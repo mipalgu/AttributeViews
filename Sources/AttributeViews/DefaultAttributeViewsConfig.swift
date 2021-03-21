@@ -1,5 +1,5 @@
 /*
- * TableRowView.swift
+ * DefaultAttributeViewsConfig.swift
  * 
  *
  * Created by Callum McColl on 21/3/21.
@@ -62,92 +62,14 @@ import TokamakShim
 import SwiftUI
 #endif
 
-import Attributes
-
-struct TableRowView<Config: AttributeViewConfig>: View {
+public final class DefaultAttributeViewsConfig: AttributeViewConfig {
     
-    let subView: (Int) -> LineAttributeView<Config>
-    let row: [LineAttribute]
-    let errorsForItem: (Int) -> [String]
-    let onDelete: () -> Void
+    @Published public var fieldColor: Color = Color.black.opacity(0.2)
     
-    @EnvironmentObject var config: Config
+    @Published public var fontBody: Font = Font.system(size: 12.0)
     
-    public init<Root: Modifiable>(
-        root: Binding<Root>,
-        path: Attributes.Path<Root, [LineAttribute]>,
-        row: [LineAttribute],
-        errorsForItem: @escaping (Int) -> [String],
-        onDelete: @escaping () -> Void
-    ) {
-        self.subView = {
-            LineAttributeView(root: root, path: path[$0], label: "")
-        }
-        self.row = row
-        self.errorsForItem = errorsForItem
-        self.onDelete = onDelete
-    }
+    @Published public var fontHeading: Font = Font.system(size: 16.0)
     
-    public init(
-        value: Binding<[LineAttribute]>,
-        row: [LineAttribute],
-        errorsForItem: @escaping (Int) -> [String],
-        onDelete: @escaping () -> Void
-    ) {
-        self.subView = {
-            LineAttributeView(attribute: value[$0], label: "")
-        }
-        self.row = row
-        self.errorsForItem = errorsForItem
-        self.onDelete = onDelete
-    }
+    @Published public var textColor: Color = Color.black
     
-    var body: some View {
-        HStack {
-            ForEach(row.indices, id: \.self) { columnIndex in
-                VStack {
-                    subView(columnIndex)
-                    ForEach(errorsForItem(columnIndex), id: \.self) { error in
-                        Text(error).foregroundColor(.red)
-                    }
-                }
-            }
-            Image(systemName: "ellipsis")
-                .font(.system(size: 16, weight: .regular))
-                .rotationEffect(.degrees(90))
-        }.contextMenu {
-            Button("Delete", action: onDelete).keyboardShortcut(.delete)
-        }
-    }
-}
-
-struct TableRowView_Previews: PreviewProvider {
-    
-    struct TableRowView_Preview: View {
-        
-        @State var value: [LineAttribute] = [
-            .bool(false),
-            .integer(2),
-            .float(3.2),
-            .expression("print(\"Hello World!\")", language: .swift),
-            .enumerated("Suspend", validValues: ["Initial", "Suspend"]),
-            .line("import swiftfsm")
-        ]
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            TableRowView<DefaultAttributeViewsConfig>(
-                value: $value,
-                row: value,
-                errorsForItem: { _ in [] },
-                onDelete: {}
-            ).environmentObject(config)
-        }
-        
-    }
-    
-    static var previews: some View {
-        TableRowView_Preview()
-    }
 }
