@@ -49,3 +49,49 @@ public struct BoolView<Config: AttributeViewConfig>: View {
     }
 }
 
+import Machines
+
+struct BoolView_Previews: PreviewProvider {
+    
+    struct BoolViewRoot_Preview: View {
+        
+        @State var machine: Machine = Machine.initialSwiftMachine()
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        let path = Machine.path
+            .attributes[1]
+            .attributes["use_custom_ringlet"]
+            .wrappedValue
+            .boolValue
+        
+        var body: some View {
+            BoolView<DefaultAttributeViewsConfig>(
+                root: $machine,
+                path: path,
+                label: "Machine"
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct BoolViewBinding_Preview: View {
+        
+        @State var value: Bool = false
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            BoolView<DefaultAttributeViewsConfig>(value: $value, label: "Binding").environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            BoolViewRoot_Preview()
+            BoolViewBinding_Preview()
+        }
+    }
+}
+
