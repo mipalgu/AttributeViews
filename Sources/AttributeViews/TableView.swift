@@ -129,16 +129,16 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
                 }
             },
             set: {
-                value.wrappedValue = $0.map { $0.attributes }
+                value.wrappedValue = $0.map(\.attributes)
             }
         )
         self.label = label
         self.columns = columns
-        let newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
+        let newRow = State<[LineAttribute]>(initialValue: columns.map(\.type.defaultValue))
         self._newRow = newRow
         self.addElement = {
             value.wrappedValue.append(newRow.wrappedValue)
-            newRow.wrappedValue = columns.map { $0.type.defaultValue }
+            newRow.wrappedValue = columns.map(\.type.defaultValue)
         }
         self.deleteElements = deleteOffsets
         self.moveElements = { (source, destination) in
