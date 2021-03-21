@@ -232,3 +232,69 @@ struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
     }
     
 }
+
+import Machines
+
+struct TableView_Previews: PreviewProvider {
+    
+    struct TableViewRoot_Preview: View {
+        
+        @State var machine: Machine = Machine.initialSwiftMachine()
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        let path = Machine.path
+            .attributes[0]
+            .attributes["machine_variables"]
+            .wrappedValue
+            .tableValue
+        
+        var body: some View {
+            TableView<DefaultAttributeViewsConfig, Machine>(
+                root: $machine,
+                path: path,
+                label: "Root",
+                columns: [
+                    .init(name: "Access Type", type: .enumerated(validValues: ["let", "var"])),
+                    .init(name: "Label", type: .line),
+                    .init(name: "Type", type: .expression(language: .swift)),
+                    .init(name: "Initial Value", type: .expression(language: .swift))
+                ]
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct TableViewBinding_Preview: View {
+        
+        @State var machine: Machine = Machine.initialSwiftMachine()
+        
+        @State var value: [[LineAttribute]] = []
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            TableView<DefaultAttributeViewsConfig, Machine>(
+                root: $machine,
+                value: $value,
+                label: "Binding",
+                columns: [
+                    .init(name: "Bool", type: .bool),
+                    .init(name: "Integer", type: .integer),
+                    .init(name: "Float", type: .float),
+                    .init(name: "Expression", type: .expression(language: .swift)),
+                    .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
+                    .init(name: "Line", type: .line)
+                ]
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            TableViewRoot_Preview()
+            TableViewBinding_Preview()
+        }
+    }
+}
