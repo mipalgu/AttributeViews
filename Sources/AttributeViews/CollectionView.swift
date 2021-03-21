@@ -64,7 +64,7 @@ import SwiftUI
 
 import Attributes
 
-public struct CollectionView<Root: Modifiable>: View {
+public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: View {
     
     struct CollectionElement: Hashable, Identifiable {
         
@@ -74,7 +74,7 @@ public struct CollectionView<Root: Modifiable>: View {
         
         var attribute: Attribute
         
-        var subView: () -> AttributeView<Root>
+        var subView: () -> AttributeView<Config, Root>
         
         static func ==(lhs: CollectionElement, rhs: CollectionElement) -> Bool {
             return lhs.attribute == rhs.attribute
@@ -200,7 +200,7 @@ public struct CollectionView<Root: Modifiable>: View {
                 case .line:
                     HStack {
                         Text(label.pretty + ":").fontWeight(.bold)
-                        AttributeView(root: $root, attribute: $newAttribute, label: "New " + label)
+                        AttributeView<Config, Root>(root: $root, attribute: $newAttribute, label: "New " + label)
                         Button(action: addElement, label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                         }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
@@ -223,7 +223,7 @@ public struct CollectionView<Root: Modifiable>: View {
                                 Image(systemName: "trash").font(.system(size: 16, weight: .regular))
                             }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.red)
                         }
-                        AttributeView(root: $root, attribute: $newAttribute, label: "")
+                        AttributeView<Config, Root>(root: $root, attribute: $newAttribute, label: "")
                     } else {
                         HStack {
                             Text(label + ":").fontWeight(.bold)

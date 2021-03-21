@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct FloatView: View {
+public struct FloatView<Config: AttributeViewConfig>: View {
     
     @Binding var value: Double
     @State var errors: [String]

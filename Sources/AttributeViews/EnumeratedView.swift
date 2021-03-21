@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct EnumeratedView: View {
+public struct EnumeratedView<Config: AttributeViewConfig>: View {
     
     @Binding var value: Expression
     @State var errors: [String]

@@ -17,21 +17,21 @@ fileprivate struct TableViewRowIDCache {
     
     static var latestIndex: Int = 0
     
-    static var ids: [Row: Int] = [:]
+    static var ids: [[LineAttribute]: Int] = [:]
     
-    static func id(for row: Row) -> Int {
-        if let id = Self.ids[row] {
+    static func id<Config>(for row: Row<Config>) -> Int {
+        if let id = Self.ids[row.attributes] {
             return id
         }
         let newId = latestIndex
         latestIndex += 1
-        ids[row] = newId
+        ids[row.attributes] = newId
         return newId
     }
     
 }
 
-struct Row: Hashable, Identifiable {
+struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
     
     var id: Int {
         TableViewRowIDCache.id(for: self)
@@ -39,7 +39,7 @@ struct Row: Hashable, Identifiable {
     
     var attributes: [LineAttribute]
     
-    var subView: () -> TableRowView
+    var subView: () -> TableRowView<Config>
     
     static func ==(lhs: Row, rhs: Row) -> Bool {
         lhs.attributes == rhs.attributes
@@ -51,10 +51,10 @@ struct Row: Hashable, Identifiable {
     
 }
 
-public struct TableView<Root: Modifiable>: View {
+public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
     
     @Binding var root: Root
-    @Binding var value: [Row]
+    @Binding var value: [Row<Config>]
     @State var errors: [String] = []
     let label: String
     let columns: [BlockAttributeType.TableColumn]
@@ -99,7 +99,7 @@ public struct TableView<Root: Modifiable>: View {
                     Row(
                         attributes: row,
                         subView: {
-                            TableRowView(
+                            TableRowView<Config>(
                                 root: root,
                                 path: path[index],
                                 row: row,
@@ -157,7 +157,7 @@ public struct TableView<Root: Modifiable>: View {
             get: {
                 value.wrappedValue.enumerated().map { (index, row) in
                     Row(attributes: row, subView: {
-                        TableRowView(
+                        TableRowView<Config>(
                             value: value[index],
                             row: row,
                             errorsForItem: { _ in [] },
@@ -215,7 +215,7 @@ public struct TableView<Root: Modifiable>: View {
                 HStack {
                     ForEach(newRow.indices) { index in
                         VStack {
-                            LineAttributeView(attribute: $newRow[index], label: "")
+                            LineAttributeView<Config>(attribute: $newRow[index], label: "")
                             ForEach(errorsForItem(value.count, index), id: \.self) { error in
                                 Text(error).foregroundColor(.red)
                             }
@@ -232,9 +232,9 @@ public struct TableView<Root: Modifiable>: View {
     }
 }
 
-struct TableRowView: View {
+struct TableRowView<Config: AttributeViewConfig>: View {
     
-    let subView: (Int) -> LineAttributeView
+    let subView: (Int) -> LineAttributeView<Config>
     let row: [LineAttribute]
     let errorsForItem: (Int) -> [String]
     let onDelete: () -> Void

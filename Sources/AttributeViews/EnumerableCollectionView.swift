@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct EnumerableCollectionView: View {
+public struct EnumerableCollectionView<Config: AttributeViewConfig>: View {
     
     @Binding var value: Set<String>
     @State var errors: [String]

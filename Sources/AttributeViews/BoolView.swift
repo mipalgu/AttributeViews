@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct BoolView: View {
+public struct BoolView<Config: AttributeViewConfig>: View {
     
     @Binding var value: Bool
     @Binding var errors: [String]

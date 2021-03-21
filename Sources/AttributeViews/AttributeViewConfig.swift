@@ -1,9 +1,9 @@
 /*
- * AttributeView.swift
- * MachineViews
+ * AttributeViewConfig.swift
+ * 
  *
- * Created by Callum McColl on 16/11/20.
- * Copyright © 2020 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 21/3/21.
+ * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,35 +62,14 @@ import TokamakShim
 import SwiftUI
 #endif
 
-import Attributes
-
-public struct AttributeView<Config: AttributeViewConfig, Root: Modifiable>: View{
+public protocol AttributeViewConfig: ObservableObject {
     
-    let subView: () -> AnyView
+    var fieldColor: Color { get }
     
-    public init(root: Binding<Root>, path: Attributes.Path<Root, Attribute>, label: String) {
-        self.subView = {
-            switch root.wrappedValue[keyPath: path.keyPath].type {
-            case .line:
-                return AnyView(LineAttributeView<Config>(root: root, path: path.lineAttribute,label: label))
-            case .block:
-                return AnyView(BlockAttributeView<Config, Root>(root: root, path: path.blockAttribute, label: label))
-            }
-        }
-    }
+    var fontBody: Font { get }
     
-    init(root: Binding<Root>, attribute: Binding<Attribute>, label: String) {
-        self.subView = {
-            switch attribute.wrappedValue.type {
-            case .line:
-                return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, label: label))
-            case .block:
-                return AnyView(BlockAttributeView<Config, Root>(root: root, attribute: attribute.blockAttribute, label: label))
-            }
-        }
-    }
+    var fontHeading: Font { get }
     
-    public var body: some View {
-        subView()
-    }
+    var textColor: Color { get }
+    
 }

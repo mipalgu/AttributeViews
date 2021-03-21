@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct LineView: View {
+public struct LineView<Config: AttributeViewConfig>: View {
     
     @Binding var value: String
     @State var errors: [String]

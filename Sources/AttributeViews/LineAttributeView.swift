@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct LineAttributeView: View {
+public struct LineAttributeView<Config: AttributeViewConfig>: View {
     
     let subView: () -> AnyView
     
@@ -21,17 +21,17 @@ public struct LineAttributeView: View {
         self.subView = {
             switch root.wrappedValue[keyPath: path.keyPath].type {
             case .bool:
-                return AnyView(BoolView(root: root, path: path.boolValue, label: label))
+                return AnyView(BoolView<Config>(root: root, path: path.boolValue, label: label))
             case .integer:
-                return AnyView(IntegerView(root: root, path: path.integerValue, label: label))
+                return AnyView(IntegerView<Config>(root: root, path: path.integerValue, label: label))
             case .float:
-                return AnyView(FloatView(root: root, path: path.floatValue, label: label))
+                return AnyView(FloatView<Config>(root: root, path: path.floatValue, label: label))
             case .expression(let language):
-                return AnyView(ExpressionView(root: root, path: path.expressionValue, label: label, language: language))
+                return AnyView(ExpressionView<Config>(root: root, path: path.expressionValue, label: label, language: language))
             case .enumerated(let validValues):
-                return AnyView(EnumeratedView(root: root, path: path.enumeratedValue, label: label, validValues: validValues))
+                return AnyView(EnumeratedView<Config>(root: root, path: path.enumeratedValue, label: label, validValues: validValues))
             case .line:
-                return AnyView(LineView(root: root, path: path.lineValue, label: label))
+                return AnyView(LineView<Config>(root: root, path: path.lineValue, label: label))
             }
         }
     }
@@ -40,17 +40,17 @@ public struct LineAttributeView: View {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .bool:
-                return AnyView(BoolView(value: attribute.boolValue, label: label))
+                return AnyView(BoolView<Config>(value: attribute.boolValue, label: label))
             case .integer:
-                return AnyView(IntegerView(value: attribute.integerValue, label: label))
+                return AnyView(IntegerView<Config>(value: attribute.integerValue, label: label))
             case .float:
-                return AnyView(FloatView(value: attribute.floatValue, label: label))
+                return AnyView(FloatView<Config>(value: attribute.floatValue, label: label))
             case .expression(let language):
-                return AnyView(ExpressionView(value: attribute.expressionValue, label: label, language: language))
+                return AnyView(ExpressionView<Config>(value: attribute.expressionValue, label: label, language: language))
             case .enumerated(let validValues):
-                return AnyView(EnumeratedView(value: attribute.enumeratedValue, label: label, validValues: validValues))
+                return AnyView(EnumeratedView<Config>(value: attribute.enumeratedValue, label: label, validValues: validValues))
             case .line:
-                return AnyView(LineView(value: attribute.lineValue, label: label))
+                return AnyView(LineView<Config>(value: attribute.lineValue, label: label))
             }
         }
     }

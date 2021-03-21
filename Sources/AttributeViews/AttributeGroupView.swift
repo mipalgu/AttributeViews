@@ -14,7 +14,7 @@ import SwiftUI
 
 import Attributes
 
-public struct AttributeGroupView<Root: Modifiable>: View {
+public struct AttributeGroupView<Config: AttributeViewConfig, Root: Modifiable>: View {
 
     @Binding var root: Root
     let path: Attributes.Path<Root, AttributeGroup>
@@ -33,7 +33,7 @@ public struct AttributeGroupView<Root: Modifiable>: View {
                 HStack {
                     VStack(alignment: .leading) {
                         ForEach(root[keyPath: path.keyPath].fields, id: \.name) { field in
-                            AttributeView(
+                            AttributeView<Config, Root>(
                                 root: $root,
                                 path: path.attributes[field.name].wrappedValue,
                                 label: field.name.pretty

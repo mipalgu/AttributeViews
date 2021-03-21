@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct ExpressionView: View {
+public struct ExpressionView<Config: AttributeViewConfig>: View {
     
     @Binding var value: Expression
     @State var errors: [String]

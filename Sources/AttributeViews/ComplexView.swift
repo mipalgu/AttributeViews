@@ -13,11 +13,11 @@ import SwiftUI
 
 import Attributes
 
-public struct ComplexView<Root: Modifiable>: View {
+public struct ComplexView<Config: AttributeViewConfig, Root: Modifiable>: View {
     
     @Binding var value: [String: Attribute]
     @State var errors: [String]
-    let subView: (Field) -> AttributeView<Root>
+    let subView: (Field) -> AttributeView<Config, Root>
     let label: String
     let fields: [Field]
     
