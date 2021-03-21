@@ -13,44 +13,6 @@ import SwiftUI
 
 import Attributes
 
-fileprivate struct TableViewRowIDCache {
-    
-    static var latestIndex: Int = 0
-    
-    static var ids: [[LineAttribute]: Int] = [:]
-    
-    static func id<Config>(for row: Row<Config>) -> Int {
-        if let id = Self.ids[row.attributes] {
-            return id
-        }
-        let newId = latestIndex
-        latestIndex += 1
-        ids[row.attributes] = newId
-        return newId
-    }
-    
-}
-
-struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
-    
-    var id: Int {
-        TableViewRowIDCache.id(for: self)
-    }
-    
-    var attributes: [LineAttribute]
-    
-    var subView: () -> TableRowView<Config>
-    
-    static func ==(lhs: Row, rhs: Row) -> Bool {
-        lhs.attributes == rhs.attributes
-    }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(attributes)
-    }
-    
-}
-
 public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
     
     @Binding var root: Root
@@ -230,59 +192,43 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
             }.padding(.top, -35).padding(.leading, 15).padding(.trailing, 18).frame(height: 50)
         }
     }
+
 }
 
-struct TableRowView<Config: AttributeViewConfig>: View {
+fileprivate struct TableViewRowIDCache {
     
-    let subView: (Int) -> LineAttributeView<Config>
-    let row: [LineAttribute]
-    let errorsForItem: (Int) -> [String]
-    let onDelete: () -> Void
+    static var latestIndex: Int = 0
     
-    @EnvironmentObject var config: Config
+    static var ids: [[LineAttribute]: Int] = [:]
     
-    public init<Root: Modifiable>(
-        root: Binding<Root>,
-        path: Attributes.Path<Root, [LineAttribute]>,
-        row: [LineAttribute],
-        errorsForItem: @escaping (Int) -> [String],
-        onDelete: @escaping () -> Void
-    ) {
-        self.subView = {
-            LineAttributeView(root: root, path: path[$0], label: "")
+    static func id<Config>(for row: Row<Config>) -> Int {
+        if let id = Self.ids[row.attributes] {
+            return id
         }
-        self.row = row
-        self.errorsForItem = errorsForItem
-        self.onDelete = onDelete
+        let newId = latestIndex
+        latestIndex += 1
+        ids[row.attributes] = newId
+        return newId
     }
     
-    public init(
-        value: Binding<[LineAttribute]>,
-        row: [LineAttribute],
-        errorsForItem: @escaping (Int) -> [String],
-        onDelete: @escaping () -> Void
-    ) {
-        self.subView = {
-            LineAttributeView(attribute: value[$0], label: "")
-        }
-        self.row = row
-        self.errorsForItem = errorsForItem
-        self.onDelete = onDelete
+}
+
+struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
+    
+    var id: Int {
+        TableViewRowIDCache.id(for: self)
     }
     
-    var body: some View {
-        HStack {
-            ForEach(row.indices, id: \.self) { columnIndex in
-                VStack {
-                    subView(columnIndex)
-                    ForEach(errorsForItem(columnIndex), id: \.self) { error in
-                        Text(error).foregroundColor(.red)
-                    }
-                }
-            }
-            Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
-        }.contextMenu {
-            Button("Delete", action: onDelete).keyboardShortcut(.delete)
-        }
+    var attributes: [LineAttribute]
+    
+    var subView: () -> TableRowView<Config>
+    
+    static func ==(lhs: Row, rhs: Row) -> Bool {
+        lhs.attributes == rhs.attributes
     }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(attributes)
+    }
+    
 }
