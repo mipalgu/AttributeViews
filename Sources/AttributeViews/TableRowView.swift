@@ -121,9 +121,56 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     }
 }
 
+import Machines
+
 struct TableRowView_Previews: PreviewProvider {
     
-    struct TableRowView_Preview: View {
+    struct TableRowViewRoot_Preview: View {
+        
+        @State var machine: Machine = {
+            var machine = Machine.initialSwiftMachine()
+            do {
+                try machine.addItem(
+                    [
+                        LineAttribute.enumerated("let", validValues: ["var", "let"]),
+                        LineAttribute.line("label"),
+                        LineAttribute.expression("Int", language: .swift),
+                        LineAttribute.expression("3", language: .swift)
+                    ],
+                    to: machine
+                        .path
+                        .attributes[0]
+                        .attributes["machine_variables"]
+                        .wrappedValue
+                        .tableValue
+                )
+            } catch let e {
+                fatalError("\(e)")
+            }
+            return machine
+        }()
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        let path = Machine.path
+            .attributes[0]
+            .attributes["machine_variables"]
+            .wrappedValue
+            .tableValue[0]
+        
+        var body: some View {
+            TableRowView<DefaultAttributeViewsConfig>(
+                root: $machine,
+                path: path,
+                row: machine[keyPath: path.keyPath],
+                errorsForItem: { _ in [] },
+                onDelete: {}
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct TableRowViewBinding_Preview: View {
         
         @State var value: [LineAttribute] = [
             .bool(false),
@@ -148,6 +195,9 @@ struct TableRowView_Previews: PreviewProvider {
     }
     
     static var previews: some View {
-        TableRowView_Preview()
+        VStack {
+            TableRowViewRoot_Preview()
+            TableRowViewBinding_Preview()
+        }
     }
 }
