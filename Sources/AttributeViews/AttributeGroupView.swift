@@ -45,4 +45,30 @@ public struct AttributeGroupView<Config: AttributeViewConfig, Root: Modifiable>:
             }
         }
     }
+    
+}
+
+import Machines
+
+struct AttributeGroupView_Previews: PreviewProvider {
+    
+    struct AttributeGroupViewRoot_Preview: View {
+
+        @State var machine: Machine = Machine.initialSwiftMachine()
+
+        let config = DefaultAttributeViewsConfig()
+
+        let path = Machine.path.attributes[0]
+
+        var body: some View {
+            AttributeGroupView<DefaultAttributeViewsConfig, Machine>(root: $machine, path: path, label: "Variables").environmentObject(config)
+        }
+
+    }
+    
+    static var previews: some View {
+        VStack {
+            AttributeGroupViewRoot_Preview()
+        }
+    }
 }
