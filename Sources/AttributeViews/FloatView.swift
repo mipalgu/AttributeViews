@@ -24,7 +24,8 @@ public struct FloatView<Config: AttributeViewConfig>: View {
     var formatter: NumberFormatter {
         let formatter = NumberFormatter()
         formatter.allowsFloats = true
-        formatter.alwaysShowsDecimalSeparator = true
+        formatter.generatesDecimalNumbers = true
+        formatter.numberStyle = .decimal
         return formatter
     }
     
