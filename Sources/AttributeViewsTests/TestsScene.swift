@@ -1,8 +1,8 @@
 /*
- * DefaultAttributeViewsConfig.swift
- * 
+ * Scene.swift
+ * AttributeViewsTests
  *
- * Created by Callum McColl on 21/3/21.
+ * Created by Callum McColl on 25/3/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,22 +56,60 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
+#if canImport(TokamakShims)
+import TokamakShims
+
+typealias State = TokamakShims.State
 #else
 import SwiftUI
+
+typealias State = SwiftUI.State
 #endif
 
-public final class DefaultAttributeViewsConfig: AttributeViewConfig {
+import AttributeViews
+import Machines
+
+struct TestsScene: App {
     
-    @Published public var fieldColor: Color = Color.black.opacity(0.2)
+    class AppDelegate: NSObject, NSApplicationDelegate {
+        
+        func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool {
+            return true
+        }
+        
+        func applicationWillFinishLaunching(_ notification: Notification) {
+            NSApp.setActivationPolicy(.regular)
+        }
+        
+    }
     
-    @Published public var fontBody: Font = Font.system(size: 12.0)
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
-    @Published public var fontHeading: Font = Font.system(size: 16.0)
+    @Environment(\.scenePhase) private var scenePhase: ScenePhase
     
-    @Published public var textColor: Color = Color.black
+    @State var machine: Machine = Machine.initialSwiftMachine()
     
-    public init() {}
+    let config = DefaultAttributeViewsConfig()
     
+    let path = Machine.path
+        .attributes[0]
+        .attributes["machine_variables"]
+        .wrappedValue
+        .tableValue
+    
+    var body: some Scene {
+        WindowGroup {
+            TableView<DefaultAttributeViewsConfig, Machine>(
+                root: $machine,
+                path: path,
+                label: "Root",
+                columns: [
+                    .init(name: "access_type", type: .enumerated(validValues: ["let", "var"])),
+                    .init(name: "label", type: .line),
+                    .init(name: "type", type: .expression(language: .swift)),
+                    .init(name: "initial_value", type: .expression(language: .swift))
+                ]
+            ).environmentObject(config)
+        }
+    }
 }

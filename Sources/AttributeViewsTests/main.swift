@@ -1,8 +1,8 @@
 /*
- * DefaultAttributeViewsConfig.swift
- * 
+ * main.swift 
+ * AttributeViewsTests 
  *
- * Created by Callum McColl on 21/3/21.
+ * Created by Callum McColl on 25/03/2021.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,22 +56,4 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
-public final class DefaultAttributeViewsConfig: AttributeViewConfig {
-    
-    @Published public var fieldColor: Color = Color.black.opacity(0.2)
-    
-    @Published public var fontBody: Font = Font.system(size: 12.0)
-    
-    @Published public var fontHeading: Font = Font.system(size: 16.0)
-    
-    @Published public var textColor: Color = Color.black
-    
-    public init() {}
-    
-}
+TestsScene.main()

@@ -82,11 +82,17 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
         let newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
         self._newRow = newRow
         self.addElement = {
-            _ = try? root.wrappedValue.addItem(newRow.wrappedValue, to: path)
+            let rootValue = root.wrappedValue
+            do {
+                try root.wrappedValue.addItem(newRow.wrappedValue, to: path)
+            } catch let e {
+                debugPrint(e)
+            }
             errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
         }
         self.deleteElements = deleteOffsets
         self.moveElements = { (source, destination) in
+            selection.wrappedValue.removeAll()
             _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
             errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
         }
@@ -142,6 +148,7 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
         }
         self.deleteElements = deleteOffsets
         self.moveElements = { (source, destination) in
+            selection.wrappedValue.removeAll()
             value.wrappedValue.move(fromOffsets: source, toOffset: destination)
         }
         self.tableErrors = { [] }
@@ -168,8 +175,8 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
                         Text(error).foregroundColor(.red)
                     }
                 }, content: {
-                    ForEach(value) { row in
-                        row.subView()
+                    ForEach(value.indices) { index in
+                        value[index].subView()
                     }.onMove(perform: moveElements).onDelete(perform: deleteElements)
                 })
             }.frame(minHeight: CGFloat(28 * value.count + 70))
