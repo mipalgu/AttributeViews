@@ -38,8 +38,8 @@ extension TableViewViewModelProtocol {
         guard row < view.value.count else {
             return
         }
-        let offsets: IndexSet = view.selection.contains(row)
-            ? IndexSet(view.selection)
+        let offsets: IndexSet = view.selection.contains(view.value[row])
+            ? IndexSet(view.value.lazy.filter { view.selection.contains($0) }.map { $0.index })
             : [row]
         self.deleteElements(view, atOffsets: offsets)
     }
@@ -135,8 +135,14 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
     
     func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int) {
         view.selection.removeAll()
+        guard let sourceMin = source.min() else {
+            return
+        }
         _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
         view.errors = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
+        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
+            view.value[$0].index = $0
+        }
     }
     
     func errors(_ view: TableView<Config, Root>, forRow row: Int) -> [[String]] {
@@ -182,7 +188,13 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig, Root: 
     
     func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int) {
         view.selection.removeAll()
+        guard let sourceMin = source.min() else {
+            return
+        }
         value.wrappedValue.move(fromOffsets: source, toOffset: destination)
+        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
+            view.value[$0].index = $0
+        }
     }
     
     func errors(_ view: TableView<Config, Root>, forRow _: Int) -> [[String]] {
@@ -207,7 +219,7 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
     let columns: [BlockAttributeType.TableColumn]
     
     @State var newRow: [LineAttribute]
-    @State var selection: Set<Int>
+    @State var selection: Set<Row<Config>>
     
     private let viewModel: AnyTableViewViewModel<Config, Root>
     
@@ -217,8 +229,8 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
         self._root = root
         self._value = Binding(
             get: {
-                root.wrappedValue[keyPath: path.keyPath].map { row in
-                    Row(attributes: row)
+                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
+                    Row(index: index, attributes: row)
                 }
             },
             set: {
@@ -226,7 +238,7 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
             }
         )
         self._errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
-        self._selection = State<Set<Int>>(initialValue: [])
+        self._selection = State(initialValue: [])
         self.label = label
         self.columns = columns
         self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
@@ -236,11 +248,11 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
     init(root: Binding<Root>, value: Binding<[[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
         self._root = root
         self._errors = State<[String]>(initialValue: [])
-        self._selection = State<Set<Int>>(initialValue: [])
+        self._selection = State(initialValue: [])
         self._value = Binding(
             get: {
                 value.wrappedValue.enumerated().map { (index, row) in
-                    Row(attributes: row)
+                    Row(index: index, attributes: row)
                 }
             },
             set: {
@@ -272,8 +284,8 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
                         Text(error).foregroundColor(.red)
                     }
                 }, content: {
-                    ForEach(value.indices, id: \.self) { index in
-                        viewModel.rowView(self, forRow: index)
+                    ForEach(value, id: \.self) { row in
+                        viewModel.rowView(self, forRow: row.index)
                     }.onMove {
                         viewModel.moveElements(self, atOffsets: $0, to: $1)
                     }.onDelete {
@@ -329,15 +341,9 @@ struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
         TableViewRowIDCache.id(for: self)
     }
     
+    var index: Int
+    
     var attributes: [LineAttribute]
-    
-    static func ==(lhs: Row, rhs: Row) -> Bool {
-        lhs.attributes == rhs.attributes
-    }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(attributes)
-    }
     
 }
 
