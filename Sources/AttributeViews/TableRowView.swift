@@ -108,8 +108,10 @@ struct TableRowView<Config: AttributeViewConfig>: View {
             ForEach(row.indices, id: \.self) { columnIndex in
                 VStack {
                     subView(columnIndex)
-                    ForEach(errors[columnIndex], id: \.self) { error in
-                        Text(error).foregroundColor(.red)
+                    if errors.count > columnIndex {
+                        ForEach(errors[columnIndex], id: \.self) { error in
+                            Text(error).foregroundColor(.red)
+                        }
                     }
                 }
             }

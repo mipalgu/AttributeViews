@@ -67,6 +67,7 @@ typealias State = SwiftUI.State
 #endif
 
 import AttributeViews
+import Attributes
 import Machines
 
 struct TestsScene: App {
@@ -97,18 +98,20 @@ struct TestsScene: App {
         .wrappedValue
         .tableValue
     
+    let columns: [BlockAttributeType.TableColumn] = [
+        .init(name: "access_type", type: .enumerated(validValues: ["let", "var"])),
+        .init(name: "label", type: .line),
+        .init(name: "type", type: .expression(language: .swift)),
+        .init(name: "initial_value", type: .expression(language: .swift))
+    ]
+    
     var body: some Scene {
         WindowGroup {
             TableView<DefaultAttributeViewsConfig, Machine>(
                 root: $machine,
                 path: path,
                 label: "Root",
-                columns: [
-                    .init(name: "access_type", type: .enumerated(validValues: ["let", "var"])),
-                    .init(name: "label", type: .line),
-                    .init(name: "type", type: .expression(language: .swift)),
-                    .init(name: "initial_value", type: .expression(language: .swift))
-                ]
+                columns: columns
             ).environmentObject(config)
         }
     }
