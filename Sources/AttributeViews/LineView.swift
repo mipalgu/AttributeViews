@@ -43,8 +43,8 @@ public struct LineView<Config: AttributeViewConfig>: View {
     public var body: some View {
         VStack(alignment: .leading) {
             TextField(label, text: $value)
-            .background(config.fieldColor)
-            .foregroundColor(config.textColor)
+                .background(config.fieldColor)
+                .foregroundColor(config.textColor)
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }

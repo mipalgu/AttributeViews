@@ -67,8 +67,8 @@ import Attributes
 struct TableRowView<Config: AttributeViewConfig>: View {
     
     let subView: (Int) -> LineAttributeView<Config>
-    let row: [LineAttribute]
-    let errorsForItem: (Int) -> [String]
+    @Binding var row: [LineAttribute]
+    @Binding var errors: [[String]]
     let onDelete: () -> Void
     
     @EnvironmentObject var config: Config
@@ -76,29 +76,30 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     public init<Root: Modifiable>(
         root: Binding<Root>,
         path: Attributes.Path<Root, [LineAttribute]>,
-        row: [LineAttribute],
-        errorsForItem: @escaping (Int) -> [String],
-        onDelete: @escaping () -> Void
+        errors: Binding<[[String]]> = .constant([]),
+        onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
             LineAttributeView(root: root, path: path[$0], label: "")
         }
-        self.row = row
-        self.errorsForItem = errorsForItem
+        self._row = Binding(
+            get: { root.wrappedValue[keyPath: path.keyPath] },
+            set: { _ = try? root.wrappedValue.modify(attribute: path, value: $0) }
+        )
+        self._errors = errors
         self.onDelete = onDelete
     }
     
     public init(
-        value: Binding<[LineAttribute]>,
-        row: [LineAttribute],
-        errorsForItem: @escaping (Int) -> [String],
-        onDelete: @escaping () -> Void
+        row: Binding<[LineAttribute]>,
+        errors: Binding<[[String]]> = .constant([]),
+        onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
-            LineAttributeView(attribute: value[$0], label: "")
+            LineAttributeView(attribute: row[$0], label: "")
         }
-        self.row = row
-        self.errorsForItem = errorsForItem
+        self._row = row
+        self._errors = errors
         self.onDelete = onDelete
     }
     
@@ -107,7 +108,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
             ForEach(row.indices, id: \.self) { columnIndex in
                 VStack {
                     subView(columnIndex)
-                    ForEach(errorsForItem(columnIndex), id: \.self) { error in
+                    ForEach(errors[columnIndex], id: \.self) { error in
                         Text(error).foregroundColor(.red)
                     }
                 }
@@ -161,10 +162,7 @@ struct TableRowView_Previews: PreviewProvider {
         var body: some View {
             TableRowView<DefaultAttributeViewsConfig>(
                 root: $machine,
-                path: path,
-                row: machine[keyPath: path.keyPath],
-                errorsForItem: { _ in [] },
-                onDelete: {}
+                path: path
             ).environmentObject(config)
         }
         
@@ -185,10 +183,7 @@ struct TableRowView_Previews: PreviewProvider {
         
         var body: some View {
             TableRowView<DefaultAttributeViewsConfig>(
-                value: $value,
-                row: value,
-                errorsForItem: { _ in [] },
-                onDelete: {}
+                row: $value
             ).environmentObject(config)
         }
         
