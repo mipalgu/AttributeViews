@@ -297,9 +297,11 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
                 HStack {
                     ForEach(newRow.indices, id: \.self) { index in
                         VStack {
-                            LineAttributeView<Config>(attribute: $newRow[index], label: "").onChange(of: newRow[index]) {
-                                print($0)
-                            }
+                            LineAttributeView<Config>(
+                                attribute: $newRow[index],
+                                errors: Binding(get: { viewModel.errors(self, forRow: value.count)[index] }, set: {_ in }),
+                                label: ""
+                            )
                             ForEach(viewModel.errors(self, forRow: value.count)[index], id: \.self) { error in
                                 Text(error).foregroundColor(.red)
                             }

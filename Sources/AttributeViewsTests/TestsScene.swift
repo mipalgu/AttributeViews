@@ -93,10 +93,10 @@ struct TestsScene: App {
     let config = DefaultAttributeViewsConfig()
     
     let path = Machine.path
-        .attributes[1]
-        .attributes["use_custom_ringlet"]
+        .attributes[0]
+        .attributes["machine_variables"]
         .wrappedValue
-        .boolValue
+        .tableValue
     
     let columns: [BlockAttributeType.TableColumn] = [
         .init(name: "access_type", type: .enumerated(validValues: ["let", "var"])),
@@ -107,7 +107,12 @@ struct TestsScene: App {
     
     var body: some Scene {
         WindowGroup {
-            BoolView<DefaultAttributeViewsConfig>(root: $machine, path: path, label: "Bool").environmentObject(config)
+            TableView<DefaultAttributeViewsConfig, Machine>(
+                root: $machine,
+                path: path,
+                label: "Root",
+                columns: columns
+            ).environmentObject(config)
         }
     }
 }
