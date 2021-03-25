@@ -23,29 +23,37 @@ public struct BoolView<Config: AttributeViewConfig>: View {
     @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Bool>, label: String) {
-        self._value = Binding(
-            get: { root.wrappedValue[keyPath: path.keyPath] },
-            set: { _ = try? root.wrappedValue.modify(attribute: path, value: $0) }
+        self.init(
+            value: Binding(
+                get: { root.wrappedValue[keyPath: path.keyPath] },
+                set: {
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            label: label
         )
-        self._errors = Binding(
-            get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message } },
-            set: { _ in }
-        )
-        self.label = label
     }
     
-    init(value: Binding<Bool>, label: String) {
+    init(value: Binding<Bool>, errors: Binding<[String]> = .constant([]), label: String) {
         self._value = value
-        var errors: [String] = []
-        self._errors = Binding(get: { errors }, set: { errors = $0 })
+        self._errors = errors
         self.label = label
     }
     
     public var body: some View {
-        Toggle(label, isOn: $value)
-            .animation(.easeOut)
-            .font(.body)
-            .foregroundColor(config.textColor)
+        VStack(alignment: .leading) {
+            Toggle(label, isOn: $value)
+                .animation(.easeOut)
+                .font(.body)
+                .foregroundColor(config.textColor)
+            ForEach(errors, id: \.self) { error in
+                Text(error).foregroundColor(.red)
+            }
+        }
     }
 }
 
@@ -79,10 +87,12 @@ struct BoolView_Previews: PreviewProvider {
         
         @State var value: Bool = false
         
+        @State var errors: [String] = ["An Error."]
+        
         let config = DefaultAttributeViewsConfig()
         
         var body: some View {
-            BoolView<DefaultAttributeViewsConfig>(value: $value, label: "Binding").environmentObject(config)
+            BoolView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
         }
         
     }
