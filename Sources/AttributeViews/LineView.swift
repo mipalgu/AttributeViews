@@ -16,27 +16,30 @@ import Attributes
 public struct LineView<Config: AttributeViewConfig>: View {
     
     @Binding var value: String
-    @State var errors: [String]
+    @Binding var errors: [String]
     let label: String
     
     @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String) {
-        let errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
-        self._value = Binding(
-            get: { root.wrappedValue[keyPath: path.keyPath] },
-            set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0)
-                errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
-            }
+        self.init(
+            value: Binding(
+                get: { root.wrappedValue[keyPath: path.keyPath] },
+                set: {
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            label: label
         )
-        self._errors = errors
-        self.label = label
     }
     
-    init(value: Binding<String>, label: String) {
+    init(value: Binding<String>, errors: Binding<[String]> = .constant([]), label: String) {
         self._value = value
-        self._errors = State<[String]>(initialValue: [])
+        self._errors = errors
         self.label = label
     }
     

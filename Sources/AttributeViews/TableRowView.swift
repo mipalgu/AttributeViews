@@ -96,7 +96,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
-            LineAttributeView(attribute: row[$0], label: "")
+            LineAttributeView(attribute: row[$0], errors: errors[$0], label: "")
         }
         self._row = row
         self._errors = errors
@@ -108,11 +108,6 @@ struct TableRowView<Config: AttributeViewConfig>: View {
             ForEach(row.indices, id: \.self) { columnIndex in
                 VStack {
                     subView(columnIndex)
-                    if errors.count > columnIndex {
-                        ForEach(errors[columnIndex], id: \.self) { error in
-                            Text(error).foregroundColor(.red)
-                        }
-                    }
                 }
             }
             Image(systemName: "ellipsis")

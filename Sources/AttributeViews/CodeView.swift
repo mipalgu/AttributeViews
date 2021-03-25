@@ -16,7 +16,7 @@ import Attributes
 public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
     
     @Binding var value: Code
-    @State var errors: [String]
+    @Binding var errors: [String]
     
     let label: () -> Label
     let language: Language
@@ -27,27 +27,30 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         self.init(root: root, path: path, language: language, label: { Text(label.capitalized) })
     }
     
-    init(value: Binding<Code>, label: String, language: Language) where Label == Text {
-        self.init(value: value, language: language, label: { Text(label.capitalized) })
+    init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language) where Label == Text {
+        self.init(value: value, errors: errors, language: language, label: { Text(label.capitalized) })
     }
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, label: @escaping () -> Label) {
-        let errors = State<[String]>(initialValue: [])
-        self._errors = errors
-        self._value = Binding(
-            get: { root.wrappedValue[keyPath: path.keyPath] },
-            set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0)
-                errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
-            }
+        self.init(
+            value: Binding(
+                get: { root.wrappedValue[keyPath: path.keyPath] },
+                set: {
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            language: language,
+            label: label
         )
-        self.label = label
-        self.language = language
     }
     
-    init(value: Binding<Code>, language: Language, label: @escaping () -> Label) {
+    init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label) {
         self._value = value
-        self._errors = State<[String]>(initialValue: [])
+        self._errors = errors
         self.label = label
         self.language = language
     }

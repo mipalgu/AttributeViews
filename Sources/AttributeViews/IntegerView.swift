@@ -16,7 +16,7 @@ import Attributes
 public struct IntegerView<Config: AttributeViewConfig>: View {
     
     @Binding var value: Int
-    @State var errors: [String]
+    @Binding var errors: [String]
     let label: String
     
     @EnvironmentObject var config: Config
@@ -28,29 +28,38 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
     }
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Int>, label: String) {
-        let errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
-        self._errors = errors
-        self._value = Binding(
-            get: { root.wrappedValue[keyPath: path.keyPath] },
-            set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0)
-                errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
-            }
+        self.init(
+            value: Binding(
+                get: { root.wrappedValue[keyPath: path.keyPath] },
+                set: {
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            label: label
         )
-        self.label = label
     }
     
-    init(value: Binding<Int>, label: String) {
+    init(value: Binding<Int>, errors: Binding<[String]> = .constant([]), label: String) {
         self._value = value
-        self._errors = State<[String]>(initialValue: [])
+        self._errors = errors
         self.label = label
     }
     
     public var body: some View {
-        TextField(label, value: $value, formatter: formatter)
-            .font(.body)
-            .background(config.fieldColor)
-            .foregroundColor(config.textColor)
+        VStack(alignment: .leading) {
+            TextField(label, value: $value, formatter: formatter)
+                .font(.body)
+                .background(config.fieldColor)
+                .foregroundColor(config.textColor)
+            ForEach(errors, id: \.self) { error in
+                Text(error).foregroundColor(.red)
+            }
+        }
+        
     }
 }
 
