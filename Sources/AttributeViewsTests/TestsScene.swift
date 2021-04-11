@@ -92,26 +92,12 @@ struct TestsScene: App {
     
     let config = DefaultAttributeViewsConfig()
     
-    let path = Machine.path
-        .attributes[0]
-        .attributes["machine_variables"]
-        .wrappedValue
-        .tableValue
-    
-    let columns: [BlockAttributeType.TableColumn] = [
-        .init(name: "access_type", type: .enumerated(validValues: ["let", "var"])),
-        .init(name: "label", type: .line),
-        .init(name: "type", type: .expression(language: .swift)),
-        .init(name: "initial_value", type: .expression(language: .swift))
-    ]
-    
     var body: some Scene {
         WindowGroup {
-            TableView<DefaultAttributeViewsConfig, Machine>(
+            AttributeGroupView<DefaultAttributeViewsConfig, Machine>(
                 root: $machine,
-                path: path,
-                label: "Root",
-                columns: columns
+                path: Machine.path.attributes[0],
+                label: "Variables"
             ).environmentObject(config)
         }
     }

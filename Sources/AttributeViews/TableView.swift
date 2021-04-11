@@ -125,12 +125,10 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
     
     func addElement(_ view: TableView<Config, Root>) {
         try? root.wrappedValue.addItem(view.newRow, to: path)
-        view.errors = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
     }
     
     func deleteElements(_ view: TableView<Config, Root>, atOffsets offsets: IndexSet) {
         _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
-        view.errors = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
     }
     
     func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int) {
@@ -139,7 +137,6 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
             return
         }
         _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
-        view.errors = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
         view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
             view.value[$0].index = $0
         }
@@ -147,7 +144,7 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
     
     func errors(_ view: TableView<Config, Root>, forRow row: Int) -> [[String]] {
         return view.columns.indices.map {
-            root.wrappedValue.errorBag.errors(forPath: AnyPath(path[row][$0])).map(\.message)
+            root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row][$0]).map(\.message)
         }
     }
     
@@ -214,7 +211,7 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
     
     @Binding var root: Root
     @Binding var value: [Row<Config>]
-    @State var errors: [String] = []
+    @Binding var errors: [String]
     let label: String
     let columns: [BlockAttributeType.TableColumn]
     
@@ -237,7 +234,10 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
                 _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.attributes))
             }
         )
-        self._errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
+        self._errors = Binding(
+            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
+            set: { _ in }
+        )
         self._selection = State(initialValue: [])
         self.label = label
         self.columns = columns
@@ -245,9 +245,9 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
         self.viewModel = AnyTableViewViewModel<Config, Root>(root: root, path: path)
     }
     
-    init(root: Binding<Root>, value: Binding<[[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
+    init(root: Binding<Root>, value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
         self._root = root
-        self._errors = State<[String]>(initialValue: [])
+        self._errors = errors
         self._selection = State(initialValue: [])
         self._value = Binding(
             get: {
@@ -270,6 +270,9 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
             Text(label.pretty.capitalized)
                 .font(.headline)
                 .foregroundColor(config.textColor)
+            ForEach(errors, id: \.self) { error in
+                Text(error).foregroundColor(.red)
+            }
             List(selection: $selection) {
                 Section(header: VStack {
                     HStack {
@@ -279,9 +282,6 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
                                 .frame(minWidth: 0, maxWidth: .infinity)
                         }
                         Text("").frame(width: 15)
-                    }
-                    ForEach(errors, id: \.self) { error in
-                        Text(error).foregroundColor(.red)
                     }
                 }, content: {
                     ForEach(value, id: \.self) { row in
