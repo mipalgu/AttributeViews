@@ -60,3 +60,48 @@ public struct EnumeratedView<Config: AttributeViewConfig>: View {
         }
     }
 }
+
+struct EnumeratedView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "enumerated", type: .enumerated(validValues: ["a", "b", "c"]))], attributes: ["enumerated": .enumerated("b", validValues: ["a", "b", "c"])], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["enumerated"].wrappedValue.enumeratedValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            EnumeratedView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root",
+                validValues: ["a", "b", "c"]
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: String = "B"
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            EnumeratedView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", validValues: ["A", "B", "C"]).environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
