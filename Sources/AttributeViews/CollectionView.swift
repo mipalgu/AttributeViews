@@ -251,3 +251,48 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
         }.padding(.top, 2)
     }
 }
+
+//struct CollectionView_Previews: PreviewProvider {
+//
+//    struct Root_Preview: View {
+//
+//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+//            AttributeGroup(
+//                name: "Fields", fields: [Field(name: "collection", type: .collection(type: .bool))], attributes: ["collection": .collection(bools: [false, true])], metaData: [:])
+//        ])
+//
+//        let path = EmptyModifiable.path.attributes[0].attributes["collection"].wrappedValue.collectionValue
+//
+//        let config = DefaultAttributeViewsConfig()
+//
+//        var body: some View {
+//            CollectionView<DefaultAttributeViewsConfig, EmptyModifiable>(
+//                root: $modifiable,
+//                path: path,
+//                label: "Root",
+//                type: .bool
+//            ).environmentObject(config)
+//        }
+//
+//    }
+//
+//    struct Binding_Preview: View {
+//
+//        @State var value: [Attribute] = [.integer(1), .integer(2), .integer(3)]
+//        @State var errors: [String] = ["An error", "A second error"]
+//
+//        let config = DefaultAttributeViewsConfig()
+//
+//        var body: some View {
+//            CollectionView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", type: .integer).environmentObject(config)
+//        }
+//
+//    }
+//
+//    static var previews: some View {
+//        VStack {
+//            Root_Preview()
+//            Binding_Preview()
+//        }
+//    }
+//}
