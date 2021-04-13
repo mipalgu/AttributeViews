@@ -71,18 +71,46 @@ public struct LineView<Config: AttributeViewConfig>: View {
     }
 }
 
-//import Machines
-//
-//struct LineView_Preview: PreviewProvider {
-//
-//    static let root: Ref<Machine> = Ref(copying: Machine.initialSwiftMachine())
-//
-//    static var previews: some View {
-//        LineView(
-//            root: root,
-//            path: Machine.path.states[0].name,
-//            label: "State 0"
-//        ).environmentObject(Config())
-//    }
-//
-//}
+struct LineView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "line", type: .line)], attributes: ["line": .line("hello")], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["line"].wrappedValue.lineValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            LineView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root"
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: String = "world"
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            LineView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
