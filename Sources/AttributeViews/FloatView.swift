@@ -80,3 +80,47 @@ public struct FloatView<Config: AttributeViewConfig>: View {
         }
     }
 }
+
+struct FloatView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "float", type: .float)], attributes: ["float": .float(0.1)], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["float"].wrappedValue.floatValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            FloatView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root"
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: Double = 12.5123
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            FloatView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
