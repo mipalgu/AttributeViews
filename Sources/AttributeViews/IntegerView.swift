@@ -97,7 +97,7 @@ struct IntegerView_Previews: PreviewProvider {
             IntegerView<DefaultAttributeViewsConfig>(
                 root: $modifiable,
                 path: path,
-                label: "Machine"
+                label: "Root"
             ).environmentObject(config)
         }
         
