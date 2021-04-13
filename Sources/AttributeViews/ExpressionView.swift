@@ -76,3 +76,48 @@ public struct ExpressionView<Config: AttributeViewConfig>: View {
         
     }
 }
+
+struct ExpressionView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "expression", type: .expression(language: .swift))], attributes: ["expression": .expression("let i = 2", language: .swift)], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["expression"].wrappedValue.expressionValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            ExpressionView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root",
+                language: .swift
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: Expression = "let b = true"
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            ExpressionView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", language: .swift).environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
