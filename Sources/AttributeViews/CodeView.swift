@@ -73,3 +73,48 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         }
     }
 }
+
+struct CodeView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "code", type: .code(language: .swift))], attributes: ["code": .code("let i = 2\nletb = true", language: .swift)], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["code"].wrappedValue.codeValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            CodeView<DefaultAttributeViewsConfig, Text>(
+                root: $modifiable,
+                path: path,
+                label: "Root",
+                language: .swift
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: String = "let f = 2.3\nlet s = \"hello\""
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            CodeView<DefaultAttributeViewsConfig, Text>(value: $value, errors: $errors, label: "Binding", language: .swift).environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
