@@ -57,27 +57,28 @@ public struct BoolView<Config: AttributeViewConfig>: View {
     }
 }
 
-import Machines
-
 struct BoolView_Previews: PreviewProvider {
     
     struct BoolViewRoot_Preview: View {
         
-        @State var machine: Machine = Machine.initialSwiftMachine()
+        @State var modifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields",
+                fields: [Field(name: "bool", type: .bool)],
+                attributes: ["bool": .bool(false)],
+                metaData: [:]
+            )
+        ])
         
         let config = DefaultAttributeViewsConfig()
         
-        let path = Machine.path
-            .attributes[1]
-            .attributes["use_custom_ringlet"]
-            .wrappedValue
-            .boolValue
+        let path = EmptyModifiable.path.attributes[0].attributes["bool"].wrappedValue.boolValue
         
         var body: some View {
             BoolView<DefaultAttributeViewsConfig>(
-                root: $machine,
+                root: $modifiable,
                 path: path,
-                label: "Machine"
+                label: "Root"
             ).environmentObject(config)
         }
         
