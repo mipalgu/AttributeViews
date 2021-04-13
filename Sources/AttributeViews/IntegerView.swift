@@ -80,68 +80,45 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
     }
 }
 
-import Machines
-
 struct IntegerView_Previews: PreviewProvider {
     
-//    struct IntegerViewRoot_Preview: View {
-//        
-//        @State var machine: Machine = {
-//            var machine = Machine.initialSwiftMachine()
-//            do {
-//                try machine.addItem(
-//                    [
-//                        LineAttribute.enumerated("let", validValues: ["var", "let"]),
-//                        LineAttribute.line("label"),
-//                        LineAttribute.expression("Int", language: .swift),
-//                        LineAttribute.expression("3", language: .swift)
-//                    ],
-//                    to: machine
-//                        .path
-//                        .attributes[0]
-//                        .attributes["machine_variables"]
-//                        .wrappedValue
-//                        .tableValue
-//                )
-//            } catch let e {
-//                fatalError("\(e)")
-//            }
-//            return machine
-//        }()
-//        
-//        let config = DefaultAttributeViewsConfig()
-//        
-//        let path = Machine.path
-//            .attributes[0]
-//            .attributes["machine_variables"]
-//            .wrappedValue
-//            .tableValue[0][0].integerValue
-//        
-//        var body: some View {
-//            BoolView<DefaultAttributeViewsConfig>(
-//                root: $machine,
-//                path: path,
-//                label: "Machine"
-//            ).environmentObject(config)
-//        }
-//        
-//    }
-    
-    struct IntegerViewBinding_Preview: View {
+    struct IntegerViewRoot_Preview: View {
         
-        @State var value: Int = 12
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "integer", type: .integer)], attributes: ["integer": .integer(0)], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["integer"].wrappedValue.integerValue
         
         let config = DefaultAttributeViewsConfig()
         
         var body: some View {
-            IntegerView<DefaultAttributeViewsConfig>(value: $value, label: "Binding").environmentObject(config)
+            IntegerView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Machine"
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct IntegerViewBinding_Preview: View {
+        
+        @State var value: Int = 12
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            IntegerView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
         }
         
     }
     
     static var previews: some View {
         VStack {
-            //IntegerViewRoot_Preview()
+            IntegerViewRoot_Preview()
             IntegerViewBinding_Preview()
         }
     }
