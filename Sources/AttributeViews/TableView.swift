@@ -13,6 +13,117 @@ import SwiftUI
 
 import Attributes
 
+public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
+    
+    @Binding var root: Root
+    @Binding var value: [Row<Config>]
+    @Binding var errors: [String]
+    let label: String
+    let columns: [BlockAttributeType.TableColumn]
+    
+    @State var newRow: [LineAttribute]
+    @State var selection: Set<Row<Config>>
+    
+    private let viewModel: AnyTableViewViewModel<Config, Root>
+    
+    @EnvironmentObject var config: Config
+    
+    public init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
+        self._root = root
+        self._value = Binding(
+            get: {
+                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
+                    Row(index: index, attributes: row)
+                }
+            },
+            set: {
+                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.attributes))
+            }
+        )
+        self._errors = Binding(
+            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
+            set: { _ in }
+        )
+        self._selection = State(initialValue: [])
+        self.label = label
+        self.columns = columns
+        self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
+        self.viewModel = AnyTableViewViewModel<Config, Root>(root: root, path: path)
+    }
+    
+    init(root: Binding<Root>, value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
+        self._root = root
+        self._errors = errors
+        self._selection = State(initialValue: [])
+        self._value = Binding(
+            get: {
+                value.wrappedValue.enumerated().map { (index, row) in
+                    Row(index: index, attributes: row)
+                }
+            },
+            set: {
+                value.wrappedValue = $0.map(\.attributes)
+            }
+        )
+        self.label = label
+        self.columns = columns
+        self._newRow = State<[LineAttribute]>(initialValue: columns.map(\.type.defaultValue))
+        self.viewModel = AnyTableViewViewModel(value: value)
+    }
+    
+    public var body: some View {
+        VStack(alignment: .leading) {
+            Text(label.pretty.capitalized)
+                .font(.headline)
+                .foregroundColor(config.textColor)
+            ForEach(errors, id: \.self) { error in
+                Text(error).foregroundColor(.red)
+            }
+            List(selection: $selection) {
+                Section(header: VStack {
+                    HStack {
+                        ForEach(columns, id: \.name) { column in
+                            Text(column.name.pretty)
+                                .multilineTextAlignment(.leading)
+                                .frame(minWidth: 0, maxWidth: .infinity)
+                        }
+                        Text("").frame(width: 15)
+                    }
+                }, content: {
+                    ForEach(value, id: \.self) { row in
+                        viewModel.rowView(self, forRow: row.index)
+                    }.onMove {
+                        viewModel.moveElements(self, atOffsets: $0, to: $1)
+                    }.onDelete {
+                        viewModel.deleteElements(self, atOffsets: $0)
+                    }
+                })
+            }.frame(minHeight: CGFloat(28 * value.count + 70))
+            ScrollView([.vertical], showsIndicators: false) {
+                HStack {
+                    ForEach(newRow.indices, id: \.self) { index in
+                        VStack {
+                            LineAttributeView<Config>(
+                                attribute: $newRow[index],
+                                errors: Binding(get: { viewModel.errors(self, forRow: value.count)[index] }, set: {_ in }),
+                                label: ""
+                            )
+                            ForEach(viewModel.errors(self, forRow: value.count)[index], id: \.self) { error in
+                                Text(error).foregroundColor(.red)
+                            }
+                        }.frame(minWidth: 0, maxWidth: .infinity)
+                    }
+                    Button(action: { viewModel.addElement(self) }, label: {
+                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                    }).buttonStyle(PlainButtonStyle())
+                      .foregroundColor(.blue)
+                      .frame(width: 15)
+                }
+            }.padding(.top, -35).padding(.leading, 15).padding(.trailing, 18).frame(height: 50)
+        }
+    }
+
+}
 
 fileprivate protocol TableViewViewModelProtocol {
     
@@ -205,118 +316,6 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig, Root: 
         )
     }
     
-}
-
-public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
-    
-    @Binding var root: Root
-    @Binding var value: [Row<Config>]
-    @Binding var errors: [String]
-    let label: String
-    let columns: [BlockAttributeType.TableColumn]
-    
-    @State var newRow: [LineAttribute]
-    @State var selection: Set<Row<Config>>
-    
-    private let viewModel: AnyTableViewViewModel<Config, Root>
-    
-    @EnvironmentObject var config: Config
-    
-    public init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
-        self._root = root
-        self._value = Binding(
-            get: {
-                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
-                    Row(index: index, attributes: row)
-                }
-            },
-            set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.attributes))
-            }
-        )
-        self._errors = Binding(
-            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
-            set: { _ in }
-        )
-        self._selection = State(initialValue: [])
-        self.label = label
-        self.columns = columns
-        self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
-        self.viewModel = AnyTableViewViewModel<Config, Root>(root: root, path: path)
-    }
-    
-    init(root: Binding<Root>, value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
-        self._root = root
-        self._errors = errors
-        self._selection = State(initialValue: [])
-        self._value = Binding(
-            get: {
-                value.wrappedValue.enumerated().map { (index, row) in
-                    Row(index: index, attributes: row)
-                }
-            },
-            set: {
-                value.wrappedValue = $0.map(\.attributes)
-            }
-        )
-        self.label = label
-        self.columns = columns
-        self._newRow = State<[LineAttribute]>(initialValue: columns.map(\.type.defaultValue))
-        self.viewModel = AnyTableViewViewModel(value: value)
-    }
-    
-    public var body: some View {
-        VStack(alignment: .leading) {
-            Text(label.pretty.capitalized)
-                .font(.headline)
-                .foregroundColor(config.textColor)
-            ForEach(errors, id: \.self) { error in
-                Text(error).foregroundColor(.red)
-            }
-            List(selection: $selection) {
-                Section(header: VStack {
-                    HStack {
-                        ForEach(columns, id: \.name) { column in
-                            Text(column.name.pretty)
-                                .multilineTextAlignment(.leading)
-                                .frame(minWidth: 0, maxWidth: .infinity)
-                        }
-                        Text("").frame(width: 15)
-                    }
-                }, content: {
-                    ForEach(value, id: \.self) { row in
-                        viewModel.rowView(self, forRow: row.index)
-                    }.onMove {
-                        viewModel.moveElements(self, atOffsets: $0, to: $1)
-                    }.onDelete {
-                        viewModel.deleteElements(self, atOffsets: $0)
-                    }
-                })
-            }.frame(minHeight: CGFloat(28 * value.count + 70))
-            ScrollView([.vertical], showsIndicators: false) {
-                HStack {
-                    ForEach(newRow.indices, id: \.self) { index in
-                        VStack {
-                            LineAttributeView<Config>(
-                                attribute: $newRow[index],
-                                errors: Binding(get: { viewModel.errors(self, forRow: value.count)[index] }, set: {_ in }),
-                                label: ""
-                            )
-                            ForEach(viewModel.errors(self, forRow: value.count)[index], id: \.self) { error in
-                                Text(error).foregroundColor(.red)
-                            }
-                        }.frame(minWidth: 0, maxWidth: .infinity)
-                    }
-                    Button(action: { viewModel.addElement(self) }, label: {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    }).buttonStyle(PlainButtonStyle())
-                      .foregroundColor(.blue)
-                      .frame(width: 15)
-                }
-            }.padding(.top, -35).padding(.leading, 15).padding(.trailing, 18).frame(height: 50)
-        }
-    }
-
 }
 
 fileprivate struct TableViewRowIDCache {
