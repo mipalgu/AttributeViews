@@ -51,6 +51,7 @@ public struct EnumeratedView<Config: AttributeViewConfig>: View {
             Picker(label, selection: $value) {
                 ForEach(validValues.sorted(), id: \.self) {
                     Text($0).tag($0)
+                        .border(config.fieldColor)
                         .foregroundColor(config.textColor)
                 }
             }

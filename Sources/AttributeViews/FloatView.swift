@@ -65,13 +65,13 @@ public struct FloatView<Config: AttributeViewConfig>: View {
             if let onCommit = onCommit {
                 TextField(label, value: $editingValue, formatter: formatter, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
                     .font(.body)
-                    .background(config.fieldColor)
+                    .border(config.fieldColor)
                     .foregroundColor(config.textColor)
                     .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, value: $value, formatter: formatter)
                     .font(.body)
-                    .background(config.fieldColor)
+                    .border(config.fieldColor)
                     .foregroundColor(config.textColor)
             }
             ForEach(errors, id: \.self) { error in

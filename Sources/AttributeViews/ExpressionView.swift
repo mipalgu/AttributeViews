@@ -60,13 +60,13 @@ public struct ExpressionView<Config: AttributeViewConfig>: View {
             if let onCommit = onCommit {
                 TextField(label, text: $editingValue, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
                     .font(.body)
-                    .background(config.fieldColor)
+                    .border(config.fieldColor)
                     .foregroundColor(config.textColor)
                     .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, text: $value)
                     .font(.body)
-                    .background(config.textColor)
+                    .border(config.fieldColor)
                     .foregroundColor(config.textColor)
             }
             ForEach(errors, id: \.self) { error in
