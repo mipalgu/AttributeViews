@@ -37,39 +37,56 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     let columns: [BlockAttributeType.TableColumn]
     
     @State var newRow: [LineAttribute]
-    @State var selection: Set<Row<[LineAttribute]>>
+    @State var selection: Set<Row<[LineAttribute]>> = []
     
     private let viewModel: TableViewViewModel<Config>
     
     @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
-        var idCache = IDCache<[LineAttribute]>()
-        self._value = Binding(
-            get: {
-                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
-                    Row(id: idCache.id(for: row), index: index, data: row)
+        self.init(
+            value: Binding(
+                get: {
+                    root.wrappedValue[keyPath: path.keyPath]
+                },
+                set: {
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
                 }
-            },
-            set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.data))
-            }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            label: label,
+            columns: columns,
+            viewModel: TableViewViewModel(
+                TableViewKeyPathViewModel(
+                    root: root,
+                    path: path,
+                    columns: columns
+                )
+            )
         )
-        self._errors = Binding(
-            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
-            set: { _ in }
-        )
-        self._selection = State(initialValue: [])
-        self.label = label
-        self.columns = columns
-        self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
-        self.viewModel = AnyListViewModel(TableViewKeyPathViewModel<Config, Root>(root: root, path: path, columns: columns))
     }
     
     public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
+        self.init(
+            value: value,
+            errors: errors,
+            label: label,
+            columns: columns,
+            viewModel: TableViewViewModel(
+                TableViewBindingViewModel(
+                    value: value,
+                    errors: errors,
+                    columns: columns
+                )
+            )
+        )
+    }
+    
+    private init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, label: String, columns: [BlockAttributeType.TableColumn], viewModel: TableViewViewModel<Config>) {
         var idCache = IDCache<[LineAttribute]>()
-        self._errors = errors
-        self._selection = State(initialValue: [])
         self._value = Binding(
             get: {
                 value.wrappedValue.enumerated().map { (index, row) in
@@ -80,10 +97,11 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                 value.wrappedValue = $0.map(\.data)
             }
         )
+        self._errors = errors
         self.label = label
         self.columns = columns
-        self._newRow = State<[LineAttribute]>(initialValue: columns.map(\.type.defaultValue))
-        self.viewModel = AnyListViewModel(TableViewBindingViewModel<Config>(value: value, errors: errors, columns: columns))
+        self.viewModel = viewModel
+        self._newRow = State(initialValue: viewModel.newRow)
     }
     
     public var body: some View {

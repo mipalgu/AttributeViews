@@ -81,28 +81,48 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType) {
-        var idCache = IDCache<Attribute>()
-        self._value = Binding(
-            get: {
-                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
-                    Row(id: idCache.id(for: row), index: index, data: row)
+        self.init(
+            value: Binding(
+                get: {
+                    root.wrappedValue[keyPath: path.keyPath]
+                },
+                set: {
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
                 }
-            },
-            set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.data))
-            }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            label: label,
+            type: type,
+            viewModel: CollectionViewViewModel(
+                CollectionViewKeyPathViewModel(
+                    root: root,
+                    path: path,
+                    type: type
+                )
+            )
         )
-        self._errors = Binding(
-            get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
-            set: { _ in }
-        )
-        self.label = label
-        self.type = type
-        self._newRow = State(initialValue: type.defaultValue)
-        self.viewModel = AnyListViewModel(CollectionViewKeyPathViewModel<Config, Root>(root: root, path: path, type: type))
     }
     
     init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), label: String, type: AttributeType) {
+        self.init(
+            value: value,
+            errors: errors,
+            label: label,
+            type: type,
+            viewModel: CollectionViewViewModel(
+                CollectionViewBindingViewModel(
+                    value: value,
+                    errors: errors,
+                    type: type
+                )
+            )
+        )
+    }
+    
+    private init(value: Binding<[Attribute]>, errors: Binding<[String]>, label: String, type: AttributeType, viewModel: CollectionViewViewModel<Config>) {
         var idCache = IDCache<Attribute>()
         self._value = Binding(
             get: {
@@ -117,8 +137,8 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
         self._errors = errors
         self.label = label
         self.type = type
-        self._newRow = State(initialValue: type.defaultValue)
-        self.viewModel = AnyListViewModel(CollectionViewBindingViewModel<Config>(value: value, errors: errors, type: type))
+        self.viewModel = viewModel
+        self._newRow = State(initialValue: viewModel.newRow)
     }
     
     public var body: some View {
