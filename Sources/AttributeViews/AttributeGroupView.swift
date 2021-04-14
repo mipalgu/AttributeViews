@@ -59,12 +59,12 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
                 HStack {
                     VStack(alignment: .leading) {
                         if !label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            Text(label.pretty).font(.title2)
+                            Text(label.pretty).font(.title3)
                             Divider()
                         }
                         ForEach(value.fields, id: \.name) { field in
                             subView(field)
-                            Divider()
+                            Spacer()
                         }
                     }
                     Spacer()

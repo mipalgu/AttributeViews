@@ -193,10 +193,10 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
     public var body: some View {
         VStack(alignment: .leading) {
             VStack {
+                Text(label.pretty).font(.headline)
                 switch type {
                 case .line:
                     HStack {
-                        Text(label.pretty + ":").fontWeight(.bold)
                         AttributeView<Config>(attribute: $newAttribute, label: "New " + label)
                         Button(action: addElement, label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
@@ -205,7 +205,6 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                 case .block:
                     if creating {
                         HStack {
-                            Text(label + ":").fontWeight(.bold)
                             Spacer()
                             Button(action: {
                                 addElement()
@@ -223,7 +222,6 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                         AttributeView<Config>(attribute: $newAttribute, label: "")
                     } else {
                         HStack {
-                            Text(label + ":").fontWeight(.bold)
                             Spacer()
                             Button(action: { creating = true }, label: {
                                 Image(systemName: "plus").font(.system(size: 16, weight: .regular))
