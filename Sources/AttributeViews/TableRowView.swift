@@ -66,7 +66,7 @@ import Attributes
 
 struct TableRowView<Config: AttributeViewConfig>: View {
     
-    let subView: (Int) -> LineAttributeView<Config>
+    let subView: (Int) -> AnyView
     @Binding var row: [LineAttribute]
     @Binding var errors: [[String]]
     let onDelete: () -> Void
@@ -80,7 +80,8 @@ struct TableRowView<Config: AttributeViewConfig>: View {
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
-            LineAttributeView(root: root, path: path[$0], label: "")
+            AnyView(LineAttributeView<Config>(root: root, path: path[$0], label: "")
+                .frame(minWidth: 0, maxWidth: .infinity))
         }
         self._row = Binding(
             get: { root.wrappedValue[keyPath: path.keyPath] },
@@ -96,7 +97,8 @@ struct TableRowView<Config: AttributeViewConfig>: View {
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
-            LineAttributeView(attribute: row[$0], errors: errors[$0], label: "")
+            AnyView(LineAttributeView<Config>(attribute: row[$0], errors: errors[$0], label: "")
+                .frame(minWidth: 0, maxWidth: .infinity))
         }
         self._row = row
         self._errors = errors
