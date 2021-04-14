@@ -96,6 +96,9 @@ public struct TableView<Config: AttributeViewConfig>: View {
                     }
                 })
             }.frame(minHeight: CGFloat(28 * value.count + 70))
+            .onExitCommand(perform: {
+                selection = []
+            })
             ScrollView([.vertical], showsIndicators: false) {
                 HStack {
                     ForEach(newRow.indices, id: \.self) { index in
