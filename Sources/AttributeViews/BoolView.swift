@@ -59,7 +59,7 @@ public struct BoolView<Config: AttributeViewConfig>: View {
 
 struct BoolView_Previews: PreviewProvider {
     
-    struct BoolViewRoot_Preview: View {
+    struct Root_Preview: View {
         
         @State var modifiable = EmptyModifiable(attributes: [
             AttributeGroup(
@@ -84,7 +84,7 @@ struct BoolView_Previews: PreviewProvider {
         
     }
     
-    struct BoolViewBinding_Preview: View {
+    struct Binding_Preview: View {
         
         @State var value: Bool = false
         
@@ -100,8 +100,8 @@ struct BoolView_Previews: PreviewProvider {
     
     static var previews: some View {
         VStack {
-            BoolViewRoot_Preview()
-            BoolViewBinding_Preview()
+            Root_Preview()
+            Binding_Preview()
         }
     }
 }

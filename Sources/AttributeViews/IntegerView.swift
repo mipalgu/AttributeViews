@@ -82,7 +82,7 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
 
 struct IntegerView_Previews: PreviewProvider {
     
-    struct IntegerViewRoot_Preview: View {
+    struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
@@ -103,7 +103,7 @@ struct IntegerView_Previews: PreviewProvider {
         
     }
     
-    struct IntegerViewBinding_Preview: View {
+    struct Binding_Preview: View {
         
         @State var value: Int = 12
         @State var errors: [String] = ["An error", "A second error"]
@@ -118,8 +118,8 @@ struct IntegerView_Previews: PreviewProvider {
     
     static var previews: some View {
         VStack {
-            IntegerViewRoot_Preview()
-            IntegerViewBinding_Preview()
+            Root_Preview()
+            Binding_Preview()
         }
     }
 }
