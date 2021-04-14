@@ -77,24 +77,25 @@ public struct TableView<Config: AttributeViewConfig>: View {
                 Text(error).foregroundColor(.red)
             }
             List(selection: $selection) {
-                Section(header: VStack {
+                VStack {
                     HStack {
                         ForEach(columns, id: \.name) { column in
                             Text(column.name.pretty)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                                 .multilineTextAlignment(.leading)
                                 .frame(minWidth: 0, maxWidth: .infinity)
                         }
-                        Text("").frame(width: 15)
+                        Spacer().frame(width: 15)
                     }
-                }, content: {
-                    ForEach(value, id: \.self) { row in
-                        viewModel.rowView(self, forRow: row.index)
-                    }.onMove {
-                        viewModel.moveElements(self, atOffsets: $0, to: $1)
-                    }.onDelete {
-                        viewModel.deleteElements(self, atOffsets: $0)
-                    }
-                })
+                }
+                ForEach(value, id: \.self) { row in
+                    viewModel.rowView(self, forRow: row.index)
+                }.onMove {
+                    viewModel.moveElements(self, atOffsets: $0, to: $1)
+                }.onDelete {
+                    viewModel.deleteElements(self, atOffsets: $0)
+                }
             }.frame(minHeight: CGFloat(28 * value.count + 70))
             .onExitCommand(perform: {
                 selection = []
