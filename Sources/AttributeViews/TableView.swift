@@ -101,9 +101,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
                             viewModel.deleteElements(self, atOffsets: $0)
                         }
                     }.frame(minHeight: CGFloat(28 * value.count) + 75)
-                    .onExitCommand(perform: {
-                        selection = []
-                    })
+                    .onExitCommand { selection = [] }
                 }
                 VStack {
                     HStack {
