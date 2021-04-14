@@ -97,7 +97,7 @@ struct TestsScene: App {
             AttributeGroupView<DefaultAttributeViewsConfig>(
                 root: $machine,
                 path: Machine.path.attributes[0],
-                label: "Variables"
+                label: "Attribute Group"
             ).environmentObject(config)
         }
     }
