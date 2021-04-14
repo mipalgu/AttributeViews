@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct TableView<Config: AttributeViewConfig>: View {
+public struct TableView<Config: AttributeViewConfig>: View, SelectableListViewProtocol {
     
     @Binding var value: [Row<[LineAttribute]>]
     @Binding var errors: [String]
@@ -23,7 +23,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
     @State var newRow: [LineAttribute]
     @State var selection: Set<Row<[LineAttribute]>>
     
-    private let viewModel: AnyTableViewViewModel<Config>
+    private let viewModel: AnyListViewModel<Self, [LineAttribute], TableRowView<Config>, [String]>
     
     @EnvironmentObject var config: Config
     
@@ -47,7 +47,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
         self.label = label
         self.columns = columns
         self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
-        self.viewModel = AnyTableViewViewModel<Config>(root: root, path: path)
+        self.viewModel = AnyListViewModel(TableViewKeyPathViewModel<Config, Root>(root: root, path: path))
     }
     
     public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
@@ -67,7 +67,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
         self.label = label
         self.columns = columns
         self._newRow = State<[LineAttribute]>(initialValue: columns.map(\.type.defaultValue))
-        self.viewModel = AnyTableViewViewModel(value: value)
+        self.viewModel = AnyListViewModel(TableViewBindingViewModel<Config>(value: value))
     }
     
     public var body: some View {
@@ -201,102 +201,14 @@ struct TableView_Previews: PreviewProvider {
     }
 }
 
-fileprivate protocol TableViewViewModelProtocol {
-    
-    associatedtype Config: AttributeViewConfig
-    
-    var tableErrors: [String] { get }
-    
-    var latestValue: [[LineAttribute]] { get }
-    
-    func addElement(_ view: TableView<Config>)
-    func deleteRow(_ view: TableView<Config>, row: Int)
-    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet)
-    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int)
-    func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]]
-    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config>
-    
-}
 
-extension TableViewViewModelProtocol {
-    
-    func deleteRow(_ view: TableView<Config>, row: Int) {
-        guard row < view.value.count else {
-            return
-        }
-        let offsets: IndexSet = view.selection.contains(view.value[row])
-            ? IndexSet(view.value.lazy.filter { view.selection.contains($0) }.map { $0.index })
-            : [row]
-        self.deleteElements(view, atOffsets: offsets)
-    }
-    
-}
 
-fileprivate struct AnyTableViewViewModel<Config: AttributeViewConfig>: TableViewViewModelProtocol {
-    
-    private let _tableErrors: () -> [String]
-    private let _latestValue: () -> [[LineAttribute]]
-    private let _addElement: (TableView<Config>) -> Void
-    private let _deleteElements: (TableView<Config>, IndexSet) -> Void
-    private let _moveElements: (TableView<Config>, IndexSet, Int) -> Void
-    private let _errors: (TableView<Config>, Int) -> [[String]]
-    private let _rowView: (TableView<Config>, Int) -> TableRowView<Config>
-    
-    
-    var tableErrors: [String] {
-        self._tableErrors()
-    }
-    
-    var latestValue: [[LineAttribute]] {
-        self._latestValue()
-    }
-    
-    init<ViewModel: TableViewViewModelProtocol>(_ viewModel: ViewModel) where ViewModel.Config == Config {
-        self._tableErrors = { viewModel.tableErrors }
-        self._latestValue = { viewModel.latestValue }
-        self._addElement = viewModel.addElement
-        self._deleteElements = viewModel.deleteElements
-        self._moveElements = viewModel.moveElements
-        self._errors = viewModel.errors
-        self._rowView = viewModel.rowView
-    }
-    
-    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>) {
-        self.init(TableViewKeyPathViewModel(root: root, path: path))
-    }
-    
-    init(value: Binding<[[LineAttribute]]>) {
-        self.init(TableViewBindingViewModel(value: value))
-    }
-    
-    func addElement(_ view: TableView<Config>) {
-        self._addElement(view)
-    }
-    
-    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
-        self._deleteElements(view, offsets)
-    }
-    
-    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        self._moveElements(view, source, destination)
-    }
-    
-    func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]] {
-        self._errors(view, row)
-    }
-    
-    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
-        self._rowView(view, row)
-    }
-    
-}
-
-fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: TableViewViewModelProtocol {
+fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol {
     
     let root: Binding<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
     
-    var tableErrors: [String] {
+    var listErrors: [String] {
         root.wrappedValue.errorBag.errors(includingDescendantsForPath: path).map(\.message)
     }
     
@@ -346,11 +258,11 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
     
 }
 
-fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: TableViewViewModelProtocol {
+fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol {
     
     let value: Binding<[[LineAttribute]]>
     
-    let tableErrors: [String] = []
+    let listErrors: [String] = []
     
     var latestValue: [[LineAttribute]] {
         value.wrappedValue

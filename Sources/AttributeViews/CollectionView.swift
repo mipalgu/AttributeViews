@@ -98,7 +98,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListV
         self.label = label
         self.type = type
         self._newAttribute = State(initialValue: type.defaultValue)
-        self.viewModel = AnyListViewModel(CollectionViewKeyPathViewModel(root: root, path: path))
+        self.viewModel = AnyListViewModel(CollectionViewKeyPathViewModel<Config, Root>(root: root, path: path))
     }
     
     init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), label: String, type: AttributeType) {
@@ -117,7 +117,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListV
         self.label = label
         self.type = type
         self._newAttribute = State(initialValue: type.defaultValue)
-        self.viewModel = AnyListViewModel(CollectionViewBindingViewModel(value: value, errors: errors))
+        self.viewModel = AnyListViewModel(CollectionViewBindingViewModel<Config>(value: value, errors: errors))
     }
     
     public var body: some View {
@@ -230,7 +230,7 @@ struct CollectionView_Previews: PreviewProvider {
     }
 }
 
-fileprivate struct CollectionViewKeyPathViewModel<Root: Modifiable, Config: AttributeViewConfig>: ListViewModelProtocol {
+fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol {
     
     private let root: Binding<Root>
     private let path: Attributes.Path<Root, [Attribute]>
