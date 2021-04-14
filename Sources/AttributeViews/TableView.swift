@@ -78,52 +78,56 @@ public struct TableView<Config: AttributeViewConfig>: View {
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
-            List(selection: $selection) {
+            ZStack(alignment: .bottom) {
+                VStack {
+                    List(selection: $selection) {
+                        VStack {
+                            HStack {
+                                ForEach(columns, id: \.name) { column in
+                                    Text(column.name.pretty)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.leading)
+                                        .frame(minWidth: 0, maxWidth: .infinity)
+                                }
+                                Spacer().frame(width: 20)
+                            }
+                        }
+                        ForEach(value, id: \.self) { row in
+                            viewModel.rowView(self, forRow: row.index)
+                        }.onMove {
+                            viewModel.moveElements(self, atOffsets: $0, to: $1)
+                        }.onDelete {
+                            viewModel.deleteElements(self, atOffsets: $0)
+                        }
+                    }.frame(minHeight: CGFloat(28 * value.count) + 75)
+                    .onExitCommand(perform: {
+                        selection = []
+                    })
+                }
                 VStack {
                     HStack {
-                        ForEach(columns, id: \.name) { column in
-                            Text(column.name.pretty)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.leading)
-                                .frame(minWidth: 0, maxWidth: .infinity)
+                        ForEach(newRow.indices, id: \.self) { index in
+                            VStack {
+                                LineAttributeView<Config>(
+                                    attribute: $newRow[index],
+                                    errors: Binding(get: { viewModel.errors(self, forRow: value.count)[index] }, set: {_ in }),
+                                    label: ""
+                                )
+                                ForEach(viewModel.errors(self, forRow: value.count)[index], id: \.self) { error in
+                                    Text(error).foregroundColor(.red)
+                                }
+                            }.frame(minWidth: 0, maxWidth: .infinity)
                         }
-                        Spacer().frame(width: 20)
-                    }
-                }
-                ForEach(value, id: \.self) { row in
-                    viewModel.rowView(self, forRow: row.index)
-                }.onMove {
-                    viewModel.moveElements(self, atOffsets: $0, to: $1)
-                }.onDelete {
-                    viewModel.deleteElements(self, atOffsets: $0)
-                }
-            }.frame(minHeight: CGFloat(28 * value.count + 70))
-            .onExitCommand(perform: {
-                selection = []
-            })
-            ScrollView([.vertical], showsIndicators: false) {
-                HStack {
-                    ForEach(newRow.indices, id: \.self) { index in
                         VStack {
-                            LineAttributeView<Config>(
-                                attribute: $newRow[index],
-                                errors: Binding(get: { viewModel.errors(self, forRow: value.count)[index] }, set: {_ in }),
-                                label: ""
-                            )
-                            ForEach(viewModel.errors(self, forRow: value.count)[index], id: \.self) { error in
-                                Text(error).foregroundColor(.red)
-                            }
-                        }.frame(minWidth: 0, maxWidth: .infinity)
+                            Button(action: { viewModel.addElement(self) }, label: {
+                                Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                            }).buttonStyle(PlainButtonStyle())
+                              .foregroundColor(.blue)
+                        }.frame(width: 20)
                     }
-                    VStack {
-                        Button(action: { viewModel.addElement(self) }, label: {
-                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                        }).buttonStyle(PlainButtonStyle())
-                          .foregroundColor(.blue)
-                    }.frame(width: 20)
-                }
-            }.padding(.top, -35).padding(.leading, 15).padding(.trailing, 18).frame(height: 50)
+                }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+            }
         }
     }
 
