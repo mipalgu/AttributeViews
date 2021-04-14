@@ -1,5 +1,5 @@
 /*
- * SelectableListViewProtocol.swift
+ * ValueErrorsContainer.swift
  * AttributeViews
  *
  * Created by Callum McColl on 15/4/21.
@@ -56,8 +56,17 @@
  *
  */
 
-protocol SelectableListViewProtocol: ListViewProtocol {
+#if canImport(TokamakShim)
+import TokamakShim
+#else
+import SwiftUI
+#endif
+
+protocol ValueErrorsContainer {
     
-    var selection: Set<Row<RowData>> { get set }
+    associatedtype Value
+    
+    var value: Binding<Value> { get }
+    var errors: Binding<[String]> { get }
     
 }

@@ -13,7 +13,23 @@ import SwiftUI
 
 import Attributes
 
-public struct TableView<Config: AttributeViewConfig>: View, SelectableListViewProtocol {
+public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
+    
+    var row: Binding<[Row<Array<LineAttribute>>]> {
+        get {
+            _value
+        } set {
+            _value = newValue
+        }
+    }
+    
+    var selectedRows: State<Set<Row<[LineAttribute]>>> {
+        get {
+            _selection
+        } set {
+            _selection = newValue
+        }
+    }
     
     @Binding var value: [Row<[LineAttribute]>]
     @Binding var errors: [String]
@@ -23,7 +39,7 @@ public struct TableView<Config: AttributeViewConfig>: View, SelectableListViewPr
     @State var newRow: [LineAttribute]
     @State var selection: Set<Row<[LineAttribute]>>
     
-    private let viewModel: AnyListViewModel<Self, [LineAttribute], TableRowView<Config>, [String]>
+    private let viewModel: TableViewViewModel<Config>
     
     @EnvironmentObject var config: Config
     
@@ -47,7 +63,7 @@ public struct TableView<Config: AttributeViewConfig>: View, SelectableListViewPr
         self.label = label
         self.columns = columns
         self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
-        self.viewModel = AnyListViewModel(TableViewKeyPathViewModel<Config, Root>(root: root, path: path))
+        self.viewModel = AnyListViewModel(TableViewKeyPathViewModel<Config, Root>(root: root, path: path, columns: columns))
     }
     
     public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
@@ -67,7 +83,7 @@ public struct TableView<Config: AttributeViewConfig>: View, SelectableListViewPr
         self.label = label
         self.columns = columns
         self._newRow = State<[LineAttribute]>(initialValue: columns.map(\.type.defaultValue))
-        self.viewModel = AnyListViewModel(TableViewBindingViewModel<Config>(value: value))
+        self.viewModel = AnyListViewModel(TableViewBindingViewModel<Config>(value: value, errors: errors, columns: columns))
     }
     
     public var body: some View {
@@ -201,43 +217,24 @@ struct TableView_Previews: PreviewProvider {
     }
 }
 
+fileprivate typealias TableViewViewModel<Config: AttributeViewConfig> = AnyListViewModel<TableView<Config>, [LineAttribute], TableRowView<Config>, [String]>
 
-
-fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol {
+fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol, RootPathContainer {
+    
+    typealias RowData = [LineAttribute]
     
     let root: Binding<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
+    let columns: [BlockAttributeType.TableColumn]
     
-    var listErrors: [String] {
-        root.wrappedValue.errorBag.errors(includingDescendantsForPath: path).map(\.message)
+    var newRow: [LineAttribute] {
+        return columns.map(\.type.defaultValue)
     }
     
-    var latestValue: [[LineAttribute]] {
-        root.wrappedValue[keyPath: path.keyPath]
-    }
-    
-    init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>) {
+    init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
         self.root = root
         self.path = path
-    }
-    
-    func addElement(_ view: TableView<Config>) {
-        try? root.wrappedValue.addItem(view.newRow, to: path)
-    }
-    
-    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
-        _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
-    }
-    
-    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        view.selection.removeAll()
-        guard let sourceMin = source.min() else {
-            return
-        }
-        _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
-        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
-            view.value[$0].index = $0
-        }
+        self.columns = columns
     }
     
     func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]] {
@@ -258,38 +255,20 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
     
 }
 
-fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol {
+fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol, ValueErrorsContainer {
     
     let value: Binding<[[LineAttribute]]>
+    let errors: Binding<[String]>
+    let columns: [BlockAttributeType.TableColumn]
     
-    let listErrors: [String] = []
-    
-    var latestValue: [[LineAttribute]] {
-        value.wrappedValue
+    var newRow: [LineAttribute] {
+        columns.map(\.type.defaultValue)
     }
     
-    init(value: Binding<[[LineAttribute]]>) {
+    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, columns: [BlockAttributeType.TableColumn]) {
         self.value = value
-    }
-    
-    func addElement(_ view: TableView<Config>) {
-        value.wrappedValue.append(view.newRow)
-        view.newRow = view.columns.map(\.type.defaultValue)
-    }
-    
-    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
-        value.wrappedValue.remove(atOffsets: offsets)
-    }
-    
-    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        view.selection.removeAll()
-        guard let sourceMin = source.min() else {
-            return
-        }
-        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
-        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
-            view.value[$0].index = $0
-        }
+        self.errors = errors
+        self.columns = columns
     }
     
     func errors(_ view: TableView<Config>, forRow _: Int) -> [[String]] {

@@ -69,6 +69,8 @@ protocol ListViewModelProtocol {
     
     var latestValue: [RowData] { get }
     
+    var newRow: RowData { get }
+    
     func addElement(_ view: View)
     func deleteRow(_ view: View, row: Int)
     func deleteElements(_ view: View, atOffsets offsets: IndexSet)
@@ -78,7 +80,7 @@ protocol ListViewModelProtocol {
     
 }
 
-extension ListViewModelProtocol where View: SelectableListViewProtocol, View.RowData == RowData {
+extension ListViewModelProtocol where View: ListViewProtocol, View.RowData == RowData {
     
     func deleteRow(_ view: View, row: Int) {
         guard row < view.value.count else {
@@ -88,6 +90,70 @@ extension ListViewModelProtocol where View: SelectableListViewProtocol, View.Row
             ? IndexSet(view.value.lazy.filter { view.selection.contains($0) }.map { $0.index })
             : [row]
         self.deleteElements(view, atOffsets: offsets)
+    }
+    
+}
+
+extension ListViewModelProtocol where View: ListViewProtocol, Self: RootPathContainer, Self.PathData == [RowData], View.RowData == RowData {
+    
+    var listErrors: [String] {
+        root.wrappedValue.errorBag.errors(includingDescendantsForPath: path).map(\.message)
+    }
+    
+    var latestValue: [RowData] {
+        root.wrappedValue[keyPath: path.keyPath]
+    }
+    
+    func addElement(_ view: View) {
+        try? root.wrappedValue.addItem(view.newRow, to: path)
+    }
+    
+    func deleteElements(_ view: View, atOffsets offsets: IndexSet) {
+        _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
+    }
+    
+    func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int) {
+        view.selection.removeAll()
+        guard let sourceMin = source.min() else {
+            return
+        }
+        _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
+            view.value[$0].index = $0
+        }
+    }
+    
+    
+}
+
+extension ListViewModelProtocol where View: ListViewProtocol, Self: ValueErrorsContainer, View.RowData == RowData, Value == [RowData] {
+    
+    var listErrors: [String] {
+        errors.wrappedValue
+    }
+    
+    var latestValue: [RowData] {
+        value.wrappedValue
+    }
+    
+    func addElement(_ view: View) {
+        value.wrappedValue.append(view.newRow)
+        view.newRow = self.newRow
+    }
+    
+    func deleteElements(_ view: View, atOffsets offsets: IndexSet) {
+        value.wrappedValue.remove(atOffsets: offsets)
+    }
+    
+    func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int) {
+        view.selection.removeAll()
+        guard let sourceMin = source.min() else {
+            return
+        }
+        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
+        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
+            view.value[$0].index = $0
+        }
     }
     
 }

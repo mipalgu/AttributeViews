@@ -64,18 +64,19 @@ import SwiftUI
 
 import Attributes
 
-public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListViewProtocol {
+public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtocol {
+    
     
     @Binding var value: [Row<Attribute>]
     @Binding var errors: [String]
     let label: String
     let type: AttributeType
     
-    let viewModel: AnyListViewModel<Self, Attribute, AttributeView<Config>, String>
+    private let viewModel: CollectionViewViewModel<Config>
     
     @State var selection: Set<Row<Attribute>> = []
     @State var creating: Bool = false
-    @State var newAttribute: Attribute
+    @State var newRow: Attribute
     
     @EnvironmentObject var config: Config
     
@@ -97,8 +98,8 @@ public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListV
         )
         self.label = label
         self.type = type
-        self._newAttribute = State(initialValue: type.defaultValue)
-        self.viewModel = AnyListViewModel(CollectionViewKeyPathViewModel<Config, Root>(root: root, path: path))
+        self._newRow = State(initialValue: type.defaultValue)
+        self.viewModel = AnyListViewModel(CollectionViewKeyPathViewModel<Config, Root>(root: root, path: path, type: type))
     }
     
     init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), label: String, type: AttributeType) {
@@ -116,8 +117,8 @@ public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListV
         self._errors = errors
         self.label = label
         self.type = type
-        self._newAttribute = State(initialValue: type.defaultValue)
-        self.viewModel = AnyListViewModel(CollectionViewBindingViewModel<Config>(value: value, errors: errors))
+        self._newRow = State(initialValue: type.defaultValue)
+        self.viewModel = AnyListViewModel(CollectionViewBindingViewModel<Config>(value: value, errors: errors, type: type))
     }
     
     public var body: some View {
@@ -127,7 +128,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListV
                 switch type {
                 case .line:
                     HStack {
-                        AttributeView<Config>(attribute: $newAttribute, label: "New " + label)
+                        AttributeView<Config>(attribute: $newRow, label: "New " + label)
                         Button(action: {
                             viewModel.addElement(self)
                         }, label: {
@@ -151,7 +152,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListV
                                 Image(systemName: "trash").font(.system(size: 16, weight: .regular))
                             }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.red)
                         }
-                        AttributeView<Config>(attribute: $newAttribute, label: "")
+                        AttributeView<Config>(attribute: $newRow, label: "")
                     } else {
                         HStack {
                             Spacer()
@@ -230,41 +231,22 @@ struct CollectionView_Previews: PreviewProvider {
     }
 }
 
-fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol {
+fileprivate typealias CollectionViewViewModel<Config: AttributeViewConfig> = AnyListViewModel<CollectionView<Config>, Attribute, AttributeView<Config>, String>
+
+fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol, RootPathContainer {
     
-    private let root: Binding<Root>
-    private let path: Attributes.Path<Root, [Attribute]>
+    let root: Binding<Root>
+    let path: Attributes.Path<Root, [Attribute]>
+    let type: AttributeType
     
-    var listErrors: [String] {
-        root.wrappedValue.errorBag.errors(includingDescendantsForPath: path).map(\.message)
+    var newRow: Attribute {
+        type.defaultValue
     }
     
-    var latestValue: [Attribute] {
-        root.wrappedValue[keyPath: path.keyPath]
-    }
-    
-    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>) {
+    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType) {
         self.root = root
         self.path = path
-    }
-    
-    func addElement(_ view: CollectionView<Config>) {
-        try? root.wrappedValue.addItem(view.newAttribute, to: path)
-    }
-    
-    func deleteElements(_ view: CollectionView<Config>, atOffsets offsets: IndexSet) {
-        _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
-    }
-    
-    func moveElements(_ view: CollectionView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        view.selection.removeAll()
-        guard let sourceMin = source.min() else {
-            return
-        }
-        _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
-        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
-            view.value[$0].index = $0
-        }
+        self.type = type
     }
     
     func errors(_ view: CollectionView<Config>, forRow row: Int) -> [String] {
@@ -279,42 +261,20 @@ fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, R
     
 }
 
-fileprivate struct CollectionViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol {
+fileprivate struct CollectionViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol, ValueErrorsContainer {
     
-    private let value: Binding<[Attribute]>
-    private let errors: Binding<[String]>
+    let value: Binding<[Attribute]>
+    let errors: Binding<[String]>
+    let type: AttributeType
     
-    var listErrors: [String] {
-        return errors.wrappedValue
+    var newRow: Attribute {
+        type.defaultValue
     }
     
-    var latestValue: [Attribute] {
-        value.wrappedValue
-    }
-    
-    init(value: Binding<[Attribute]>, errors: Binding<[String]>) {
+    init(value: Binding<[Attribute]>, errors: Binding<[String]>, type: AttributeType) {
         self.value = value
         self.errors = errors
-    }
-    
-    func addElement(_ view: CollectionView<Config>) {
-        value.wrappedValue.append(view.newAttribute)
-        view.newAttribute = view.type.defaultValue
-    }
-    
-    func deleteElements(_ view: CollectionView<Config>, atOffsets offsets: IndexSet) {
-        value.wrappedValue.remove(atOffsets: offsets)
-    }
-    
-    func moveElements(_ view: CollectionView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        view.selection.removeAll()
-        guard let sourceMin = source.min() else {
-            return
-        }
-        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
-        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
-            view.value[$0].index = $0
-        }
+        self.type = type
     }
     
     func errors(_ view: CollectionView<Config>, forRow _: Int) -> [String] {
