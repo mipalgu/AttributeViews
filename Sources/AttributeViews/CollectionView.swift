@@ -64,57 +64,31 @@ import SwiftUI
 
 import Attributes
 
-public struct CollectionView<Config: AttributeViewConfig>: View {
+public struct CollectionView<Config: AttributeViewConfig>: View, SelectableListViewProtocol {
     
-    struct CollectionElement: Hashable, Identifiable {
-        
-        var id: Int {
-            self.attribute.id
-        }
-        
-        var attribute: Attribute
-        
-        var subView: () -> AttributeView<Config>
-        
-        static func ==(lhs: CollectionElement, rhs: CollectionElement) -> Bool {
-            return lhs.attribute == rhs.attribute
-        }
-        
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(attribute)
-        }
-        
-    }
-    
-    @Binding var value: [CollectionElement]
+    @Binding var value: [Row<Attribute>]
     @Binding var errors: [String]
     let label: String
     let type: AttributeType
     
-    @State var newAttribute: Attribute
+    let viewModel: AnyListViewModel<Self, Attribute, AttributeView<Config>, String>
     
-    @State var selection: Set<Int>
+    @State var selection: Set<Row<Attribute>> = []
+    @State var creating: Bool = false
+    @State var newAttribute: Attribute
     
     @EnvironmentObject var config: Config
     
-    @State var creating: Bool = false
-    
-    let addElement: () -> Void
-    let deleteElement: (CollectionElement) -> Void
-    let deleteElements: (IndexSet) -> Void
-    let moveElements: (IndexSet, Int) -> Void
-    
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType) {
-        let errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
+        var idCache = IDCache<Attribute>()
         self._value = Binding(
             get: {
-                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, element) in
-                    CollectionElement(attribute: element, subView: { AttributeView(root: root, path: path[index], label: "") })
+                root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
+                    Row(id: idCache.id(for: row), index: index, data: row)
                 }
             },
             set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map { $0.attribute })
-                errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
+                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.data))
             }
         )
         self._errors = Binding(
@@ -123,74 +97,27 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
         )
         self.label = label
         self.type = type
-        let newAttribute = State<Attribute>(initialValue: type.defaultValue)
-        self._newAttribute = newAttribute
-        let selection = State<Set<Int>>(initialValue: [])
-        self._selection = selection
-        self.addElement = {
-            if let _ = try? root.wrappedValue.addItem(newAttribute.wrappedValue, to: path) {
-                newAttribute.wrappedValue = type.defaultValue
-            }
-            errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message)
-        }
-        let deleteOffsets: (IndexSet) -> Void = { (offsets) in
-            try? root.wrappedValue.deleteItems(table: path, items: offsets)
-            errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message)
-        }
-        self.deleteElement = { (element) in
-            guard let index = root.wrappedValue[keyPath: path.keyPath].firstIndex(of: element.attribute) else {
-                return
-            }
-            let offsets: IndexSet = selection.wrappedValue.contains(element.id)
-                ? IndexSet(root.wrappedValue[keyPath: path.keyPath].enumerated().lazy.filter { selection.wrappedValue.contains($1.id) }.map { $0.0 })
-                : [index]
-            deleteOffsets(offsets)
-        }
-        self.deleteElements = deleteOffsets
-        self.moveElements = { (source, destination) in
-            try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
-            errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message)
-        }
+        self._newAttribute = State(initialValue: type.defaultValue)
+        self.viewModel = AnyListViewModel(CollectionViewKeyPathViewModel(root: root, path: path))
     }
     
     init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), label: String, type: AttributeType) {
+        var idCache = IDCache<Attribute>()
         self._value = Binding(
             get: {
-                value.wrappedValue.enumerated().map { (index, element) in
-                    CollectionElement(attribute: element, subView: { AttributeView(attribute: value[index], label: "") })
+                value.wrappedValue.enumerated().map { (index, row) in
+                    Row(id: idCache.id(for: row), index: index, data: row)
                 }
             },
             set: {
-                value.wrappedValue = $0.map { $0.attribute }
+                value.wrappedValue = $0.map(\.data)
             }
         )
         self._errors = errors
         self.label = label
         self.type = type
-        let newAttribute = State<Attribute>(initialValue: type.defaultValue)
-        self._newAttribute = newAttribute
-        let selection = State<Set<Int>>(initialValue: [])
-        self._selection = selection
-        self.addElement = {
-            value.wrappedValue.append(newAttribute.wrappedValue)
-            newAttribute.wrappedValue = type.defaultValue
-        }
-        let deleteOffsets: (IndexSet) -> Void = { (offsets) in
-            value.wrappedValue.remove(atOffsets: offsets)
-        }
-        self.deleteElement = { (element) in
-            guard let index = value.wrappedValue.firstIndex(of: element.attribute) else {
-                return
-            }
-            let offsets: IndexSet = selection.wrappedValue.contains(element.id)
-                ? IndexSet(value.wrappedValue.enumerated().lazy.filter { selection.wrappedValue.contains($1.id) }.map { $0.0 })
-                : [index]
-            deleteOffsets(offsets)
-        }
-        self.deleteElements = deleteOffsets
-        self.moveElements = { (source, destination) in
-            value.wrappedValue.move(fromOffsets: source, toOffset: destination)
-        }
+        self._newAttribute = State(initialValue: type.defaultValue)
+        self.viewModel = AnyListViewModel(CollectionViewBindingViewModel(value: value, errors: errors))
     }
     
     public var body: some View {
@@ -201,7 +128,9 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                 case .line:
                     HStack {
                         AttributeView<Config>(attribute: $newAttribute, label: "New " + label)
-                        Button(action: addElement, label: {
+                        Button(action: {
+                            viewModel.addElement(self)
+                        }, label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                         }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                     }
@@ -210,7 +139,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                         HStack {
                             Spacer()
                             Button(action: {
-                                addElement()
+                                viewModel.addElement(self)
                                 creating = false
                             }, label: {
                                 Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular))
@@ -238,12 +167,18 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                 List(selection: $selection) {
                     ForEach(value, id: \.self) { element in
                         HStack(spacing: 1) {
-                            element.subView()
+                            viewModel.rowView(self, forRow: element.index)
                             Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
                         }.contextMenu {
-                            Button("Delete", action: { deleteElement(element) }).keyboardShortcut(.delete)
+                            Button("Delete") {
+                                viewModel.deleteRow(self, row: element.index)
+                            }.keyboardShortcut(.delete)
                         }
-                    }.onMove(perform: moveElements).onDelete(perform: deleteElements)
+                    }.onMove {
+                        viewModel.moveElements(self, atOffsets: $0, to: $1)
+                    }.onDelete {
+                        viewModel.deleteElements(self, atOffsets: $0)
+                    }
                 }.frame(minHeight: min(CGFloat(value.count * (type == .line ? 30 : 80) + 15), 100))
             }
         }.padding(.top, 2)
@@ -293,4 +228,101 @@ struct CollectionView_Previews: PreviewProvider {
             Binding_Preview()
         }
     }
+}
+
+fileprivate struct CollectionViewKeyPathViewModel<Root: Modifiable, Config: AttributeViewConfig>: ListViewModelProtocol {
+    
+    private let root: Binding<Root>
+    private let path: Attributes.Path<Root, [Attribute]>
+    
+    var listErrors: [String] {
+        root.wrappedValue.errorBag.errors(includingDescendantsForPath: path).map(\.message)
+    }
+    
+    var latestValue: [Attribute] {
+        root.wrappedValue[keyPath: path.keyPath]
+    }
+    
+    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>) {
+        self.root = root
+        self.path = path
+    }
+    
+    func addElement(_ view: CollectionView<Config>) {
+        try? root.wrappedValue.addItem(view.newAttribute, to: path)
+    }
+    
+    func deleteElements(_ view: CollectionView<Config>, atOffsets offsets: IndexSet) {
+        _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
+    }
+    
+    func moveElements(_ view: CollectionView<Config>, atOffsets source: IndexSet, to destination: Int) {
+        view.selection.removeAll()
+        guard let sourceMin = source.min() else {
+            return
+        }
+        _ = try? root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
+            view.value[$0].index = $0
+        }
+    }
+    
+    func errors(_ view: CollectionView<Config>, forRow row: Int) -> [String] {
+        return root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row]).map(\.message)
+    }
+    
+    func rowView(_ view: CollectionView<Config>, forRow row: Int) -> AttributeView<Config> {
+        return AttributeView(root: root, path: path[row], label: "")
+    }
+    
+    
+    
+}
+
+fileprivate struct CollectionViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol {
+    
+    private let value: Binding<[Attribute]>
+    private let errors: Binding<[String]>
+    
+    var listErrors: [String] {
+        return errors.wrappedValue
+    }
+    
+    var latestValue: [Attribute] {
+        value.wrappedValue
+    }
+    
+    init(value: Binding<[Attribute]>, errors: Binding<[String]>) {
+        self.value = value
+        self.errors = errors
+    }
+    
+    func addElement(_ view: CollectionView<Config>) {
+        value.wrappedValue.append(view.newAttribute)
+        view.newAttribute = view.type.defaultValue
+    }
+    
+    func deleteElements(_ view: CollectionView<Config>, atOffsets offsets: IndexSet) {
+        value.wrappedValue.remove(atOffsets: offsets)
+    }
+    
+    func moveElements(_ view: CollectionView<Config>, atOffsets source: IndexSet, to destination: Int) {
+        view.selection.removeAll()
+        guard let sourceMin = source.min() else {
+            return
+        }
+        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
+        view.value.indices.dropFirst(min(sourceMin, destination)).forEach {
+            view.value[$0].index = $0
+        }
+    }
+    
+    func errors(_ view: CollectionView<Config>, forRow _: Int) -> [String] {
+        return []
+    }
+    
+    func rowView(_ view: CollectionView<Config>, forRow row: Int) -> AttributeView<Config> {
+        return AttributeView(attribute: value[row], label: "")
+    }
+    
 }
