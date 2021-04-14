@@ -391,16 +391,22 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: Table
 
 fileprivate struct TableViewRowIDCache {
     
-    static var latestIndex: Int = 0
+    private static let limit = 512
     
-    static var ids: [[LineAttribute]: Int] = [:]
+    static var ids: [[LineAttribute]: UUID] = {
+        var dict: [[LineAttribute]: UUID] = [:]
+        dict.reserveCapacity(Self.limit)
+        return dict
+    }()
     
-    static func id<Config>(for row: Row<Config>) -> Int {
+    static func id<Config>(for row: Row<Config>) -> UUID {
+        if ids.count > Self.limit {
+            ids.removeAll(keepingCapacity: true)
+        }
         if let id = Self.ids[row.attributes] {
             return id
         }
-        let newId = latestIndex
-        latestIndex += 1
+        let newId = UUID()
         ids[row.attributes] = newId
         return newId
     }
@@ -409,7 +415,7 @@ fileprivate struct TableViewRowIDCache {
 
 struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
     
-    var id: Int {
+    var id: UUID {
         TableViewRowIDCache.id(for: self)
     }
     
