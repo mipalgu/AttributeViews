@@ -64,28 +64,28 @@ import SwiftUI
 
 import Attributes
 
-public struct AttributeView<Config: AttributeViewConfig, Root: Modifiable>: View{
+public struct AttributeView<Config: AttributeViewConfig>: View{
     
     let subView: () -> AnyView
     
-    public init(root: Binding<Root>, path: Attributes.Path<Root, Attribute>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Attribute>, label: String) {
         self.subView = {
             switch root.wrappedValue[keyPath: path.keyPath].type {
             case .line:
                 return AnyView(LineAttributeView<Config>(root: root, path: path.lineAttribute,label: label))
             case .block:
-                return AnyView(BlockAttributeView<Config, Root>(root: root, path: path.blockAttribute, label: label))
+                return AnyView(BlockAttributeView<Config>(root: root, path: path.blockAttribute, label: label))
             }
         }
     }
     
-    init(root: Binding<Root>, attribute: Binding<Attribute>, label: String) {
+    init(attribute: Binding<Attribute>, label: String) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .line:
                 return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, label: label))
             case .block:
-                return AnyView(BlockAttributeView<Config, Root>(root: root, attribute: attribute.blockAttribute, label: label))
+                return AnyView(BlockAttributeView<Config>(attribute: attribute.blockAttribute, label: label))
             }
         }
     }

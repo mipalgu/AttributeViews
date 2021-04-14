@@ -64,7 +64,7 @@ import SwiftUI
 
 import Attributes
 
-public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: View {
+public struct CollectionView<Config: AttributeViewConfig>: View {
     
     struct CollectionElement: Hashable, Identifiable {
         
@@ -74,7 +74,7 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
         
         var attribute: Attribute
         
-        var subView: () -> AttributeView<Config, Root>
+        var subView: () -> AttributeView<Config>
         
         static func ==(lhs: CollectionElement, rhs: CollectionElement) -> Bool {
             return lhs.attribute == rhs.attribute
@@ -86,7 +86,6 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
         
     }
     
-    @Binding var root: Root
     @Binding var value: [CollectionElement]
     @State var errors: [String]
     let label: String
@@ -105,8 +104,7 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
     let deleteElements: (IndexSet) -> Void
     let moveElements: (IndexSet, Int) -> Void
     
-    public init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType) {
-        self._root = root
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType) {
         let errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
         self._value = Binding(
             get: {
@@ -152,12 +150,11 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
         }
     }
     
-    init(root: Binding<Root>, value: Binding<[Attribute]>, label: String, type: AttributeType) {
-        self._root = root
+    init(value: Binding<[Attribute]>, label: String, type: AttributeType) {
         self._value = Binding(
             get: {
                 value.wrappedValue.enumerated().map { (index, element) in
-                    CollectionElement(attribute: element, subView: { AttributeView(root: root, attribute: value[index], label: "") })
+                    CollectionElement(attribute: element, subView: { AttributeView(attribute: value[index], label: "") })
                 }
             },
             set: {
@@ -200,7 +197,7 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
                 case .line:
                     HStack {
                         Text(label.pretty + ":").fontWeight(.bold)
-                        AttributeView<Config, Root>(root: $root, attribute: $newAttribute, label: "New " + label)
+                        AttributeView<Config>(attribute: $newAttribute, label: "New " + label)
                         Button(action: addElement, label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                         }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
@@ -223,7 +220,7 @@ public struct CollectionView<Config: AttributeViewConfig, Root: Modifiable>: Vie
                                 Image(systemName: "trash").font(.system(size: 16, weight: .regular))
                             }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.red)
                         }
-                        AttributeView<Config, Root>(root: $root, attribute: $newAttribute, label: "")
+                        AttributeView<Config>(attribute: $newAttribute, label: "")
                     } else {
                         HStack {
                             Text(label + ":").fontWeight(.bold)

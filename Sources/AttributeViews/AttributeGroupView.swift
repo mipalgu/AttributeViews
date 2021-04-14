@@ -33,7 +33,7 @@ public struct AttributeGroupView<Config: AttributeViewConfig, Root: Modifiable>:
                 HStack {
                     VStack(alignment: .leading) {
                         ForEach(root[keyPath: path.keyPath].fields, id: \.name) { field in
-                            AttributeView<Config, Root>(
+                            AttributeView<Config>(
                                 root: $root,
                                 path: path.attributes[field.name].wrappedValue,
                                 label: field.name.pretty

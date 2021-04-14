@@ -13,17 +13,17 @@ import SwiftUI
 
 import Attributes
 
-public struct ComplexView<Config: AttributeViewConfig, Root: Modifiable>: View {
+public struct ComplexView<Config: AttributeViewConfig>: View {
     
     @Binding var value: [String: Attribute]
     @State var errors: [String]
-    let subView: (Field) -> AttributeView<Config, Root>
+    let subView: (Field) -> AttributeView<Config>
     let label: String
     let fields: [Field]
     
     @EnvironmentObject var config: Config
     
-    public init(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field]) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field]) {
         let errors = State<[String]>(initialValue: root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message })
         self._errors = errors
         self._value = Binding(
@@ -40,13 +40,13 @@ public struct ComplexView<Config: AttributeViewConfig, Root: Modifiable>: View {
         }
     }
     
-    init(root: Binding<Root>, value: Binding<[String: Attribute]>, label: String, fields: [Field]) {
+    init(value: Binding<[String: Attribute]>, label: String, fields: [Field]) {
         self._value = value
         self._errors = State<[String]>(initialValue: [])
         self.label = label
         self.fields = fields
         self.subView = {
-            AttributeView(root: root, attribute: Binding(value[$0.name])!, label: $0.name.pretty)
+            AttributeView(attribute: Binding(value[$0.name])!, label: $0.name.pretty)
         }
     }
     

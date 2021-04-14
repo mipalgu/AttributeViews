@@ -13,9 +13,8 @@ import SwiftUI
 
 import Attributes
 
-public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
+public struct TableView<Config: AttributeViewConfig>: View {
     
-    @Binding var root: Root
     @Binding var value: [Row<Config>]
     @Binding var errors: [String]
     let label: String
@@ -24,12 +23,11 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
     @State var newRow: [LineAttribute]
     @State var selection: Set<Row<Config>>
     
-    private let viewModel: AnyTableViewViewModel<Config, Root>
+    private let viewModel: AnyTableViewViewModel<Config>
     
     @EnvironmentObject var config: Config
     
-    public init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
-        self._root = root
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
         self._value = Binding(
             get: {
                 root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
@@ -48,11 +46,10 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
         self.label = label
         self.columns = columns
         self._newRow = State<[LineAttribute]>(initialValue: columns.map { $0.type.defaultValue })
-        self.viewModel = AnyTableViewViewModel<Config, Root>(root: root, path: path)
+        self.viewModel = AnyTableViewViewModel<Config>(root: root, path: path)
     }
     
-    init(root: Binding<Root>, value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
-        self._root = root
+    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
         self._errors = errors
         self._selection = State(initialValue: [])
         self._value = Binding(
@@ -125,27 +122,96 @@ public struct TableView<Config: AttributeViewConfig, Root: Modifiable>: View {
 
 }
 
+struct TableView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields",
+                fields: [
+                    Field(
+                        name: "table",
+                        type: .table(columns: [("b", .bool), ("i", .integer), ("f", .float)])
+                    )
+                ],
+                attributes: [
+                    "table": .table([
+                        [.bool(false), .integer(1), .float(1.1)],
+                        [.bool(true), .integer(2), .float(2.2)]
+                    ], columns: [("b", .bool), ("i", .integer), ("f", .float)]
+                    )
+                ],
+                metaData: [:]
+            )
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            TableView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root",
+                columns: [.init(name: "b", type: .bool), .init(name: "i", type: .integer), .init(name: "f", type: .float)]
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: [[LineAttribute]] = []
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            TableView<DefaultAttributeViewsConfig>(
+                value: $value,
+                label: "Binding",
+                columns: [
+                    .init(name: "Bool", type: .bool),
+                    .init(name: "Integer", type: .integer),
+                    .init(name: "Float", type: .float),
+                    .init(name: "Expression", type: .expression(language: .swift)),
+                    .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
+                    .init(name: "Line", type: .line)
+                ]
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
+
 fileprivate protocol TableViewViewModelProtocol {
     
     associatedtype Config: AttributeViewConfig
-    associatedtype Root: Modifiable
     
     var tableErrors: [String] { get }
     
     var latestValue: [[LineAttribute]] { get }
     
-    func addElement(_ view: TableView<Config, Root>)
-    func deleteRow(_ view: TableView<Config, Root>, row: Int)
-    func deleteElements(_ view: TableView<Config, Root>, atOffsets offsets: IndexSet)
-    func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int)
-    func errors(_ view: TableView<Config, Root>, forRow row: Int) -> [[String]]
-    func rowView(_ view: TableView<Config, Root>, forRow row: Int) -> TableRowView<Config>
+    func addElement(_ view: TableView<Config>)
+    func deleteRow(_ view: TableView<Config>, row: Int)
+    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet)
+    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int)
+    func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]]
+    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config>
     
 }
 
 extension TableViewViewModelProtocol {
     
-    func deleteRow(_ view: TableView<Config, Root>, row: Int) {
+    func deleteRow(_ view: TableView<Config>, row: Int) {
         guard row < view.value.count else {
             return
         }
@@ -157,15 +223,15 @@ extension TableViewViewModelProtocol {
     
 }
 
-fileprivate struct AnyTableViewViewModel<Config: AttributeViewConfig, Root: Modifiable>: TableViewViewModelProtocol {
+fileprivate struct AnyTableViewViewModel<Config: AttributeViewConfig>: TableViewViewModelProtocol {
     
     private let _tableErrors: () -> [String]
     private let _latestValue: () -> [[LineAttribute]]
-    private let _addElement: (TableView<Config, Root>) -> Void
-    private let _deleteElements: (TableView<Config, Root>, IndexSet) -> Void
-    private let _moveElements: (TableView<Config, Root>, IndexSet, Int) -> Void
-    private let _errors: (TableView<Config, Root>, Int) -> [[String]]
-    private let _rowView: (TableView<Config, Root>, Int) -> TableRowView<Config>
+    private let _addElement: (TableView<Config>) -> Void
+    private let _deleteElements: (TableView<Config>, IndexSet) -> Void
+    private let _moveElements: (TableView<Config>, IndexSet, Int) -> Void
+    private let _errors: (TableView<Config>, Int) -> [[String]]
+    private let _rowView: (TableView<Config>, Int) -> TableRowView<Config>
     
     
     var tableErrors: [String] {
@@ -176,7 +242,7 @@ fileprivate struct AnyTableViewViewModel<Config: AttributeViewConfig, Root: Modi
         self._latestValue()
     }
     
-    init<ViewModel: TableViewViewModelProtocol>(_ viewModel: ViewModel) where ViewModel.Config == Config, ViewModel.Root == Root {
+    init<ViewModel: TableViewViewModelProtocol>(_ viewModel: ViewModel) where ViewModel.Config == Config {
         self._tableErrors = { viewModel.tableErrors }
         self._latestValue = { viewModel.latestValue }
         self._addElement = viewModel.addElement
@@ -186,7 +252,7 @@ fileprivate struct AnyTableViewViewModel<Config: AttributeViewConfig, Root: Modi
         self._rowView = viewModel.rowView
     }
     
-    init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>) {
+    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>) {
         self.init(TableViewKeyPathViewModel(root: root, path: path))
     }
     
@@ -194,23 +260,23 @@ fileprivate struct AnyTableViewViewModel<Config: AttributeViewConfig, Root: Modi
         self.init(TableViewBindingViewModel(value: value))
     }
     
-    func addElement(_ view: TableView<Config, Root>) {
+    func addElement(_ view: TableView<Config>) {
         self._addElement(view)
     }
     
-    func deleteElements(_ view: TableView<Config, Root>, atOffsets offsets: IndexSet) {
+    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
         self._deleteElements(view, offsets)
     }
     
-    func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int) {
+    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
         self._moveElements(view, source, destination)
     }
     
-    func errors(_ view: TableView<Config, Root>, forRow row: Int) -> [[String]] {
+    func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]] {
         self._errors(view, row)
     }
     
-    func rowView(_ view: TableView<Config, Root>, forRow row: Int) -> TableRowView<Config> {
+    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
         self._rowView(view, row)
     }
     
@@ -234,15 +300,15 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
         self.path = path
     }
     
-    func addElement(_ view: TableView<Config, Root>) {
+    func addElement(_ view: TableView<Config>) {
         try? root.wrappedValue.addItem(view.newRow, to: path)
     }
     
-    func deleteElements(_ view: TableView<Config, Root>, atOffsets offsets: IndexSet) {
+    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
         _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
     }
     
-    func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int) {
+    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
         view.selection.removeAll()
         guard let sourceMin = source.min() else {
             return
@@ -253,13 +319,13 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
         }
     }
     
-    func errors(_ view: TableView<Config, Root>, forRow row: Int) -> [[String]] {
+    func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]] {
         return view.columns.indices.map {
             root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row][$0]).map(\.message)
         }
     }
     
-    func rowView(_ view: TableView<Config, Root>, forRow row: Int) -> TableRowView<Config> {
+    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
         let view: TableRowView<Config> = TableRowView(
             root: root,
             path: path[row],
@@ -271,7 +337,7 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
     
 }
 
-fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig, Root: Modifiable>: TableViewViewModelProtocol {
+fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: TableViewViewModelProtocol {
     
     let value: Binding<[[LineAttribute]]>
     
@@ -285,16 +351,16 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig, Root: 
         self.value = value
     }
     
-    func addElement(_ view: TableView<Config, Root>) {
+    func addElement(_ view: TableView<Config>) {
         value.wrappedValue.append(view.newRow)
         view.newRow = view.columns.map(\.type.defaultValue)
     }
     
-    func deleteElements(_ view: TableView<Config, Root>, atOffsets offsets: IndexSet) {
+    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
         value.wrappedValue.remove(atOffsets: offsets)
     }
     
-    func moveElements(_ view: TableView<Config, Root>, atOffsets source: IndexSet, to destination: Int) {
+    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
         view.selection.removeAll()
         guard let sourceMin = source.min() else {
             return
@@ -305,11 +371,11 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig, Root: 
         }
     }
     
-    func errors(_ view: TableView<Config, Root>, forRow _: Int) -> [[String]] {
+    func errors(_ view: TableView<Config>, forRow _: Int) -> [[String]] {
         view.columns.map { _ in [] }
     }
     
-    func rowView(_ view: TableView<Config, Root>, forRow row: Int) -> TableRowView<Config> {
+    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
         return TableRowView<Config>(
             row: value[row],
             onDelete: { self.deleteRow(view, row: row) }
@@ -346,70 +412,4 @@ struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
     
     var attributes: [LineAttribute]
     
-}
-
-import Machines
-
-struct TableView_Previews: PreviewProvider {
-    
-    struct TableViewRoot_Preview: View {
-        
-        @State var machine: Machine = Machine.initialSwiftMachine()
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        let path = Machine.path
-            .attributes[0]
-            .attributes["machine_variables"]
-            .wrappedValue
-            .tableValue
-        
-        var body: some View {
-            TableView<DefaultAttributeViewsConfig, Machine>(
-                root: $machine,
-                path: path,
-                label: "Root",
-                columns: [
-                    .init(name: "Access Type", type: .enumerated(validValues: ["let", "var"])),
-                    .init(name: "Label", type: .line),
-                    .init(name: "Type", type: .expression(language: .swift)),
-                    .init(name: "Initial Value", type: .expression(language: .swift))
-                ]
-            ).environmentObject(config)
-        }
-        
-    }
-    
-    struct TableViewBinding_Preview: View {
-        
-        @State var machine: Machine = Machine.initialSwiftMachine()
-        
-        @State var value: [[LineAttribute]] = []
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            TableView<DefaultAttributeViewsConfig, Machine>(
-                root: $machine,
-                value: $value,
-                label: "Binding",
-                columns: [
-                    .init(name: "Bool", type: .bool),
-                    .init(name: "Integer", type: .integer),
-                    .init(name: "Float", type: .float),
-                    .init(name: "Expression", type: .expression(language: .swift)),
-                    .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
-                    .init(name: "Line", type: .line)
-                ]
-            ).environmentObject(config)
-        }
-        
-    }
-    
-    static var previews: some View {
-        VStack {
-            TableViewRoot_Preview()
-            TableViewBinding_Preview()
-        }
-    }
 }
