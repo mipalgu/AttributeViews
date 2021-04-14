@@ -38,7 +38,7 @@ public struct BoolView<Config: AttributeViewConfig>: View {
         )
     }
     
-    init(value: Binding<Bool>, errors: Binding<[String]> = .constant([]), label: String) {
+    public init(value: Binding<Bool>, errors: Binding<[String]> = .constant([]), label: String) {
         self._value = value
         self._errors = errors
         self.label = label

@@ -42,13 +42,13 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
         }
     }
     
-    init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), label: String, fields: [Field]) {
+    public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), label: String, fields: [Field]) {
         self.init(value: value, errors: errors, label: label, fields: fields) {
             AttributeView(attribute: Binding(value[$0.name])!, label: $0.name.pretty)
         }
     }
     
-    init(value: Binding<[String: Attribute]>, errors: Binding<[String]>, label: String, fields: [Field], subView: @escaping (Field) -> AttributeView<Config>) {
+    private init(value: Binding<[String: Attribute]>, errors: Binding<[String]>, label: String, fields: [Field], subView: @escaping (Field) -> AttributeView<Config>) {
         self._value = value
         self._errors = errors
         self.label = label

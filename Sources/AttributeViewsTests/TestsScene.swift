@@ -94,7 +94,7 @@ struct TestsScene: App {
     
     var body: some Scene {
         WindowGroup {
-            AttributeGroupView<DefaultAttributeViewsConfig, Machine>(
+            AttributeGroupView<DefaultAttributeViewsConfig>(
                 root: $machine,
                 path: Machine.path.attributes[0],
                 label: "Variables"

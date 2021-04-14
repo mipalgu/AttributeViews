@@ -49,7 +49,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
         self.viewModel = AnyTableViewViewModel<Config>(root: root, path: path)
     }
     
-    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
+    public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
         self._errors = errors
         self._selection = State(initialValue: [])
         self._value = Binding(

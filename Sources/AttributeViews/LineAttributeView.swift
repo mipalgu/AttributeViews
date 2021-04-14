@@ -36,7 +36,7 @@ public struct LineAttributeView<Config: AttributeViewConfig>: View {
         }
     }
     
-    init(attribute: Binding<LineAttribute>, errors: Binding<[String]> = .constant([]), label: String) {
+    public init(attribute: Binding<LineAttribute>, errors: Binding<[String]> = .constant([]), label: String) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .bool:

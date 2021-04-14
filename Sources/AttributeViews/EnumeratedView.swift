@@ -39,7 +39,7 @@ public struct EnumeratedView<Config: AttributeViewConfig>: View {
         )
     }
     
-    init(value: Binding<Expression>, errors: Binding<[String]> = .constant([]), label: String, validValues: Set<String>) {
+    public init(value: Binding<Expression>, errors: Binding<[String]> = .constant([]), label: String, validValues: Set<String>) {
         self._value = value
         self._errors = errors
         self.label = label

@@ -27,7 +27,7 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         self.init(root: root, path: path, language: language, label: { Text(label.capitalized) })
     }
     
-    init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language) where Label == Text {
+    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language) where Label == Text {
         self.init(value: value, errors: errors, language: language, label: { Text(label.capitalized) })
     }
     
@@ -48,7 +48,7 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         )
     }
     
-    init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label) {
+    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label) {
         self._value = value
         self._errors = errors
         self.label = label

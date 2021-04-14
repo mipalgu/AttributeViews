@@ -35,7 +35,7 @@ public struct TextView<Config: AttributeViewConfig>: View {
         )
     }
     
-    init(value: Binding<String>, errors: Binding<[String]> = .constant([]), label: String) {
+    public init(value: Binding<String>, errors: Binding<[String]> = .constant([]), label: String) {
         self._value = value
         self._errors = errors
         self.label = label

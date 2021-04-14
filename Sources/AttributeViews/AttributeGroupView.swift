@@ -14,16 +14,42 @@ import SwiftUI
 
 import Attributes
 
-public struct AttributeGroupView<Config: AttributeViewConfig, Root: Modifiable>: View {
-
-    @Binding var root: Root
-    let path: Attributes.Path<Root, AttributeGroup>
-    let label: String
+public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
-    public init(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String) {
-        self._root = root
-        self.path = path
+    @Binding var value: AttributeGroup
+    let label: String
+    let subView: (Field) -> AttributeView<Config>
+    
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String) {
+        self.init(
+            value: Binding(
+                get: { root.wrappedValue[keyPath: path.keyPath] },
+                set: {
+                _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                }
+            ),
+            label: label
+        ) {
+            AttributeView(root: root, path: path.attributes[$0.name].wrappedValue, label: $0.name.pretty)
+        }
+    }
+    
+    public init(value: Binding<AttributeGroup>, label: String) {
+        self.init(value: value, label: label) { field in
+            AttributeView(
+                attribute: Binding(
+                    get: { value.attributes[field.name].wrappedValue! },
+                    set: { value.attributes[field.name].wrappedValue = $0 }
+                ),
+                label: field.name.pretty
+            )
+        }
+    }
+    
+    private init(value: Binding<AttributeGroup>, label: String, subView: @escaping (Field) -> AttributeView<Config>) {
+        self._value = value
         self.label = label
+        self.subView = subView
     }
     
     @ViewBuilder
@@ -32,12 +58,9 @@ public struct AttributeGroupView<Config: AttributeViewConfig, Root: Modifiable>:
             Form {
                 HStack {
                     VStack(alignment: .leading) {
-                        ForEach(root[keyPath: path.keyPath].fields, id: \.name) { field in
-                            AttributeView<Config>(
-                                root: $root,
-                                path: path.attributes[field.name].wrappedValue,
-                                label: field.name.pretty
-                            )
+                        Text(label.pretty).font(.headline)
+                        ForEach(value.fields, id: \.name) { field in
+                            subView(field)
                         }
                     }
                     Spacer()
@@ -48,27 +71,50 @@ public struct AttributeGroupView<Config: AttributeViewConfig, Root: Modifiable>:
     
 }
 
-import Machines
-
 struct AttributeGroupView_Previews: PreviewProvider {
     
-    struct AttributeGroupViewRoot_Preview: View {
-
-        @State var machine: Machine = Machine.initialSwiftMachine()
-
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "float", type: .float)], attributes: ["float": .float(0.1)], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0]
+        
         let config = DefaultAttributeViewsConfig()
-
-        let path = Machine.path.attributes[0]
-
+        
         var body: some View {
-            AttributeGroupView<DefaultAttributeViewsConfig, Machine>(root: $machine, path: path, label: "Variables").environmentObject(config)
+            AttributeGroupView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root"
+            ).environmentObject(config)
         }
-
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: AttributeGroup = AttributeGroup(
+            name: "Binding",
+            fields: [Field(name: "s", type: .line)],
+            attributes: ["s": .line("Hello")],
+            metaData: [:]
+        )
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            AttributeGroupView<DefaultAttributeViewsConfig>(value: $value, label: "Binding").environmentObject(config)
+        }
+        
     }
     
     static var previews: some View {
         VStack {
-            AttributeGroupViewRoot_Preview()
+            Root_Preview()
+            Binding_Preview()
         }
     }
 }
