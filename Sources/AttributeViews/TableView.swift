@@ -84,7 +84,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
                                 .multilineTextAlignment(.leading)
                                 .frame(minWidth: 0, maxWidth: .infinity)
                         }
-                        Text("").frame(width: 25)
+                        Text("").frame(width: 15)
                     }
                 }, content: {
                     ForEach(value, id: \.self) { row in
@@ -110,11 +110,12 @@ public struct TableView<Config: AttributeViewConfig>: View {
                             }
                         }.frame(minWidth: 0, maxWidth: .infinity)
                     }
-                    Button(action: { viewModel.addElement(self) }, label: {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    }).buttonStyle(PlainButtonStyle())
-                      .foregroundColor(.blue)
-                      .frame(width: 15)
+                    VStack {
+                        Button(action: { viewModel.addElement(self) }, label: {
+                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                        }).buttonStyle(PlainButtonStyle())
+                          .foregroundColor(.blue)
+                    }.frame(width: 15)
                 }
             }.padding(.top, -35).padding(.leading, 15).padding(.trailing, 18).frame(height: 50)
         }

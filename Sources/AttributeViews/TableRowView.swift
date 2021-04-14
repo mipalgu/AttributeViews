@@ -116,7 +116,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16, weight: .regular))
                     .rotationEffect(.degrees(90))
-            }.frame(width: 25)
+            }.frame(width: 15)
         }.contextMenu {
             Button("Delete", action: onDelete).keyboardShortcut(.delete)
         }
