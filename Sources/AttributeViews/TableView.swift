@@ -88,7 +88,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
                                 .multilineTextAlignment(.leading)
                                 .frame(minWidth: 0, maxWidth: .infinity)
                         }
-                        Spacer().frame(width: 15)
+                        Spacer().frame(width: 20)
                     }
                 }
                 ForEach(value, id: \.self) { row in
@@ -121,7 +121,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                         }).buttonStyle(PlainButtonStyle())
                           .foregroundColor(.blue)
-                    }.frame(width: 15)
+                    }.frame(width: 20)
                 }
             }.padding(.top, -35).padding(.leading, 15).padding(.trailing, 18).frame(height: 50)
         }
