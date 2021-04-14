@@ -15,27 +15,28 @@ import Attributes
 
 public struct TableView<Config: AttributeViewConfig>: View {
     
-    @Binding var value: [Row<Config>]
+    @Binding var value: [Row<[LineAttribute]>]
     @Binding var errors: [String]
     let label: String
     let columns: [BlockAttributeType.TableColumn]
     
     @State var newRow: [LineAttribute]
-    @State var selection: Set<Row<Config>>
+    @State var selection: Set<Row<[LineAttribute]>>
     
     private let viewModel: AnyTableViewViewModel<Config>
     
     @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
+        var idCache = IDCache<[LineAttribute]>()
         self._value = Binding(
             get: {
                 root.wrappedValue[keyPath: path.keyPath].enumerated().map { (index, row) in
-                    Row(index: index, attributes: row)
+                    Row(id: idCache.id(for: row), index: index, data: row)
                 }
             },
             set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.attributes))
+                _ = try? root.wrappedValue.modify(attribute: path, value: $0.map(\.data))
             }
         )
         self._errors = Binding(
@@ -50,16 +51,17 @@ public struct TableView<Config: AttributeViewConfig>: View {
     }
     
     public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
+        var idCache = IDCache<[LineAttribute]>()
         self._errors = errors
         self._selection = State(initialValue: [])
         self._value = Binding(
             get: {
                 value.wrappedValue.enumerated().map { (index, row) in
-                    Row(index: index, attributes: row)
+                    Row(id: idCache.id(for: row), index: index, data: row)
                 }
             },
             set: {
-                value.wrappedValue = $0.map(\.attributes)
+                value.wrappedValue = $0.map(\.data)
             }
         )
         self.label = label
@@ -389,38 +391,4 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: Table
     
 }
 
-fileprivate struct TableViewRowIDCache {
-    
-    private static let limit = 512
-    
-    static var ids: [[LineAttribute]: UUID] = {
-        var dict: [[LineAttribute]: UUID] = [:]
-        dict.reserveCapacity(Self.limit)
-        return dict
-    }()
-    
-    static func id<Config>(for row: Row<Config>) -> UUID {
-        if ids.count > Self.limit {
-            ids.removeAll(keepingCapacity: true)
-        }
-        if let id = Self.ids[row.attributes] {
-            return id
-        }
-        let newId = UUID()
-        ids[row.attributes] = newId
-        return newId
-    }
-    
-}
 
-struct Row<Config: AttributeViewConfig>: Hashable, Identifiable {
-    
-    var id: UUID {
-        TableViewRowIDCache.id(for: self)
-    }
-    
-    var index: Int
-    
-    var attributes: [LineAttribute]
-    
-}
