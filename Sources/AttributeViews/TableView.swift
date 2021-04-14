@@ -84,7 +84,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
                                 .multilineTextAlignment(.leading)
                                 .frame(minWidth: 0, maxWidth: .infinity)
                         }
-                        Text("").frame(width: 15)
+                        Text("").frame(width: 25)
                     }
                 }, content: {
                     ForEach(value, id: \.self) { row in
