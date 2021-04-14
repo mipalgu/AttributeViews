@@ -1,5 +1,5 @@
 /*
- * ListViewModelProtocol.swift
+ * AnyListViewModel.swift
  * AttributeViews
  *
  * Created by Callum McColl on 15/4/21.
@@ -58,36 +58,59 @@
 
 import Foundation
 
-protocol ListViewModelProtocol {
+struct AnyListViewModel<View, RowData, RowView, ErrorData>: ListViewModelProtocol {
     
-    associatedtype View
-    associatedtype RowData
-    associatedtype RowView
-    associatedtype ErrorData
+    private let _listErrors: () -> [String]
+    private let _latestValue: () -> [RowData]
+    private let _addElement: (View) -> Void
+    private let _deleteRow: (View, Int) -> Void
+    private let _deleteElements: (View, IndexSet) -> Void
+    private let _moveElements: (View, IndexSet, Int) -> Void
+    private let _errors: (View, Int) -> [ErrorData]
+    private let _rowView: (View, Int) -> RowView
     
-    var listErrors: [String] { get }
     
-    var latestValue: [RowData] { get }
+    var listErrors: [String] {
+        self._listErrors()
+    }
     
-    func addElement(_ view: View)
-    func deleteRow(_ view: View, row: Int)
-    func deleteElements(_ view: View, atOffsets offsets: IndexSet)
-    func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int)
-    func errors(_ view: View, forRow row: Int) -> [ErrorData]
-    func rowView(_ view: View, forRow row: Int) -> RowView
+    var latestValue: [RowData] {
+        self._latestValue()
+    }
     
-}
-
-extension ListViewModelProtocol where View: SelectableListViewProtocol, View.RowData == RowData {
+    init<ViewModel: ListViewModelProtocol>(_ viewModel: ViewModel) where ViewModel.View == View, ViewModel.RowData == RowData, ViewModel.RowView == RowView, ViewModel.ErrorData == ErrorData {
+        self._listErrors = { viewModel.listErrors }
+        self._latestValue = { viewModel.latestValue }
+        self._addElement = viewModel.addElement
+        self._deleteRow = viewModel.deleteRow
+        self._deleteElements = viewModel.deleteElements
+        self._moveElements = viewModel.moveElements
+        self._errors = viewModel.errors
+        self._rowView = viewModel.rowView
+    }
+    
+    func addElement(_ view: View) {
+        self._addElement(view)
+    }
     
     func deleteRow(_ view: View, row: Int) {
-        guard row < view.value.count else {
-            return
-        }
-        let offsets: IndexSet = view.selection.contains(view.value[row])
-            ? IndexSet(view.value.lazy.filter { view.selection.contains($0) }.map { $0.index })
-            : [row]
-        self.deleteElements(view, atOffsets: offsets)
+        self._deleteRow(view, row)
+    }
+    
+    func deleteElements(_ view: View, atOffsets offsets: IndexSet) {
+        self._deleteElements(view, offsets)
+    }
+    
+    func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int) {
+        self._moveElements(view, source, destination)
+    }
+    
+    func errors(_ view: View, forRow row: Int) -> [ErrorData] {
+        self._errors(view, row)
+    }
+    
+    func rowView(_ view: View, forRow row: Int) -> RowView {
+        self._rowView(view, row)
     }
     
 }

@@ -1,5 +1,5 @@
 /*
- * ListViewModelProtocol.swift
+ * ListViewProtocol.swift
  * AttributeViews
  *
  * Created by Callum McColl on 15/4/21.
@@ -56,38 +56,10 @@
  *
  */
 
-import Foundation
-
-protocol ListViewModelProtocol {
+protocol ListViewProtocol {
     
-    associatedtype View
-    associatedtype RowData
-    associatedtype RowView
-    associatedtype ErrorData
+    associatedtype RowData: Hashable
     
-    var listErrors: [String] { get }
-    
-    var latestValue: [RowData] { get }
-    
-    func addElement(_ view: View)
-    func deleteRow(_ view: View, row: Int)
-    func deleteElements(_ view: View, atOffsets offsets: IndexSet)
-    func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int)
-    func errors(_ view: View, forRow row: Int) -> [ErrorData]
-    func rowView(_ view: View, forRow row: Int) -> RowView
-    
-}
-
-extension ListViewModelProtocol where View: SelectableListViewProtocol, View.RowData == RowData {
-    
-    func deleteRow(_ view: View, row: Int) {
-        guard row < view.value.count else {
-            return
-        }
-        let offsets: IndexSet = view.selection.contains(view.value[row])
-            ? IndexSet(view.value.lazy.filter { view.selection.contains($0) }.map { $0.index })
-            : [row]
-        self.deleteElements(view, atOffsets: offsets)
-    }
+    var value: [Row<RowData>] { get set }
     
 }
