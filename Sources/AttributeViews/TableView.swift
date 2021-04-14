@@ -265,7 +265,6 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
         let view: TableRowView<Config> = TableRowView(
             root: root,
             path: path[row],
-            errors: Binding(get: { self.errors(view, forRow: row) }, set: { _ in }),
             onDelete: { self.deleteRow(view, row: row) }
         )
         return view

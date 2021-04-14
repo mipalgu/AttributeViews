@@ -68,7 +68,6 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     
     let subView: (Int) -> AnyView
     @Binding var row: [LineAttribute]
-    @Binding var errors: [[String]]
     let onDelete: () -> Void
     
     @EnvironmentObject var config: Config
@@ -76,7 +75,6 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     public init<Root: Modifiable>(
         root: Binding<Root>,
         path: Attributes.Path<Root, [LineAttribute]>,
-        errors: Binding<[[String]]> = .constant([]),
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
@@ -87,7 +85,6 @@ struct TableRowView<Config: AttributeViewConfig>: View {
             get: { root.wrappedValue[keyPath: path.keyPath] },
             set: { _ = try? root.wrappedValue.modify(attribute: path, value: $0) }
         )
-        self._errors = errors
         self.onDelete = onDelete
     }
     
@@ -101,7 +98,6 @@ struct TableRowView<Config: AttributeViewConfig>: View {
                 .frame(minWidth: 0, maxWidth: .infinity))
         }
         self._row = row
-        self._errors = errors
         self.onDelete = onDelete
     }
     
@@ -123,77 +119,79 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     }
 }
 
-import Machines
-
 struct TableRowView_Previews: PreviewProvider {
     
-    struct TableRowViewRoot_Preview: View {
+    struct Root_Preview: View {
         
-        @State var machine: Machine = {
-            var machine = Machine.initialSwiftMachine()
-            do {
-                try machine.addItem(
-                    [
-                        LineAttribute.enumerated("let", validValues: ["var", "let"]),
-                        LineAttribute.line("label"),
-                        LineAttribute.expression("Int", language: .swift),
-                        LineAttribute.expression("3", language: .swift)
-                    ],
-                    to: machine
-                        .path
-                        .attributes[0]
-                        .attributes["machine_variables"]
-                        .wrappedValue
-                        .tableValue
-                )
-            } catch let e {
-                fatalError("\(e)")
-            }
-            return machine
-        }()
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [
+                    Field(
+                        name: "table",
+                        type: .table(columns: [
+                            ("bool", .bool),
+                            ("int", .integer),
+                            ("float", .float),
+                            ("enum", .enumerated(validValues: ["a", "b", "c"])),
+                            ("line", .line)
+                        ])
+                    )
+                ],
+                attributes: [
+                    "table": .table([
+                        [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
+                    ], columns: [
+                        ("bool", .bool),
+                        ("int", .integer),
+                        ("float", .float),
+                        ("enum", .enumerated(validValues: ["a", "b", "c"])),
+                        ("line", .line)
+                    ])
+                ],
+                metaData: [:]
+            )
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue[0]
         
         let config = DefaultAttributeViewsConfig()
         
-        let path = Machine.path
-            .attributes[0]
-            .attributes["machine_variables"]
-            .wrappedValue
-            .tableValue[0]
-        
         var body: some View {
             TableRowView<DefaultAttributeViewsConfig>(
-                root: $machine,
+                root: $modifiable,
                 path: path
             ).environmentObject(config)
         }
         
     }
     
-    struct TableRowViewBinding_Preview: View {
+    struct Binding_Preview: View {
         
-        @State var value: [LineAttribute] = [
-            .bool(false),
-            .integer(2),
-            .float(3.2),
-            .expression("print(\"Hello World!\")", language: .swift),
-            .enumerated("Suspend", validValues: ["Initial", "Suspend"]),
-            .line("import swiftfsm")
+        @State var value: [LineAttribute] = [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
+        
+        @State var errors: [[String]] = [
+            ["bool error1", "bool error2"],
+            ["int error"],
+            ["float error1", "float error2", "float error3"],
+            [],
+            ["Really long line error that is very long in length"]
         ]
         
         let config = DefaultAttributeViewsConfig()
         
         var body: some View {
-            TableRowView<DefaultAttributeViewsConfig>(
-                row: $value
-            ).environmentObject(config)
+            TableRowView<DefaultAttributeViewsConfig>(row: $value, errors: $errors).environmentObject(config)
         }
         
     }
     
     static var previews: some View {
         VStack {
-            TableRowViewRoot_Preview()
-            TableRowViewBinding_Preview()
+            Root_Preview()
+            Spacer()
+            Divider()
+            Spacer()
+            Binding_Preview()
         }
     }
 }
