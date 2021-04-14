@@ -87,7 +87,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
     }
     
     @Binding var value: [CollectionElement]
-    @State var errors: [String]
+    @Binding var errors: [String]
     let label: String
     let type: AttributeType
     
@@ -117,7 +117,10 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                 errors.wrappedValue = root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message }
             }
         )
-        self._errors = errors
+        self._errors = Binding(
+            get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+            set: { _ in }
+        )
         self.label = label
         self.type = type
         let newAttribute = State<Attribute>(initialValue: type.defaultValue)
@@ -150,7 +153,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
         }
     }
     
-    init(value: Binding<[Attribute]>, label: String, type: AttributeType) {
+    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), label: String, type: AttributeType) {
         self._value = Binding(
             get: {
                 value.wrappedValue.enumerated().map { (index, element) in
@@ -161,7 +164,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
                 value.wrappedValue = $0.map { $0.attribute }
             }
         )
-        self._errors = State(initialValue: [])
+        self._errors = errors
         self.label = label
         self.type = type
         let newAttribute = State<Attribute>(initialValue: type.defaultValue)
@@ -247,47 +250,47 @@ public struct CollectionView<Config: AttributeViewConfig>: View {
     }
 }
 
-//struct CollectionView_Previews: PreviewProvider {
-//
-//    struct Root_Preview: View {
-//
-//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-//            AttributeGroup(
-//                name: "Fields", fields: [Field(name: "collection", type: .collection(type: .bool))], attributes: ["collection": .collection(bools: [false, true])], metaData: [:])
-//        ])
-//
-//        let path = EmptyModifiable.path.attributes[0].attributes["collection"].wrappedValue.collectionValue
-//
-//        let config = DefaultAttributeViewsConfig()
-//
-//        var body: some View {
-//            CollectionView<DefaultAttributeViewsConfig, EmptyModifiable>(
-//                root: $modifiable,
-//                path: path,
-//                label: "Root",
-//                type: .bool
-//            ).environmentObject(config)
-//        }
-//
-//    }
-//
-//    struct Binding_Preview: View {
-//
-//        @State var value: [Attribute] = [.integer(1), .integer(2), .integer(3)]
-//        @State var errors: [String] = ["An error", "A second error"]
-//
-//        let config = DefaultAttributeViewsConfig()
-//
-//        var body: some View {
-//            CollectionView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", type: .integer).environmentObject(config)
-//        }
-//
-//    }
-//
-//    static var previews: some View {
-//        VStack {
-//            Root_Preview()
-//            Binding_Preview()
-//        }
-//    }
-//}
+struct CollectionView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "collection", type: .collection(type: .integer))], attributes: ["collection": .collection(integers: [1, 2, 3, 4, 5])], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["collection"].wrappedValue.collectionValue
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            CollectionView<DefaultAttributeViewsConfig>(
+                root: $modifiable,
+                path: path,
+                label: "Root",
+                type: .integer
+            ).environmentObject(config)
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: [Attribute] = [1, 2, 3, 4, 5].map { Attribute.integer($0) }
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        let config = DefaultAttributeViewsConfig()
+        
+        var body: some View {
+            CollectionView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", type: .integer).environmentObject(config)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}
