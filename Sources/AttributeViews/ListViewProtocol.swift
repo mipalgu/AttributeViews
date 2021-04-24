@@ -62,6 +62,8 @@ import TokamakShim
 import SwiftUI
 #endif
 
+import GUUI
+
 protocol ListViewProtocol {
     
     associatedtype RowData: Hashable

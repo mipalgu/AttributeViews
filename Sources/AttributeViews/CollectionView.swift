@@ -63,6 +63,7 @@ import SwiftUI
 #endif
 
 import Attributes
+import GUUI
 
 public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtocol {
     

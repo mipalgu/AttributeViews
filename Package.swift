@@ -21,7 +21,8 @@ let package = Package(
             targets: ["AttributeViews"]),
     ],
     dependencies: ui + [
-        .package(url: "ssh://git.mipal.net/Users/Shared/git/Machines.git", .branch("meta"))
+        .package(name: "Machines", url: "ssh://git.mipal.net/Users/Shared/git/Machines.git", .branch("meta")),
+        .package(name: "GUUI", url: "ssh://git.mipal.net/Users/Shared/git/GUUI.git", .branch("master"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -29,6 +30,6 @@ let package = Package(
         .target(
             name: "AttributeViews",
             dependencies: products + ["Machines"]),
-        .target(name: "AttributeViewsTests", dependencies: products + ["AttributeViews", "Machines"])
+        .target(name: "AttributeViewsTests", dependencies: products + ["AttributeViews", "Machines", "GUUI"])
     ]
 )
