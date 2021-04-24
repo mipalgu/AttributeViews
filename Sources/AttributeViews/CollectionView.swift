@@ -79,7 +79,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     @State var creating: Bool = false
     @State var newRow: Attribute
     
-    @EnvironmentObject var config: Config
+    //@EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType) {
         self.init(

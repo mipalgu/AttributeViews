@@ -21,7 +21,7 @@ public struct EnumerableCollectionView<Config: AttributeViewConfig>: View {
     let label: String
     let validValues: Set<String>
     
-    @EnvironmentObject var config: Config
+    //@EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Set<String>>, label: String, validValues: Set<String>) {
         self.init(
@@ -49,7 +49,9 @@ public struct EnumerableCollectionView<Config: AttributeViewConfig>: View {
     
     public var body: some View {
         VStack(alignment: .leading) {
-            Text(label + ":").font(config.fontHeading).fontWeight(.bold)
+            Text(label + ":")
+//                .font(config.fontHeading)
+                .fontWeight(.bold)
             if validValues.isEmpty {
                 HStack {
                     Spacer()

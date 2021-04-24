@@ -70,7 +70,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     @Binding var row: [LineAttribute]
     let onDelete: () -> Void
     
-    @EnvironmentObject var config: Config
+//    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(
         root: Binding<Root>,

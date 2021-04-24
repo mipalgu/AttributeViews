@@ -21,8 +21,6 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
     let label: () -> Label
     let language: Language
     
-    @EnvironmentObject var config: Config
-    
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, label: String, language: Language) where Label == Text {
         self.init(root: root, path: path, language: language, label: { Text(label.capitalized) })
     }
@@ -62,8 +60,8 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
                 Text(error).foregroundColor(.red)
             }
             TextEditor(text: $value)
-                .font(config.fontBody)
-                .foregroundColor(config.textColor)
+//                .font(config.fontBody)
+//                .foregroundColor(config.textColor)
                 .disableAutocorrection(true)
                 .overlay(
                     RoundedRectangle(cornerRadius: 5)

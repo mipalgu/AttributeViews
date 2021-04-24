@@ -99,7 +99,7 @@ struct TestsScene: App {
                     root: $machine,
                     path: Machine.path.attributes[index],
                     label: group.name
-                ).environmentObject(config)
+                )//.environmentObject(config)
             }
         }
     }

@@ -20,8 +20,6 @@ public struct BoolView<Config: AttributeViewConfig>: View {
     
     let label: String
     
-    @EnvironmentObject var config: Config
-    
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Bool>, label: String) {
         self.init(
             value: Binding(
@@ -49,7 +47,7 @@ public struct BoolView<Config: AttributeViewConfig>: View {
             Toggle(label, isOn: $value)
                 .animation(.easeOut)
                 .font(.body)
-                .foregroundColor(config.textColor)
+//                .foregroundColor(config.textColor)
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
