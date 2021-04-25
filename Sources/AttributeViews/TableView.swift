@@ -39,6 +39,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     
     @State var newRow: [LineAttribute]
     @State var selection: Set<Row<[LineAttribute]>> = []
+    @State var editing: (row: Int, column: Int)? = nil
     
     private let viewModel: TableViewViewModel<Config>
     
@@ -137,7 +138,8 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                         }
                     }.frame(minHeight: CGFloat(28 * value.count) + 75)
                     .onExitCommand {
-                        selection = []
+                        editing = nil
+                        selection.removeAll(keepingCapacity: true)
                     }
                 }
                 VStack {
@@ -268,7 +270,17 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
         let view: TableRowView<Config> = TableRowView(
             root: root,
             path: path[row],
-            editing: Binding(get: { view.$selection.wrappedValue.contains(view.$value.wrappedValue[row]) }, set: { _ in }),
+            editing: Binding(
+                get: {
+                    guard view.$editing.wrappedValue?.row == row else {
+                        return nil
+                    }
+                    return view.$editing.wrappedValue?.column
+                },
+                set: {
+                    view.$editing.wrappedValue = $0.map { (row, $0) }
+                }
+            ),
             onDelete: { self.deleteRow(view, row: row) }
         )
         return view
@@ -299,7 +311,17 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: ListV
     func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
         return TableRowView<Config>(
             row: value[row],
-            editing: Binding(get: { view.$selection.wrappedValue.contains(view.$value.wrappedValue[row]) }, set: { _ in }),
+            editing: Binding(
+                get: {
+                    guard view.$editing.wrappedValue?.row == row else {
+                        return nil
+                    }
+                    return view.$editing.wrappedValue?.column
+                },
+                set: {
+                    view.$editing.wrappedValue = $0.map { (row, $0) }
+                }
+            ),
             onDelete: { self.deleteRow(view, row: row) }
         )
     }

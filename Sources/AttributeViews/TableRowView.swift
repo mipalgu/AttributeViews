@@ -69,7 +69,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     
     let subView: (Int) -> AnyView
     @Binding var row: [LineAttribute]
-    @Binding var editing: Bool
+    @Binding var editing: Int?
     let onDelete: () -> Void
     
     let viewModel = TableRowViewModel()
@@ -79,7 +79,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     public init<Root: Modifiable>(
         root: Binding<Root>,
         path: Attributes.Path<Root, [LineAttribute]>,
-        editing: Binding<Bool> = .constant(false),
+        editing: Binding<Int?> = .constant(nil),
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
@@ -97,7 +97,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     public init(
         row: Binding<[LineAttribute]>,
         errors: Binding<[[String]]> = .constant([]),
-        editing: Binding<Bool> = .constant(false),
+        editing: Binding<Int?> = .constant(nil),
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
@@ -113,19 +113,22 @@ struct TableRowView<Config: AttributeViewConfig>: View {
         HStack {
             ForEach(viewModel.rows(row), id: \.self) { row in
                 VStack {
-                    if editing {
+                    if editing == row.index {
                         subView(row.index)
                     } else {
                         switch row.data {
                         case .enumerated:
-                            Text(row.data.strValue)
-                                .padding(.leading, 15)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                            Button(row.data.strValue) {
+                                editing = row.index
+                            }.buttonStyle(PlainButtonStyle())
+                            .padding(.leading, 15)
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                         default:
-                            Text(row.data.strValue)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                            Button(row.data.strValue) {
+                                editing = row.index
+                            }.buttonStyle(PlainButtonStyle())
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                         }
-                        
                     }
                 }
             }
