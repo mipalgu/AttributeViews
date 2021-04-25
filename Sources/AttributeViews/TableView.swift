@@ -42,7 +42,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     
     private let viewModel: TableViewViewModel<Config>
     
-//    @EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
         self.init(
@@ -109,7 +109,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
         VStack(alignment: .leading) {
             Text(label.pretty.capitalized)
                 .font(.headline)
-//                .foregroundColor(config.textColor)
+                .foregroundColor(config.textColor)
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }

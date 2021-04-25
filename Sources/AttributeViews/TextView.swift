@@ -19,7 +19,7 @@ public struct TextView<Config: AttributeViewConfig>: View {
     @Binding var errors: [String]
     let label: String
     
-//    @EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String) {
         self.init(
@@ -45,13 +45,13 @@ public struct TextView<Config: AttributeViewConfig>: View {
         VStack(alignment: .leading) {
             Text(label.capitalized)
                 .font(.headline)
-//                .foregroundColor(config.textColor)
+                .foregroundColor(config.textColor)
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
             TextEditor(text: $value)
                 .font(.body)
-//                .foregroundColor(config.textColor)
+                .foregroundColor(config.textColor)
                 .disableAutocorrection(false)
                 .overlay(
                     RoundedRectangle(cornerRadius: 5)

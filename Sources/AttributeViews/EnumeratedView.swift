@@ -20,7 +20,7 @@ public struct EnumeratedView<Config: AttributeViewConfig>: View {
     let label: String
     let validValues: Set<String>
     
-    //@EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Expression>, label: String, validValues: Set<String>) {
         self.init(
@@ -51,8 +51,8 @@ public struct EnumeratedView<Config: AttributeViewConfig>: View {
             Picker(label, selection: $value) {
                 ForEach(validValues.sorted(), id: \.self) {
                     Text($0).tag($0)
-//                        .border(config.fieldColor)
-//                        .foregroundColor(config.textColor)
+                        .border(config.fieldColor)
+                        .foregroundColor(config.textColor)
                 }
             }
             ForEach(errors, id: \.self) { error in

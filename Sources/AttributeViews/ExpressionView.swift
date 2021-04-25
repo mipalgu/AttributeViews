@@ -23,7 +23,7 @@ public struct ExpressionView<Config: AttributeViewConfig>: View {
     let language: Language
     let onCommit: ((Expression) -> Void)?
     
-    //@EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Expression>, label: String, language: Language) {
         self.init(
@@ -60,14 +60,14 @@ public struct ExpressionView<Config: AttributeViewConfig>: View {
             if let onCommit = onCommit {
                 TextField(label, text: $editingValue, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
                     .font(.body)
-//                    .border(config.fieldColor)
-//                    .foregroundColor(config.textColor)
+                    .border(config.fieldColor)
+                    .foregroundColor(config.textColor)
                     .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, text: $value)
                     .font(.body)
-//                    .border(config.fieldColor)
-//                    .foregroundColor(config.textColor)
+                    .border(config.fieldColor)
+                    .foregroundColor(config.textColor)
             }
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)

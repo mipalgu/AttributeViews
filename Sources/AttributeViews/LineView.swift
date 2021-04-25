@@ -22,7 +22,7 @@ public struct LineView<Config: AttributeViewConfig>: View {
     let label: String
     let onCommit: ((String) -> Void)?
     
-//    @EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String) {
         self.init(
@@ -56,13 +56,13 @@ public struct LineView<Config: AttributeViewConfig>: View {
         VStack(alignment: .leading) {
             if let onCommit = onCommit {
                 TextField(label, text: $editingValue, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
-//                    .border(config.fieldColor)
-//                    .foregroundColor(config.textColor)
+                    .border(config.fieldColor)
+                    .foregroundColor(config.textColor)
                     .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, text: $value)
-//                    .border(config.fieldColor)
-//                    .foregroundColor(config.textColor)
+                    .border(config.fieldColor)
+                    .foregroundColor(config.textColor)
             }
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)

@@ -74,7 +74,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
     
     let viewModel = TableRowViewModel()
     
-//    @EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(
         root: Binding<Root>,

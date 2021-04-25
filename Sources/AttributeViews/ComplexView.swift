@@ -21,7 +21,7 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
     let label: String
     let fields: [Field]
     
-    //@EnvironmentObject var config: Config
+    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field]) {
         self.init(
