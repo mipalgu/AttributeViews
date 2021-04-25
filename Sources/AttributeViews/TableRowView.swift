@@ -63,18 +63,23 @@ import SwiftUI
 #endif
 
 import Attributes
+import GUUI
 
 struct TableRowView<Config: AttributeViewConfig>: View {
     
     let subView: (Int) -> AnyView
     @Binding var row: [LineAttribute]
+    @Binding var editing: Bool
     let onDelete: () -> Void
+    
+    let viewModel = TableRowViewModel()
     
 //    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(
         root: Binding<Root>,
         path: Attributes.Path<Root, [LineAttribute]>,
+        editing: Binding<Bool> = .constant(false),
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
@@ -85,12 +90,14 @@ struct TableRowView<Config: AttributeViewConfig>: View {
             get: { root.wrappedValue[keyPath: path.keyPath] },
             set: { _ = try? root.wrappedValue.modify(attribute: path, value: $0) }
         )
+        self._editing = editing
         self.onDelete = onDelete
     }
     
     public init(
         row: Binding<[LineAttribute]>,
         errors: Binding<[[String]]> = .constant([]),
+        editing: Binding<Bool> = .constant(false),
         onDelete: @escaping () -> Void = {}
     ) {
         self.subView = {
@@ -98,14 +105,28 @@ struct TableRowView<Config: AttributeViewConfig>: View {
                 .frame(minWidth: 0, maxWidth: .infinity))
         }
         self._row = row
+        self._editing = editing
         self.onDelete = onDelete
     }
     
     var body: some View {
         HStack {
-            ForEach(row.indices, id: \.self) { columnIndex in
+            ForEach(viewModel.rows(row), id: \.self) { row in
                 VStack {
-                    subView(columnIndex)
+                    if editing {
+                        subView(row.index)
+                    } else {
+                        switch row.data {
+                        case .enumerated:
+                            Text(row.data.strValue)
+                                .padding(.leading, 15)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                        default:
+                            Text(row.data.strValue)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                        }
+                        
+                    }
                 }
             }
             VStack {
@@ -194,4 +215,16 @@ struct TableRowView_Previews: PreviewProvider {
             Binding_Preview()
         }
     }
+}
+
+final class TableRowViewModel {
+    
+    private var idCache = IDCache<LineAttribute>()
+    
+    func rows(_ attributes: [LineAttribute]) -> [Row<LineAttribute>] {
+        return attributes.enumerated().map {
+            Row(id: idCache.id(for: $1), index: $0, data: $1)
+        }
+    }
+    
 }

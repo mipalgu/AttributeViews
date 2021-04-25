@@ -40,8 +40,6 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     @State var newRow: [LineAttribute]
     @State var selection: Set<Row<[LineAttribute]>> = []
     
-    @State var editMode: Bool = false
-    
     private let viewModel: TableViewViewModel<Config>
     
 //    @EnvironmentObject var config: Config
@@ -130,25 +128,17 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                                 Spacer().frame(width: 20)
                             }
                         }
-                        if editMode {
-                            ForEach(value, id: \.self) { row in
-                                viewModel.rowView(self, forRow: row.index)
-                            }.onMove {
-                                viewModel.moveElements(self, atOffsets: $0, to: $1)
-                            }.onDelete {
-                                viewModel.deleteElements(self, atOffsets: $0)
-                            }
-                        } else {
-                            ForEach(value, id: \.self) { row in
-                                HStack {
-                                    ForEach(row.data.indices, id: \.self) { columnIndex in
-                                        Text("\(columnIndex)").frame(minWidth: 0, maxWidth: .infinity)
-                                    }
-                                }
-                            }
+                        ForEach(value, id: \.self) { row in
+                            viewModel.rowView(self, forRow: row.index)
+                        }.onMove {
+                            viewModel.moveElements(self, atOffsets: $0, to: $1)
+                        }.onDelete {
+                            viewModel.deleteElements(self, atOffsets: $0)
                         }
                     }.frame(minHeight: CGFloat(28 * value.count) + 75)
-                    .onExitCommand { selection = [] }
+                    .onExitCommand {
+                        selection = []
+                    }
                 }
                 VStack {
                     HStack {
@@ -278,6 +268,7 @@ fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: 
         let view: TableRowView<Config> = TableRowView(
             root: root,
             path: path[row],
+            editing: Binding(get: { view.$selection.wrappedValue.contains(view.$value.wrappedValue[row]) }, set: { _ in }),
             onDelete: { self.deleteRow(view, row: row) }
         )
         return view
@@ -308,6 +299,7 @@ fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: ListV
     func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
         return TableRowView<Config>(
             row: value[row],
+            editing: Binding(get: { view.$selection.wrappedValue.contains(view.$value.wrappedValue[row]) }, set: { _ in }),
             onDelete: { self.deleteRow(view, row: row) }
         )
     }
