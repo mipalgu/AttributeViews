@@ -94,13 +94,18 @@ struct TestsScene: App {
     
     var body: some Scene {
         WindowGroup {
-            ForEach(Array(machine.attributes.enumerated()), id: \.0) { (index, group) in
-                AttributeGroupView<DefaultAttributeViewsConfig>(
-                    root: $machine,
-                    path: Machine.path.attributes[index],
-                    label: group.name
-                )//.environmentObject(config)
-            }
+            AttributeGroupView<DefaultAttributeViewsConfig>(
+                root: $machine,
+                path: Machine.path.attributes[0],
+                label: "Variables"
+            )
+//            ForEach(Array(machine.attributes.enumerated()), id: \.0) { (index, group) in
+//                AttributeGroupView<DefaultAttributeViewsConfig>(
+//                    root: $machine,
+//                    path: Machine.path.attributes[index],
+//                    label: group.name
+//                )//.environmentObject(config)
+//            }
         }
     }
 }

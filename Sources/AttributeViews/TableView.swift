@@ -40,6 +40,8 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     @State var newRow: [LineAttribute]
     @State var selection: Set<Row<[LineAttribute]>> = []
     
+    @State var editMode: Bool = false
+    
     private let viewModel: TableViewViewModel<Config>
     
 //    @EnvironmentObject var config: Config
@@ -128,12 +130,22 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                                 Spacer().frame(width: 20)
                             }
                         }
-                        ForEach(value, id: \.self) { row in
-                            viewModel.rowView(self, forRow: row.index)
-                        }.onMove {
-                            viewModel.moveElements(self, atOffsets: $0, to: $1)
-                        }.onDelete {
-                            viewModel.deleteElements(self, atOffsets: $0)
+                        if editMode {
+                            ForEach(value, id: \.self) { row in
+                                viewModel.rowView(self, forRow: row.index)
+                            }.onMove {
+                                viewModel.moveElements(self, atOffsets: $0, to: $1)
+                            }.onDelete {
+                                viewModel.deleteElements(self, atOffsets: $0)
+                            }
+                        } else {
+                            ForEach(value, id: \.self) { row in
+                                HStack {
+                                    ForEach(row.data.indices, id: \.self) { columnIndex in
+                                        Text("\(columnIndex)").frame(minWidth: 0, maxWidth: .infinity)
+                                    }
+                                }
+                            }
                         }
                     }.frame(minHeight: CGFloat(28 * value.count) + 75)
                     .onExitCommand { selection = [] }
