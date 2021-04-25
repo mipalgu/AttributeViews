@@ -15,27 +15,28 @@ import Attributes
 
 public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
     
+    @State var editingValue: Code
+    
     @Binding var value: Code
     @Binding var errors: [String]
     
     let label: () -> Label
     let language: Language
+    let onCommit: ((Code) -> Void)?
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, label: String, language: Language) where Label == Text {
         self.init(root: root, path: path, language: language, label: { Text(label.capitalized) })
     }
     
     public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language) where Label == Text {
-        self.init(value: value, errors: errors, language: language, label: { Text(label.capitalized) })
+        self.init(value: value, errors: errors, language: language, label: { Text(label.capitalized) }, onCommit: nil)
     }
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, label: @escaping () -> Label) {
         self.init(
             value: Binding(
                 get: { root.wrappedValue[keyPath: path.keyPath] },
-                set: {
-                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
-                }
+                set: { _ in }
             ),
             errors: Binding(
                 get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
@@ -43,14 +44,18 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
             ),
             language: language,
             label: label
-        )
+        ) {
+            _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+        }
     }
     
-    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label) {
+    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label, onCommit: ((Code) -> Void)?) {
         self._value = value
         self._errors = errors
         self.label = label
         self.language = language
+        self.onCommit = onCommit
+        self._editingValue = State(initialValue: value.wrappedValue)
     }
     
     public var body: some View {
@@ -59,15 +64,30 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
-            TextEditor(text: $value)
-//                .font(config.fontBody)
-//                .foregroundColor(config.textColor)
-                .disableAutocorrection(true)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 2)
-                )
-                .frame(minHeight: 80)
+            Group {
+                if let onCommit = onCommit {
+                    TextEditor(text: $editingValue)
+                        .disableAutocorrection(true)
+                        .onChange(of: editingValue) {
+                            if $0 == value {
+                                return
+                            }
+                            onCommit($0)
+                            value = $0
+                        }.onChange(of: value) {
+                            if $0 == editingValue {
+                                return
+                            }
+                            editingValue = $0
+                        }
+                } else {
+                    TextEditor(text: $value).disableAutocorrection(true)
+                }
+            }.overlay(
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+            )
+            .frame(minHeight: 80)
         }
     }
 }
