@@ -122,12 +122,12 @@ struct TableRowView<Config: AttributeViewConfig>: View {
                                 editing = row.index
                             }.buttonStyle(PlainButtonStyle())
                             .padding(.leading, 15)
-                            .frame(minWidth: 0, maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 20, maxHeight: 20, alignment: .leading)
                         default:
                             Button(row.data.strValue) {
                                 editing = row.index
                             }.buttonStyle(PlainButtonStyle())
-                            .frame(minWidth: 0, maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 20, maxHeight: 20, alignment: .leading)
                         }
                     }
                 }

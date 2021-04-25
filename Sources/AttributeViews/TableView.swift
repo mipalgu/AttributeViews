@@ -138,8 +138,9 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                         }
                     }.frame(minHeight: CGFloat(28 * value.count) + 75)
                     .onExitCommand {
-                        editing = nil
                         selection.removeAll(keepingCapacity: true)
+                    }.onChange(of: selection) { _ in
+                        editing = nil
                     }
                 }
                 VStack {

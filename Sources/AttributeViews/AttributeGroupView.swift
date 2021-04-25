@@ -57,7 +57,7 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
         ScrollView(.vertical, showsIndicators: true) {
             Form {
                 HStack {
-                    LazyVStack(alignment: .leading) {
+                    VStack(alignment: .leading) {
                         if !label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text(label.pretty).font(.title3)
                             Divider()
