@@ -120,11 +120,12 @@ struct TableRowView<Config: AttributeViewConfig>: View {
                         case .enumerated:
                             Text(row.data.strValue)
                                 .padding(.leading, 15)
-                                .frame(minWidth: 0, maxWidth: .infinity, maxHeight: 28, alignment: .leading)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                         default:
                             Text(row.data.strValue)
-                                .frame(minWidth: 0, maxWidth: .infinity, maxHeight: 28, alignment: .leading)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                         }
+                        
                     }
                 }
             }
