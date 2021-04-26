@@ -60,9 +60,6 @@ public struct TextView<Config: AttributeViewConfig>: View {
             Group {
                 GeometryReader { geometry in
                     Editor(editingText: $value, size: geometry.size, onCommit: onCommit)
-                        .onChange(of: value) {
-                            print($0)
-                        }
                 }.clipShape(RoundedRectangle(cornerRadius: 5))
             }.overlay(
                 RoundedRectangle(cornerRadius: 5)
