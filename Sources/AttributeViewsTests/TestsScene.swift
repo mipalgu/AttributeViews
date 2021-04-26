@@ -92,13 +92,19 @@ struct TestsScene: App {
     
     let config = DefaultAttributeViewsConfig()
     
+    @State var text: String = ""
+    
     var body: some Scene {
         WindowGroup {
-            AttributeGroupView<DefaultAttributeViewsConfig>(
-                root: $machine,
-                path: Machine.path.attributes[0],
-                label: "Variables"
-            )
+            VStack {
+                CodeView<DefaultAttributeViewsConfig, Text>(
+                    root: $machine,
+                    path: Machine.path.states[0].actions[0].implementation,
+                    label: "Root",
+                    language: .swift
+                )
+                CodeView<DefaultAttributeViewsConfig, Text>(value: $text, label: "Binding", language: .swift)
+            }
 //            ForEach(Array(machine.attributes.enumerated()), id: \.0) { (index, group) in
 //                AttributeGroupView<DefaultAttributeViewsConfig>(
 //                    root: $machine,

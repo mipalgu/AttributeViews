@@ -15,8 +15,6 @@ import Attributes
 
 public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
     
-    @State var editingValue: Code
-    
     @Binding var value: Code
     @Binding var errors: [String]
     
@@ -55,7 +53,6 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         self.label = label
         self.language = language
         self.onCommit = onCommit
-        self._editingValue = State(initialValue: value.wrappedValue)
     }
     
     public var body: some View {
@@ -65,24 +62,12 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
                 Text(error).foregroundColor(.red)
             }
             Group {
-                if let onCommit = onCommit {
-                    TextEditor(text: $editingValue)
-                        .disableAutocorrection(true)
-                        .onChange(of: editingValue) {
-                            if $0 == value {
-                                return
-                            }
-                            onCommit($0)
-                            value = $0
-                        }.onChange(of: value) {
-                            if $0 == editingValue {
-                                return
-                            }
-                            editingValue = $0
+                GeometryReader { geometry in
+                    Editor(editingText: $value, size: geometry.size, onCommit: onCommit)
+                        .onChange(of: value) {
+                            print($0)
                         }
-                } else {
-                    TextEditor(text: $value).disableAutocorrection(true)
-                }
+                }.clipShape(RoundedRectangle(cornerRadius: 5))
             }.overlay(
                 RoundedRectangle(cornerRadius: 5)
                     .stroke(Color.gray.opacity(0.3), lineWidth: 2)
@@ -136,3 +121,66 @@ struct CodeView_Previews: PreviewProvider {
         }
     }
 }
+
+#if canImport(Cocoa)
+
+import Cocoa
+
+fileprivate struct Editor: NSViewRepresentable {
+    
+    @Binding var editingText: String
+    let size: CGSize
+    
+    let onCommit: ((String) -> Void)?
+    
+    init(editingText: Binding<String>, size: CGSize, onCommit: ((String) -> Void)? = nil) {
+        self._editingText = editingText
+        self.size = size
+        self.onCommit = onCommit
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        return Coordinator(
+            changeValue: onCommit == nil ? { editingText = $0 } : { _ in },
+            onCommit: onCommit ?? { _ in }
+        )
+    }
+    
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSTextView.scrollableTextView()
+        scrollView.setFrameSize(size)
+        let textView = scrollView.documentView as! NSTextView
+        textView.string = editingText
+        context.coordinator.textView = textView
+        textView.delegate = context.coordinator
+        return scrollView
+    }
+    
+    func updateNSView(_ nsView: NSScrollView, context: Context) {}
+    
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        
+        var textView: NSTextView!
+        
+        let changeValue: (String) -> Void
+        
+        let onCommit: (String) -> Void
+        
+        init(changeValue: @escaping (String) -> Void, onCommit: @escaping (String) -> Void) {
+            self.changeValue = changeValue
+            self.onCommit = onCommit
+        }
+        
+        func textDidEndEditing(_ notification: Notification) {
+            onCommit(textView.string)
+        }
+        
+        func textDidChange(_ notification: Notification) {
+            changeValue(textView.string)
+        }
+        
+    }
+    
+}
+
+#endif
