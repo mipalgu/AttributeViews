@@ -18,6 +18,7 @@ public struct TextView<Config: AttributeViewConfig>: View {
     @Binding var value: String
     @Binding var errors: [String]
     let label: String
+    let onCommit: ((String) -> Void)?
     
 //    @EnvironmentObject var config: Config
     
@@ -25,20 +26,27 @@ public struct TextView<Config: AttributeViewConfig>: View {
         self.init(
             value: Binding(
                 get: { root.wrappedValue[keyPath: path.keyPath] },
-                set: { try? root.wrappedValue.modify(attribute: path, value: $0) }
+                set: { _ in }
             ),
             errors: Binding(
                 get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
                 set: { _ in }
             ),
             label: label
-        )
+        ) {
+            try? root.wrappedValue.modify(attribute: path, value: $0)
+        }
     }
     
     public init(value: Binding<String>, errors: Binding<[String]> = .constant([]), label: String) {
+        self.init(value: value, errors: errors, label: label, onCommit: nil)
+    }
+    
+    private init(value: Binding<String>, errors: Binding<[String]>, label: String, onCommit: ((String) -> Void)?) {
         self._value = value
         self._errors = errors
         self.label = label
+        self.onCommit = onCommit
     }
     
     public var body: some View {
@@ -49,15 +57,17 @@ public struct TextView<Config: AttributeViewConfig>: View {
             ForEach(errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
-            TextEditor(text: $value)
-                .font(.body)
-//                .foregroundColor(config.textColor)
-                .disableAutocorrection(false)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 2)
-                )
-                .frame(minHeight: 80)
+            Group {
+                GeometryReader { geometry in
+                    Editor(editingText: $value, size: geometry.size, onCommit: onCommit)
+                        .onChange(of: value) {
+                            print($0)
+                        }
+                }.clipShape(RoundedRectangle(cornerRadius: 5))
+            }.overlay(
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+            )
         }
     }
 }
