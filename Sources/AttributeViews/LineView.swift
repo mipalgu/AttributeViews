@@ -24,6 +24,22 @@ public struct LineView<Config: AttributeViewConfig>: View {
     
 //    @EnvironmentObject var config: Config
     
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String?>, label: String) {
+        self.init(
+            value: Binding(
+                get: { path.isNil(root.wrappedValue) ? "" : root.wrappedValue[keyPath: path.keyPath] ?? "" },
+                set: { _ in }
+            ),
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+                set: { _ in }
+            ),
+            label: label
+        ) {
+            _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+        }
+    }
+    
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String) {
         self.init(
             value: Binding(
