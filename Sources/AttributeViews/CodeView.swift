@@ -33,7 +33,7 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, label: @escaping () -> Label) {
         self.init(
             value: Binding(
-                get: { root.wrappedValue[keyPath: path.keyPath] },
+                get: { path.isNil(root.wrappedValue) ? "" : root.wrappedValue[keyPath: path.keyPath] },
                 set: { _ in }
             ),
             errors: Binding(

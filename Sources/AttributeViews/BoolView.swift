@@ -23,7 +23,7 @@ public struct BoolView<Config: AttributeViewConfig>: View {
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Bool>, label: String) {
         self.init(
             value: Binding(
-                get: { root.wrappedValue[keyPath: path.keyPath] },
+                get: { path.isNil(root.wrappedValue) ? false : root.wrappedValue[keyPath: path.keyPath] },
                 set: {
                     _ = try? root.wrappedValue.modify(attribute: path, value: $0)
                 }

@@ -49,7 +49,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
         self.init(
             value: Binding(
                 get: {
-                    root.wrappedValue[keyPath: path.keyPath]
+                    path.isNil(root.wrappedValue) ? [] : root.wrappedValue[keyPath: path.keyPath]
                 },
                 set: {
                     _ = try? root.wrappedValue.modify(attribute: path, value: $0)

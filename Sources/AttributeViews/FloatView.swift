@@ -35,7 +35,7 @@ public struct FloatView<Config: AttributeViewConfig>: View {
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Double>, label: String) {
         self.init(
             value: Binding(
-                get: { root.wrappedValue[keyPath: path.keyPath] },
+                get: { path.isNil(root.wrappedValue) ? 0.0 : root.wrappedValue[keyPath: path.keyPath] },
                 set: { _ in }
             ),
             errors: Binding(
