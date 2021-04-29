@@ -64,7 +64,7 @@ import SwiftUI
 
 import Attributes
 
-public struct AttributeView<Config: AttributeViewConfig>: View{
+public struct AttributeView<Config: AttributeViewConfig>: View {
     
     let subView: () -> AnyView
     

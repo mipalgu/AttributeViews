@@ -25,7 +25,7 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? AttributeGroup(name: "") : root.wrappedValue[keyPath: path.keyPath] },
                 set: {
-                _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
                 }
             ),
             label: label
@@ -63,8 +63,14 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
                             Divider()
                         }
                         ForEach(value.fields, id: \.name) { field in
-                            subView(field)
-                            Spacer()
+                            if value.attributes[field.name]?.isBlock == true {
+                                DisclosureGroup(field.name.pretty) {
+                                    subView(field)
+                                }
+                            } else {
+                                subView(field)
+                                Spacer()
+                            }
                         }
                     }
                     Spacer()

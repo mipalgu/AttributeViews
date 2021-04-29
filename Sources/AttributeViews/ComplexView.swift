@@ -66,7 +66,13 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                     HStack {
                         VStack(alignment: .leading) {
                             ForEach(fields, id: \.name) { field in
-                                subView(field)
+                                if value[field.name]?.isBlock == true {
+                                    DisclosureGroup(field.name.pretty) {
+                                        subView(field)
+                                    }
+                                } else {
+                                    subView(field)
+                                }
                             }
                         }.padding(10).background(Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 0.05))
                         Spacer()
