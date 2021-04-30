@@ -60,7 +60,7 @@ public struct EnumerableCollectionView<Config: AttributeViewConfig>: View {
                 }
             } else {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100, maximum: .infinity), spacing: 10, alignment: .topLeading)]) {
-                    ForEach(Array(validValues.sorted()), id: \.self) { element in
+                    ForEach(validValues.sorted(), id: \.self) { element in
                         Toggle(element, isOn: Binding(
                             get: { value.contains(element) },
                             set: { (isChecked) in
