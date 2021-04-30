@@ -38,13 +38,20 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
             label: label,
             fields: fields
         ){
-            AttributeView(root: root, path: path[$0.name].wrappedValue, label: $0.name.pretty)
+            AttributeView(
+                root: root,
+                path: path[$0.name].wrappedValue,
+                label: root.wrappedValue[keyPath: path.keyPath][$0.name]?.isBlock == true ? "" : $0.name.pretty
+            )
         }
     }
     
     public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), label: String, fields: [Field]) {
         self.init(value: value, errors: errors, label: label, fields: fields) {
-            AttributeView(attribute: Binding(value[$0.name])!, label: $0.name.pretty)
+            AttributeView(
+                attribute: Binding(value[$0.name])!,
+                label: value.wrappedValue[$0.name]?.isBlock == true ? "" : $0.name.pretty
+            )
         }
     }
     

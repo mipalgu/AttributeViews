@@ -30,7 +30,11 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
             ),
             label: label
         ) {
-            AttributeView(root: root, path: path.attributes[$0.name].wrappedValue, label: $0.name.pretty)
+            AttributeView(
+                root: root,
+                path: path.attributes[$0.name].wrappedValue,
+                label: root.wrappedValue[keyPath: path.keyPath].attributes[$0.name]?.isBlock == true ? "" : $0.name.pretty
+            )
         }
     }
     
@@ -41,7 +45,7 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
                     get: { value.attributes[field.name].wrappedValue! },
                     set: { value.attributes[field.name].wrappedValue = $0 }
                 ),
-                label: field.name.pretty
+                label: value.wrappedValue.attributes[field.name]?.isBlock == true ? "" : field.name.pretty
             )
         }
     }
