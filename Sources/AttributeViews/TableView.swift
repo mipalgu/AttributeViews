@@ -16,15 +16,7 @@ import GUUI
 
 public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     
-    var row: Binding<[Row<Array<LineAttribute>>]> {
-        get {
-            _value
-        } set {
-            _value = newValue
-        }
-    }
-    
-    var selectedRows: State<Set<Row<[LineAttribute]>>> {
+    var selectedRows: State<Set<Int>> {
         get {
             _selection
         } set {
@@ -38,7 +30,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
     let columns: [BlockAttributeType.TableColumn]
     
     @State var newRow: [LineAttribute]
-    @State var selection: Set<Row<[LineAttribute]>> = []
+    @State var selection: Set<Int> = []
     @State var editing: (row: Int, column: Int)? = nil
     
     private let viewModel: TableViewViewModel<Config>
@@ -129,8 +121,8 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                                 Spacer().frame(width: 20)
                             }
                         }
-                        ForEach(value, id: \.self) { row in
-                            viewModel.rowView(self, forRow: row.index)
+                        ForEach(value.indices, id: \.self) { index in
+                            viewModel.rowView(self, forRow: value[index].index)
                         }.onMove {
                             viewModel.moveElements(self, atOffsets: $0, to: $1)
                         }.onDelete {

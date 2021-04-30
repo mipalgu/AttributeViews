@@ -68,6 +68,7 @@ import GUUI
 public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtocol {
     
     
+    
     @Binding var value: [Row<Attribute>]
     @Binding var errors: [String]
     let label: String
@@ -75,7 +76,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     
     private let viewModel: CollectionViewViewModel<Config>
     
-    @State var selection: Set<Row<Attribute>> = []
+    @State var selection: Set<Int> = []
     @State var creating: Bool = false
     @State var newRow: Attribute
     
@@ -187,13 +188,13 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
             Divider()
             if !value.isEmpty {
                 List(selection: $selection) {
-                    ForEach(value, id: \.self) { element in
+                    ForEach(value.indices, id: \.self) { index in
                         HStack(spacing: 1) {
-                            viewModel.rowView(self, forRow: element.index)
+                            viewModel.rowView(self, forRow: index)
                             Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
                         }.contextMenu {
                             Button("Delete") {
-                                viewModel.deleteRow(self, row: element.index)
+                                viewModel.deleteRow(self, row: index)
                             }.keyboardShortcut(.delete)
                         }
                     }.onMove {

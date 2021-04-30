@@ -69,7 +69,7 @@ protocol ListViewProtocol {
     associatedtype RowData: Hashable
     
     var value: [Row<RowData>] { get nonmutating set }
-    var selection: Set<Row<RowData>> { get nonmutating set }
+    var selection: Set<Int> { get nonmutating set }
     var newRow: RowData { get nonmutating set }
     
 }

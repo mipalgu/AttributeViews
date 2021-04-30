@@ -86,8 +86,8 @@ extension ListViewModelProtocol where View: ListViewProtocol, View.RowData == Ro
         guard row < view.value.count else {
             return
         }
-        let offsets: IndexSet = view.selection.contains(view.value[row])
-            ? IndexSet(view.value.lazy.filter { view.selection.contains($0) }.map { $0.index })
+        let offsets: IndexSet = view.selection.contains(row)
+            ? IndexSet(view.selection)
             : [row]
         self.deleteElements(view, atOffsets: offsets)
     }
