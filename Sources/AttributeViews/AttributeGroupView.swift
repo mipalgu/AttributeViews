@@ -18,6 +18,8 @@ final class AttributeGroupViewModel: ObservableObject {
     
     let value: Binding<AttributeGroup>
     
+    let _errors: (ReadOnlyPath<AttributeGroup, Attribute>) -> [String]
+    
     private var attributesViewModels: [String: AttributeViewModel] = [:]
     
     public var attributes: [String: AttributeViewModel] {
@@ -43,8 +45,13 @@ final class AttributeGroupViewModel: ObservableObject {
         }
     }
     
-    init(value: Binding<AttributeGroup>) {
+    init(value: Binding<AttributeGroup>, errors: @escaping (ReadOnlyPath<AttributeGroup, Attribute>) -> [String]) {
         self.value = value
+        self._errors = errors
+    }
+    
+    func errors(forAttributeAtPath path: ReadOnlyPath<AttributeGroup, Attribute>) -> [String] {
+        return self._errors(path)
     }
     
 }
@@ -90,7 +97,6 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
     @StateObject var viewModel: AttributeGroupViewModel
     let label: String
-    let subView: (String, String) -> AttributeView<Config>
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String) {
         let viewModel = AttributeGroupViewModel(
@@ -99,17 +105,21 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
                 set: {
                     _ = root.wrappedValue.modify(attribute: path, value: $0)
                 }
-            )
+            ),
+            errors: {
+                root.wrappedValue.errorBag.errors(includingDescendantsForPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: path.ancestors)).map(\.message)
+            }
         )
-        self.init(viewModel: viewModel, label: label) { (field, label) in
-            AttributeView(attribute: viewModel.attributes[field]?.value ?? .constant(.bool(false)), label: label)
-        }
+        self.init(viewModel: viewModel, label: label)
     }
     
-    private init(viewModel: AttributeGroupViewModel, label: String, subView: @escaping (String, String) -> AttributeView<Config>) {
+    public init(value: Binding<AttributeGroup>, errors: @escaping (Attributes.ReadOnlyPath<AttributeGroup, Attribute>) -> [String], label: String) {
+        self.init(viewModel: AttributeGroupViewModel(value: value, errors: errors), label: label)
+    }
+    
+    private init(viewModel: AttributeGroupViewModel, label: String) {
         self._viewModel = StateObject(wrappedValue: viewModel)
         self.label = label
-        self.subView = subView
     }
     
     @ViewBuilder
@@ -126,10 +136,16 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
                             if let attribute = viewModel.attributes[field.name] {
                                 if attribute.value.wrappedValue.isBlock == true {
                                     DisclosureGroup(field.name.pretty) {
-                                        subView(field.name, "")
+                                        AttributeView<Config>(
+                                            attribute: viewModel.attributes[field.name]?.value ?? .constant(.bool(false)),
+                                            label: ""
+                                        )
                                     }
                                 } else {
-                                    subView(field.name, field.name.pretty)
+                                    AttributeView<Config>(
+                                        attribute: viewModel.attributes[field.name]?.value ?? .constant(.bool(false)),
+                                        label: field.name.pretty
+                                    )
                                     Spacer()
                                 }
                             }
