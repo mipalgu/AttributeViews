@@ -13,11 +13,73 @@ import SwiftUI
 
 import Attributes
 
+final class ComplexViewModel: ObservableObject {
+    
+    let value: Binding<[String: Attribute]>
+    
+    let errorsBinding: Binding<[String]>
+    
+    let subErrors: (ReadOnlyPath<[String: Attribute], Attribute>) -> [String]
+    
+    private var attributesViewModels: [String: AttributeViewModel] = [:]
+    
+    var errors: [String] {
+        errorsBinding.wrappedValue
+    }
+    
+    public var attributes: [String: AttributeViewModel] {
+        get {
+            Dictionary(uniqueKeysWithValues: value.wrappedValue.keys.map { key in
+                if let viewModel = attributesViewModels[key] {
+                    return (key, viewModel)
+                }
+                let viewModel = AttributeViewModel(
+                    value: Binding(
+                        get: { self.value.wrappedValue[key] ?? .bool(false) },
+                        set: { self.value.wrappedValue[key] = $0 }
+                    )
+                )
+                attributesViewModels[key] = viewModel
+                return (key, viewModel)
+            })
+        } set {
+            value.wrappedValue = newValue.mapValues {
+                $0.value.wrappedValue
+            }
+            objectWillChange.send()
+        }
+    }
+    
+    init(value: Binding<[String: Attribute]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String]) {
+        self.value = value
+        self.errorsBinding = errors
+        self.subErrors = subErrors
+    }
+    
+    func errorBinding(forAttribute fieldName: String) -> Binding<[String]> {
+        return Binding(
+            get: { self.errors(forAttributeAtPath: ReadOnlyPath<[String : Attribute], Attribute>(keyPath: \.[fieldName].wrappedValue, ancestors: [])) },
+            set: { _ in }
+        )
+    }
+    
+    func subErrors(forAttribute fieldName: String) -> (ReadOnlyPath<Attribute, Attribute>) -> [String] {
+        let keyPath: KeyPath<[String: Attribute], Attribute> = \.[fieldName].wrappedValue
+        return {
+            let path = ReadOnlyPath<[String: Attribute], Attribute>(keyPath: keyPath.appending(path: $0.keyPath), ancestors: [])
+            return self.errors(forAttributeAtPath: path)
+        }
+    }
+    
+    func errors(forAttributeAtPath path: ReadOnlyPath<[String: Attribute], Attribute>) -> [String] {
+        subErrors(path)
+    }
+    
+}
+
 public struct ComplexView<Config: AttributeViewConfig>: View {
     
-    @Binding var value: [String: Attribute]
-    @Binding var errors: [String]
-    let subView: (Field) -> AttributeView<Config>
+    @StateObject var viewModel: ComplexViewModel
     let label: String
     let fields: [Field]
     
@@ -28,39 +90,29 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? [:] : root.wrappedValue[keyPath: path.keyPath] },
                 set: {
-                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                    _ = root.wrappedValue.modify(attribute: path, value: $0)
                 }
             ),
             errors: Binding(
                 get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message } },
                 set: { _ in }
             ),
+            subErrors: {
+                root.wrappedValue.errorBag.errors(includingDescendantsForPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
+            },
             label: label,
             fields: fields
-        ){
-            AttributeView(
-                root: root,
-                path: path[$0.name].wrappedValue,
-                label: root.wrappedValue[keyPath: path.keyPath][$0.name]?.isBlock == true ? "" : $0.name.pretty
-            )
-        }
+        )
     }
     
-    public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), label: String, fields: [Field]) {
-        self.init(value: value, errors: errors, label: label, fields: fields) {
-            AttributeView(
-                attribute: Binding(value[$0.name])!,
-                label: value.wrappedValue[$0.name]?.isBlock == true ? "" : $0.name.pretty
-            )
-        }
+    public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String] = { _ in [] }, label: String, fields: [Field]) {
+        self.init(viewModel: ComplexViewModel(value: value, errors: errors, subErrors: subErrors), label: label, fields: fields)
     }
     
-    private init(value: Binding<[String: Attribute]>, errors: Binding<[String]>, label: String, fields: [Field], subView: @escaping (Field) -> AttributeView<Config>) {
-        self._value = value
-        self._errors = errors
+    private init(viewModel: ComplexViewModel, label: String, fields: [Field]) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
         self.label = label
         self.fields = fields
-        self.subView = subView
     }
     
     public var body: some View {
@@ -73,12 +125,23 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                     HStack {
                         VStack(alignment: .leading) {
                             ForEach(fields, id: \.name) { field in
-                                if value[field.name]?.isBlock == true {
+                                if viewModel.attributes[field.name]?.value.wrappedValue.isBlock == true {
                                     DisclosureGroup(field.name.pretty) {
-                                        subView(field)
+                                        AttributeView<Config>(
+                                            attribute: viewModel.attributes[field.name]?.value ?? .constant(.bool(false)),
+                                            errors: viewModel.errorBinding(forAttribute: field.name),
+                                            subErrors: viewModel.subErrors(forAttribute: field.name),
+                                            label: ""
+                                        )
                                     }
                                 } else {
-                                    subView(field)
+                                    AttributeView<Config>(
+                                        attribute: viewModel.attributes[field.name]?.value ?? .constant(.bool(false)),
+                                        errors: viewModel.errorBinding(forAttribute: field.name),
+                                        subErrors: viewModel.subErrors(forAttribute: field.name),
+                                        label: field.name.pretty
+                                    )
+                                    Spacer()
                                 }
                             }
                         }.padding(10).background(Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 0.05))
@@ -137,6 +200,7 @@ struct ComplexView_Previews: PreviewProvider {
             ComplexView<DefaultAttributeViewsConfig>(
                 value: $value,
                 errors: $errors,
+                subErrors: { _ in [] },
                 label: "Binding",
                 fields: ["s": .line, "f": .float]
             ).environmentObject(config)

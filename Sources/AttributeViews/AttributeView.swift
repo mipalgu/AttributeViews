@@ -79,13 +79,24 @@ public struct AttributeView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(attribute: Binding<Attribute>, label: String) {
+    public init(attribute: Binding<Attribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<Attribute, Attribute>) -> [String], label: String) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .line:
-                return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, label: label))
+                return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, errors: errors, label: label))
             case .block:
-                return AnyView(BlockAttributeView<Config>(attribute: attribute.blockAttribute, label: label))
+                return AnyView(
+                    BlockAttributeView<Config>(
+                        attribute: attribute.blockAttribute,
+                        errors: errors,
+                        subErrors: {
+                            let keyPath: KeyPath<Attribute, BlockAttribute> = \.blockAttribute
+                            let path = ReadOnlyPath(keyPath: keyPath.appending(path: $0.keyPath), ancestors: [])
+                            return subErrors(path)
+                        },
+                        label: label
+                    )
+                )
             }
         }
     }

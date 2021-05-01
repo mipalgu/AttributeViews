@@ -14,48 +14,6 @@ import SwiftUI
 
 import Attributes
 
-final class AttributeGroupViewModel: ObservableObject {
-    
-    let value: Binding<AttributeGroup>
-    
-    let _errors: (ReadOnlyPath<AttributeGroup, Attribute>) -> [String]
-    
-    private var attributesViewModels: [String: AttributeViewModel] = [:]
-    
-    public var attributes: [String: AttributeViewModel] {
-        get {
-            Dictionary(uniqueKeysWithValues: value.wrappedValue.attributes.keys.map { key in
-                if let viewModel = attributesViewModels[key] {
-                    return (key, viewModel)
-                }
-                let viewModel = AttributeViewModel(
-                    value: Binding(
-                        get: { self.value.wrappedValue.attributes[key] ?? .bool(false) },
-                        set: { self.value.wrappedValue.attributes[key] = $0 }
-                    )
-                )
-                attributesViewModels[key] = viewModel
-                return (key, viewModel)
-            })
-        } set {
-            value.wrappedValue.attributes = newValue.mapValues {
-                $0.value.wrappedValue
-            }
-            objectWillChange.send()
-        }
-    }
-    
-    init(value: Binding<AttributeGroup>, errors: @escaping (ReadOnlyPath<AttributeGroup, Attribute>) -> [String]) {
-        self.value = value
-        self._errors = errors
-    }
-    
-    func errors(forAttributeAtPath path: ReadOnlyPath<AttributeGroup, Attribute>) -> [String] {
-        return self._errors(path)
-    }
-    
-}
-
 final class AttributeViewModel: ObservableObject {
     
     let value: Binding<Attribute>
@@ -95,30 +53,34 @@ final class AttributeViewModel: ObservableObject {
 
 public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
-    @StateObject var viewModel: AttributeGroupViewModel
+    let value: Binding<AttributeGroup>
+    let errors: Binding<[String]>
+    let subErrors: (ReadOnlyPath<[String: Attribute], Attribute>) -> [String]
     let label: String
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String) {
-        let viewModel = AttributeGroupViewModel(
+        self.init(
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? AttributeGroup(name: "") : root.wrappedValue[keyPath: path.keyPath] },
                 set: {
                     _ = root.wrappedValue.modify(attribute: path, value: $0)
                 }
             ),
-            errors: {
-                root.wrappedValue.errorBag.errors(includingDescendantsForPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: path.ancestors)).map(\.message)
-            }
+            errors: Binding(
+                get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
+                set: { _ in }
+            ),
+            subErrors: {
+                root.wrappedValue.errorBag.errors(includingDescendantsForPath: ReadOnlyPath(keyPath: path.attributes.keyPath.appending(path: $0.keyPath), ancestors: path.ancestors)).map(\.message)
+            },
+            label: label
         )
-        self.init(viewModel: viewModel, label: label)
     }
     
-    public init(value: Binding<AttributeGroup>, errors: @escaping (Attributes.ReadOnlyPath<AttributeGroup, Attribute>) -> [String], label: String) {
-        self.init(viewModel: AttributeGroupViewModel(value: value, errors: errors), label: label)
-    }
-    
-    private init(viewModel: AttributeGroupViewModel, label: String) {
-        self._viewModel = StateObject(wrappedValue: viewModel)
+    public init(value: Binding<AttributeGroup>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (Attributes.ReadOnlyPath<[String: Attribute], Attribute>) -> [String], label: String) {
+        self.value = value
+        self.errors = errors
+        self.subErrors = subErrors
         self.label = label
     }
     
@@ -126,33 +88,7 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     public var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             Form {
-                HStack {
-                    VStack(alignment: .leading) {
-                        if !label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            Text(label.pretty).font(.title3)
-                            Divider()
-                        }
-                        ForEach(viewModel.value.wrappedValue.fields, id: \.name) { field in
-                            if let attribute = viewModel.attributes[field.name] {
-                                if attribute.value.wrappedValue.isBlock == true {
-                                    DisclosureGroup(field.name.pretty) {
-                                        AttributeView<Config>(
-                                            attribute: viewModel.attributes[field.name]?.value ?? .constant(.bool(false)),
-                                            label: ""
-                                        )
-                                    }
-                                } else {
-                                    AttributeView<Config>(
-                                        attribute: viewModel.attributes[field.name]?.value ?? .constant(.bool(false)),
-                                        label: field.name.pretty
-                                    )
-                                    Spacer()
-                                }
-                            }
-                        }
-                    }
-                    Spacer()
-                }
+                ComplexView<Config>(value: value.attributes, errors: errors, subErrors: subErrors, label: label, fields: value.wrappedValue.fields)
             }
         }
     }

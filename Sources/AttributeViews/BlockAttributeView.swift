@@ -36,7 +36,7 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
         }
     }
     
-    public init(attribute: Binding<BlockAttribute>, label: String) {
+    public init(attribute: Binding<BlockAttribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<BlockAttribute, Attribute>) -> [String], label: String) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .code(let language):
@@ -48,7 +48,19 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
             case .table(let columns):
                 return AnyView(TableView<Config>(value: attribute.tableValue, label: label, columns: columns))
             case .complex(let fields):
-                return AnyView(ComplexView<Config>(value: attribute.complexValue, label: label, fields: fields))
+                return AnyView(
+                    ComplexView<Config>(
+                        value: attribute.complexValue,
+                        errors: errors,
+                        subErrors: {
+                            let keyPath: KeyPath<BlockAttribute, [String: Attribute]> = \.complexValue
+                            let path = ReadOnlyPath<BlockAttribute, Attribute>(keyPath: keyPath.appending(path: $0.keyPath), ancestors: [])
+                            return subErrors(path)
+                        },
+                        label: label,
+                        fields: fields
+                    )
+                )
             case .enumerableCollection(let validValues):
                 return AnyView(EnumerableCollectionView<Config>(value: attribute.enumerableCollectionValue, label: label, validValues: validValues))
             }
