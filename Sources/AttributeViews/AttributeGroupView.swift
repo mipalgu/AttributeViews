@@ -14,43 +14,6 @@ import SwiftUI
 
 import Attributes
 
-final class AttributeViewModel: ObservableObject {
-    
-    let value: Binding<Attribute>
-    
-    var attribute: Attribute {
-        get {
-            value.wrappedValue
-        } set {
-            value.wrappedValue = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    var blockAttribute: BlockAttribute {
-        get {
-            value.wrappedValue.blockAttribute
-        } set {
-            value.wrappedValue.blockAttribute = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    var lineAttribute: LineAttribute {
-        get {
-            value.wrappedValue.lineAttribute
-        } set {
-            value.wrappedValue.lineAttribute = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    init(value: Binding<Attribute>) {
-        self.value = value
-    }
-    
-}
-
 public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
     let value: Binding<AttributeGroup>
