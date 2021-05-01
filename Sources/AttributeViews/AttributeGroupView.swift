@@ -40,7 +40,7 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
         )
     }
     
-    public init(value: Binding<AttributeGroup>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (Attributes.ReadOnlyPath<[String: Attribute], Attribute>) -> [String], label: String) {
+    public init(value: Binding<AttributeGroup>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (Attributes.ReadOnlyPath<[String: Attribute], Attribute>) -> [String] = { _ in [] }, label: String) {
         self.value = value
         self.errors = errors
         self.subErrors = subErrors

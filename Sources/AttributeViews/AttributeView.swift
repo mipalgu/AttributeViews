@@ -79,7 +79,7 @@ public struct AttributeView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(attribute: Binding<Attribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<Attribute, Attribute>) -> [String], label: String) {
+    public init(attribute: Binding<Attribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<Attribute, Attribute>) -> [String] = { _ in [] }, label: String) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .line:

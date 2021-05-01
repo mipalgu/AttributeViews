@@ -16,20 +16,9 @@ import GUUI
 
 public struct TableView<Config: AttributeViewConfig>: View {
     
-    var selectedRows: State<Set<Int>> {
-        get {
-            _selection
-        } set {
-            _selection = newValue
-        }
-    }
-    
     let label: String
     
-    @State var newRow: [LineAttribute]
-    @State var selection: Set<Int> = []
-    
-    @StateObject var viewModel: TableViewModel<Config>
+    @StateObject var viewModel: TableViewModel
     
 //    @EnvironmentObject var config: Config
     
@@ -47,10 +36,9 @@ public struct TableView<Config: AttributeViewConfig>: View {
         )
     }
     
-    private init(viewModel: TableViewModel<Config>, label: String) {
+    private init(viewModel: TableViewModel, label: String) {
         self._viewModel = StateObject(wrappedValue: viewModel)
         self.label = label
-        self._newRow = State(initialValue: viewModel.newRow)
     }
     
     public var body: some View {
@@ -63,7 +51,7 @@ public struct TableView<Config: AttributeViewConfig>: View {
             }
             ZStack(alignment: .bottom) {
                 VStack {
-                    List(selection: $selection) {
+                    List(selection: $viewModel.selection) {
                         VStack {
                             HStack {
                                 ForEach(viewModel.columns, id: \.name) { column in
@@ -79,34 +67,31 @@ public struct TableView<Config: AttributeViewConfig>: View {
                         ForEach(viewModel.value.indices, id: \.self) { index in
                             TableRowView<Config>(
                                 row: viewModel.row(atIndex: index),
-                                onDelete: { viewModel.deleteRow(self, row: index) }
+                                onDelete: { viewModel.deleteRow(row: index) }
                             )
                         }.onMove {
-                            viewModel.moveElements(self, atOffsets: $0, to: $1)
+                            viewModel.moveElements(atOffsets: $0, to: $1)
                         }.onDelete {
-                            viewModel.deleteElements(self, atOffsets: $0)
+                            viewModel.deleteElements(atOffsets: $0)
                         }
                     }.frame(minHeight: CGFloat(28 * viewModel.value.count) + 75)
                     .onExitCommand {
-                        selection.removeAll(keepingCapacity: true)
+                        viewModel.selection.removeAll(keepingCapacity: true)
                     }
                 }
                 VStack {
                     HStack {
-                        ForEach(newRow.indices, id: \.self) { index in
+                        ForEach(viewModel.newRow.indices, id: \.self) { index in
                             VStack {
                                 LineAttributeView<Config>(
-                                    attribute: $newRow[index],
-                                    errors: Binding(get: { viewModel.errors(self, forRow: viewModel.value.count)[index] }, set: {_ in }),
+                                    attribute: $viewModel.newRow[index],
+                                    errors: Binding(get: { viewModel.errors(forRow: viewModel.value.count)[index] }, set: {_ in }),
                                     label: ""
                                 )
-                                ForEach(viewModel.errors(self, forRow: viewModel.value.count)[index], id: \.self) { error in
-                                    Text(error).foregroundColor(.red)
-                                }
                             }.frame(minWidth: 0, maxWidth: .infinity)
                         }
                         VStack {
-                            Button(action: { viewModel.addElement(self) }, label: {
+                            Button(action: { viewModel.addElement() }, label: {
                                 Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                             }).buttonStyle(PlainButtonStyle())
                               .foregroundColor(.blue)
@@ -191,11 +176,12 @@ struct TableView_Previews: PreviewProvider {
 
 protocol TableViewDataSource {
     
-    var newRow: [LineAttribute] { get }
+    var emptyRow: [LineAttribute] { get }
     
     func addElement()
     func deleteElements(atOffsets offsets: IndexSet)
     func moveElements(atOffsets source: IndexSet, to destination: Int)
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel
     
 }
 
@@ -203,14 +189,10 @@ struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
     
     let root: Binding<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
-    let columns: [BlockAttributeType.TableColumn]
-    
-    var newRow: [LineAttribute] {
-        columns.map(\.type.defaultValue)
-    }
+    let emptyRow: [LineAttribute]
     
     func addElement() {
-        _ = root.wrappedValue.addItem(newRow, to: path)
+        _ = root.wrappedValue.addItem(emptyRow, to: path)
     }
     
     func deleteElements(atOffsets offsets: IndexSet) {
@@ -221,19 +203,32 @@ struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
         _ = root.wrappedValue.moveItems(table: path, from: source, to: destination)
     }
     
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
+        let elementPath = path[row][column]
+        return LineAttributeViewModel(
+            value: Binding(
+                get: {
+                    elementPath.isNil(root.wrappedValue) ? .bool(false) : root.wrappedValue[keyPath: elementPath.keyPath]
+                },
+                set: {
+                    guard !elementPath.isNil(root.wrappedValue) else {
+                        return
+                    }
+                    root.wrappedValue[keyPath: elementPath.path] = $0
+                }
+            )
+        )
+    }
+    
 }
 
 struct BindingTableViewDataSource: TableViewDataSource {
     
     let value: Binding<[[LineAttribute]]>
-    let columns: [BlockAttributeType.TableColumn]
-    
-    var newRow: [LineAttribute] {
-        columns.map(\.type.defaultValue)
-    }
+    let emptyRow: [LineAttribute]
     
     func addElement() {
-        value.wrappedValue.append(newRow)
+        value.wrappedValue.append(emptyRow)
     }
     
     func deleteElements(atOffsets offsets: IndexSet) {
@@ -244,16 +239,35 @@ struct BindingTableViewDataSource: TableViewDataSource {
         value.wrappedValue.move(fromOffsets: source, toOffset: destination)
     }
     
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
+        return LineAttributeViewModel(
+            value: Binding(
+                get: {
+                    row < value.wrappedValue.count && column < value.wrappedValue[row].count ? value.wrappedValue[row][column] : .bool(false)
+                },
+                set: {
+                    guard row < value.wrappedValue.count && column < value.wrappedValue[row].count else {
+                        return
+                    }
+                    value.wrappedValue[row][column] = $0
+                }
+            )
+        )
+    }
+    
 }
 
-final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
+final class TableViewModel: ObservableObject {
     
-    private let valueBinding: Binding<[[LineAttribute]]>
+    private var valueBinding: Binding<[[LineAttribute]]>
     let errors: Binding<[String]>
     let subErrors: (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String]
     let columns: [BlockAttributeType.TableColumn]
     
-    private var rows: [[LineAttributeViewModel]] = []
+    @Published var newRow: [LineAttribute]
+    @Published var selection: Set<Int> = []
+    
+    var rows: [[LineAttributeViewModel]] = []
     
     var dataSource: TableViewDataSource
     
@@ -270,8 +284,8 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         errors.wrappedValue
     }
     
-    var newRow: [LineAttribute] {
-        dataSource.newRow
+    var emptyRow: [LineAttribute] {
+        dataSource.emptyRow
     }
     
     init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
@@ -287,7 +301,9 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
             root.wrappedValue.errorBag.errors(forPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
         }
         self.columns = columns
-        self.dataSource = KeyPathTableViewDataSource(root: root, path: path, columns: columns)
+        let emptyRow = columns.map(\.type.defaultValue)
+        self.dataSource = KeyPathTableViewDataSource(root: root, path: path, emptyRow: emptyRow)
+        self.newRow = emptyRow
     }
     
     init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
@@ -295,36 +311,45 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         self.errors = errors
         self.subErrors = subErrors
         self.columns = columns
-        self.dataSource = BindingTableViewDataSource(value: value, columns: columns)
+        let emptyRow = columns.map(\.type.defaultValue)
+        self.dataSource = BindingTableViewDataSource(value: value, emptyRow: emptyRow)
+        self.newRow = emptyRow
     }
     
-    func errors(_ view: TableView<Config>, forRow _: Int) -> [[String]] {
+    func errors(forRow _: Int) -> [[String]] {
         columns.map { _ in [] }
     }
     
-    func addElement(_ view: TableView<Config>) {
+    func addElement() {
         dataSource.addElement()
+        let _ = row(atIndex: rows.count)
+        newRow = dataSource.emptyRow
+        let values = valueBinding.wrappedValue
+        valueBinding.update()
+        let values2 = valueBinding.wrappedValue
         objectWillChange.send()
     }
     
-    func deleteRow(_ view: TableView<Config>, row: Int) {
+    func deleteRow(row: Int) {
         guard row < value.count else {
             return
         }
-        let offsets: IndexSet = view.selection.contains(row)
-            ? IndexSet(view.selection)
+        let offsets: IndexSet = selection.contains(row)
+            ? IndexSet(selection)
             : [row]
         dataSource.deleteElements(atOffsets: offsets)
+        rows.removeLast(offsets.count)
         objectWillChange.send()
     }
     
-    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
+    func deleteElements(atOffsets offsets: IndexSet) {
         dataSource.deleteElements(atOffsets: offsets)
+        rows.removeLast(offsets.count)
         objectWillChange.send()
     }
     
-    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        view.selection.removeAll()
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
+        selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
         objectWillChange.send()
     }
@@ -334,22 +359,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
             rows.append(
                 contentsOf: (rows.count...index).map { row in
                     columns.indices.map { column in
-                        LineAttributeViewModel(
-                            value: Binding(
-                                get: {
-                                    guard row < self.value.count && column < self.value[row].count else {
-                                        return .bool(false)
-                                    }
-                                    return self.value[row][column]
-                                },
-                                set: {
-                                    guard row < self.value.count && column < self.value[row].count else {
-                                        return
-                                    }
-                                    self.value[row][column] = $0
-                                }
-                            )
-                        )
+                        dataSource.viewModel(forElementAtRow: row, column: column)
                     }
                 }
             )

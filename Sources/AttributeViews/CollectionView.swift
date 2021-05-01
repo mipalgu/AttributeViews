@@ -67,8 +67,6 @@ import GUUI
 
 public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtocol {
     
-    
-    
     @Binding var value: [Row<Attribute>]
     @Binding var errors: [String]
     let label: String
