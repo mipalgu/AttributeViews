@@ -65,71 +65,57 @@ import SwiftUI
 import Attributes
 import GUUI
 
+final class TableRowViewModel {
+    
+    let row: [LineAttributeViewModel]
+    let errors: Binding<[[String]]>
+    
+    init(row: [LineAttributeViewModel], errors: Binding<[[String]]>) {
+        self.row = row
+        self.errors = errors
+    }
+    
+    func row(atIndex index: Int) -> LineAttributeViewModel {
+        guard index < row.count else {
+            return LineAttributeViewModel(value: .constant(.bool(false)))
+        }
+        return row[index]
+    }
+    
+    func errorBinding(atIndex index: Int) -> Binding<[String]> {
+        guard index < errors.wrappedValue.count else {
+            return .constant([])
+        }
+        return errors[index]
+    }
+    
+}
+
 struct TableRowView<Config: AttributeViewConfig>: View {
     
-    let subView: (Int) -> AnyView
-    @Binding var row: [LineAttribute]
-    @Binding var editing: Int?
+    let viewModel: TableRowViewModel
     let onDelete: () -> Void
-    
-    let viewModel = TableRowViewModel()
     
 //    @EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(
-        root: Binding<Root>,
-        path: Attributes.Path<Root, [LineAttribute]>,
-        editing: Binding<Int?> = .constant(nil),
-        onDelete: @escaping () -> Void = {}
-    ) {
-        self.subView = {
-            AnyView(LineAttributeView<Config>(root: root, path: path[$0], label: "")
-                .frame(minWidth: 0, maxWidth: .infinity))
-        }
-        self._row = Binding(
-            get: { root.wrappedValue[keyPath: path.keyPath] },
-            set: { _ = try? root.wrappedValue.modify(attribute: path, value: $0) }
-        )
-        self._editing = editing
-        self.onDelete = onDelete
-    }
-    
-    public init(
-        row: Binding<[LineAttribute]>,
+    init(
+        row: [LineAttributeViewModel],
         errors: Binding<[[String]]> = .constant([]),
-        editing: Binding<Int?> = .constant(nil),
         onDelete: @escaping () -> Void = {}
     ) {
-        self.subView = {
-            AnyView(LineAttributeView<Config>(attribute: row[$0], errors: errors[$0], label: "")
-                .frame(minWidth: 0, maxWidth: .infinity))
-        }
-        self._row = row
-        self._editing = editing
+        self.viewModel = TableRowViewModel(row: row, errors: errors)
         self.onDelete = onDelete
     }
     
     var body: some View {
         HStack {
-            ForEach(viewModel.rows(row), id: \.self) { row in
+            ForEach(viewModel.row.indices) { index in
                 VStack {
-                    if editing == row.index {
-                        subView(row.index)
-                    } else {
-                        switch row.data {
-                        case .enumerated:
-                            Button(row.data.strValue) {
-                                editing = row.index
-                            }.buttonStyle(PlainButtonStyle())
-                            .padding(.leading, 15)
-                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 20, maxHeight: 20, alignment: .leading)
-                        default:
-                            Button(row.data.strValue) {
-                                editing = row.index
-                            }.buttonStyle(PlainButtonStyle())
-                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 20, maxHeight: 20, alignment: .leading)
-                        }
-                    }
+                    LineAttributeView<Config>(
+                        attribute: viewModel.row(atIndex: index).lineAttributeBinding,
+                        errors: viewModel.errorBinding(atIndex: index),
+                        label: ""
+                    ).frame(minWidth: 0, maxWidth: .infinity)
                 }
             }
             VStack {
@@ -145,49 +131,49 @@ struct TableRowView<Config: AttributeViewConfig>: View {
 
 struct TableRowView_Previews: PreviewProvider {
     
-    struct Root_Preview: View {
-        
-        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-            AttributeGroup(
-                name: "Fields", fields: [
-                    Field(
-                        name: "table",
-                        type: .table(columns: [
-                            ("bool", .bool),
-                            ("int", .integer),
-                            ("float", .float),
-                            ("enum", .enumerated(validValues: ["a", "b", "c"])),
-                            ("line", .line)
-                        ])
-                    )
-                ],
-                attributes: [
-                    "table": .table([
-                        [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
-                    ], columns: [
-                        ("bool", .bool),
-                        ("int", .integer),
-                        ("float", .float),
-                        ("enum", .enumerated(validValues: ["a", "b", "c"])),
-                        ("line", .line)
-                    ])
-                ],
-                metaData: [:]
-            )
-        ])
-        
-        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue[0]
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            TableRowView<DefaultAttributeViewsConfig>(
-                root: $modifiable,
-                path: path
-            ).environmentObject(config)
-        }
-        
-    }
+//    struct Root_Preview: View {
+//        
+//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+//            AttributeGroup(
+//                name: "Fields", fields: [
+//                    Field(
+//                        name: "table",
+//                        type: .table(columns: [
+//                            ("bool", .bool),
+//                            ("int", .integer),
+//                            ("float", .float),
+//                            ("enum", .enumerated(validValues: ["a", "b", "c"])),
+//                            ("line", .line)
+//                        ])
+//                    )
+//                ],
+//                attributes: [
+//                    "table": .table([
+//                        [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
+//                    ], columns: [
+//                        ("bool", .bool),
+//                        ("int", .integer),
+//                        ("float", .float),
+//                        ("enum", .enumerated(validValues: ["a", "b", "c"])),
+//                        ("line", .line)
+//                    ])
+//                ],
+//                metaData: [:]
+//            )
+//        ])
+//
+//        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue[0]
+//
+//        let config = DefaultAttributeViewsConfig()
+//
+//        var body: some View {
+//            TableRowView<DefaultAttributeViewsConfig>(
+//                root: $modifiable,
+//                path: path
+//            ).environmentObject(config)
+//        }
+//
+//    }
     
     struct Binding_Preview: View {
         
@@ -204,30 +190,23 @@ struct TableRowView_Previews: PreviewProvider {
         let config = DefaultAttributeViewsConfig()
         
         var body: some View {
-            TableRowView<DefaultAttributeViewsConfig>(row: $value, errors: $errors).environmentObject(config)
+            TableRowView<DefaultAttributeViewsConfig>(
+                row: value.indices.map {
+                    LineAttributeViewModel(value: $value[$0])
+                },
+                errors: $errors
+            ).environmentObject(config)
         }
         
     }
     
     static var previews: some View {
         VStack {
-            Root_Preview()
-            Spacer()
-            Divider()
-            Spacer()
+//            Root_Preview()
+//            Spacer()
+//            Divider()
+//            Spacer()
             Binding_Preview()
         }
     }
-}
-
-final class TableRowViewModel {
-    
-    private var idCache = IDCache<LineAttribute>()
-    
-    func rows(_ attributes: [LineAttribute]) -> [Row<LineAttribute>] {
-        return attributes.enumerated().map {
-            Row(id: idCache.id(for: $1), index: $0, data: $1)
-        }
-    }
-    
 }

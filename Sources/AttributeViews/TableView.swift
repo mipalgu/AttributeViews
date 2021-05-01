@@ -14,7 +14,7 @@ import SwiftUI
 import Attributes
 import GUUI
 
-public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
+public struct TableView<Config: AttributeViewConfig>: View {
     
     var selectedRows: State<Set<Int>> {
         get {
@@ -24,77 +24,32 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
         }
     }
     
-    @Binding var value: [Row<[LineAttribute]>]
-    @Binding var errors: [String]
     let label: String
-    let columns: [BlockAttributeType.TableColumn]
     
     @State var newRow: [LineAttribute]
     @State var selection: Set<Int> = []
-    @State var editing: (row: Int, column: Int)? = nil
     
-    private let viewModel: TableViewViewModel<Config>
+    @StateObject var viewModel: TableViewModel<Config>
     
 //    @EnvironmentObject var config: Config
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
         self.init(
-            value: Binding(
-                get: {
-                    path.isNil(root.wrappedValue) ? [] : root.wrappedValue[keyPath: path.keyPath]
-                },
-                set: {
-                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
-                }
-            ),
-            errors: Binding(
-                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
-                set: { _ in }
-            ),
-            label: label,
-            columns: columns,
-            viewModel: TableViewViewModel(
-                TableViewKeyPathViewModel(
-                    root: root,
-                    path: path,
-                    columns: columns
-                )
-            )
+            viewModel: TableViewModel(root: root, path: path, columns: columns),
+            label: label
         )
     }
     
-    public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), label: String, columns: [BlockAttributeType.TableColumn]) {
+    public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String] = { _ in [] }, label: String, columns: [BlockAttributeType.TableColumn]) {
         self.init(
-            value: value,
-            errors: errors,
-            label: label,
-            columns: columns,
-            viewModel: TableViewViewModel(
-                TableViewBindingViewModel(
-                    value: value,
-                    errors: errors,
-                    columns: columns
-                )
-            )
+            viewModel: TableViewModel(value: value, errors: errors, subErrors: subErrors, columns: columns),
+            label: label
         )
     }
     
-    private init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, label: String, columns: [BlockAttributeType.TableColumn], viewModel: TableViewViewModel<Config>) {
-        var idCache = IDCache<[LineAttribute]>()
-        self._value = Binding(
-            get: {
-                value.wrappedValue.enumerated().map { (index, row) in
-                    Row(id: idCache.id(for: row), index: index, data: row)
-                }
-            },
-            set: {
-                value.wrappedValue = $0.map(\.data)
-            }
-        )
-        self._errors = errors
+    private init(viewModel: TableViewModel<Config>, label: String) {
+        self._viewModel = StateObject(wrappedValue: viewModel)
         self.label = label
-        self.columns = columns
-        self.viewModel = viewModel
         self._newRow = State(initialValue: viewModel.newRow)
     }
     
@@ -103,7 +58,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
             Text(label.pretty.capitalized)
                 .font(.headline)
 //                .foregroundColor(config.textColor)
-            ForEach(errors, id: \.self) { error in
+            ForEach(viewModel.listErrors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
             ZStack(alignment: .bottom) {
@@ -111,7 +66,7 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                     List(selection: $selection) {
                         VStack {
                             HStack {
-                                ForEach(columns, id: \.name) { column in
+                                ForEach(viewModel.columns, id: \.name) { column in
                                     Text(column.name.pretty)
                                         .font(.caption)
                                         .foregroundColor(.secondary)
@@ -121,18 +76,19 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                                 Spacer().frame(width: 20)
                             }
                         }
-                        ForEach(value.indices, id: \.self) { index in
-                            viewModel.rowView(self, forRow: value[index].index)
+                        ForEach(viewModel.value.indices, id: \.self) { index in
+                            TableRowView<Config>(
+                                row: viewModel.row(atIndex: index),
+                                onDelete: { viewModel.deleteRow(self, row: index) }
+                            )
                         }.onMove {
                             viewModel.moveElements(self, atOffsets: $0, to: $1)
                         }.onDelete {
                             viewModel.deleteElements(self, atOffsets: $0)
                         }
-                    }.frame(minHeight: CGFloat(28 * value.count) + 75)
+                    }.frame(minHeight: CGFloat(28 * viewModel.value.count) + 75)
                     .onExitCommand {
                         selection.removeAll(keepingCapacity: true)
-                    }.onChange(of: selection) { _ in
-                        editing = nil
                     }
                 }
                 VStack {
@@ -141,10 +97,10 @@ public struct TableView<Config: AttributeViewConfig>: View, ListViewProtocol {
                             VStack {
                                 LineAttributeView<Config>(
                                     attribute: $newRow[index],
-                                    errors: Binding(get: { viewModel.errors(self, forRow: value.count)[index] }, set: {_ in }),
+                                    errors: Binding(get: { viewModel.errors(self, forRow: viewModel.value.count)[index] }, set: {_ in }),
                                     label: ""
                                 )
-                                ForEach(viewModel.errors(self, forRow: value.count)[index], id: \.self) { error in
+                                ForEach(viewModel.errors(self, forRow: viewModel.value.count)[index], id: \.self) { error in
                                     Text(error).foregroundColor(.red)
                                 }
                             }.frame(minWidth: 0, maxWidth: .infinity)
@@ -233,92 +189,172 @@ struct TableView_Previews: PreviewProvider {
     }
 }
 
-fileprivate typealias TableViewViewModel<Config: AttributeViewConfig> = AnyListViewModel<TableView<Config>, [LineAttribute], TableRowView<Config>, [String]>
-
-fileprivate struct TableViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol, RootPathContainer {
+protocol TableViewDataSource {
     
-    typealias RowData = [LineAttribute]
+    var newRow: [LineAttribute] { get }
+    
+    func addElement()
+    func deleteElements(atOffsets offsets: IndexSet)
+    func moveElements(atOffsets source: IndexSet, to destination: Int)
+    
+}
+
+struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
     
     let root: Binding<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
     let columns: [BlockAttributeType.TableColumn]
     
     var newRow: [LineAttribute] {
-        return columns.map(\.type.defaultValue)
+        columns.map(\.type.defaultValue)
     }
     
-    init(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
-        self.root = root
-        self.path = path
-        self.columns = columns
+    func addElement() {
+        _ = root.wrappedValue.addItem(newRow, to: path)
     }
     
-    func errors(_ view: TableView<Config>, forRow row: Int) -> [[String]] {
-        return view.columns.indices.map {
-            root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row][$0]).map(\.message)
-        }
+    func deleteElements(atOffsets offsets: IndexSet) {
+        _ = root.wrappedValue.deleteItems(table: path, items: offsets)
     }
     
-    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
-        let view: TableRowView<Config> = TableRowView(
-            root: root,
-            path: path[row],
-            editing: Binding(
-                get: {
-                    guard view.$editing.wrappedValue?.row == row else {
-                        return nil
-                    }
-                    return view.$editing.wrappedValue?.column
-                },
-                set: {
-                    view.$editing.wrappedValue = $0.map { (row, $0) }
-                }
-            ),
-            onDelete: { self.deleteRow(view, row: row) }
-        )
-        return view
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
+        _ = root.wrappedValue.moveItems(table: path, from: source, to: destination)
     }
     
 }
 
-fileprivate struct TableViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol, ValueErrorsContainer {
+struct BindingTableViewDataSource: TableViewDataSource {
     
     let value: Binding<[[LineAttribute]]>
-    let errors: Binding<[String]>
     let columns: [BlockAttributeType.TableColumn]
     
     var newRow: [LineAttribute] {
         columns.map(\.type.defaultValue)
     }
     
-    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, columns: [BlockAttributeType.TableColumn]) {
-        self.value = value
-        self.errors = errors
-        self.columns = columns
+    func addElement() {
+        value.wrappedValue.append(newRow)
     }
     
-    func errors(_ view: TableView<Config>, forRow _: Int) -> [[String]] {
-        view.columns.map { _ in [] }
+    func deleteElements(atOffsets offsets: IndexSet) {
+        value.wrappedValue.remove(atOffsets: offsets)
     }
     
-    func rowView(_ view: TableView<Config>, forRow row: Int) -> TableRowView<Config> {
-        return TableRowView<Config>(
-            row: value[row],
-            editing: Binding(
-                get: {
-                    guard view.$editing.wrappedValue?.row == row else {
-                        return nil
-                    }
-                    return view.$editing.wrappedValue?.column
-                },
-                set: {
-                    view.$editing.wrappedValue = $0.map { (row, $0) }
-                }
-            ),
-            onDelete: { self.deleteRow(view, row: row) }
-        )
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
+        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
     }
     
 }
 
-
+final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
+    
+    private let valueBinding: Binding<[[LineAttribute]]>
+    let errors: Binding<[String]>
+    let subErrors: (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String]
+    let columns: [BlockAttributeType.TableColumn]
+    
+    private var rows: [[LineAttributeViewModel]] = []
+    
+    var dataSource: TableViewDataSource
+    
+    var value: [[LineAttribute]] {
+        get {
+            valueBinding.wrappedValue
+        } set {
+            valueBinding.wrappedValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    var listErrors: [String] {
+        errors.wrappedValue
+    }
+    
+    var newRow: [LineAttribute] {
+        dataSource.newRow
+    }
+    
+    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
+        self.valueBinding = Binding(
+            get: { root.wrappedValue[keyPath: path.keyPath] },
+            set: { _ = root.wrappedValue.modify(attribute: path, value: $0) }
+        )
+        self.errors = Binding(
+            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
+            set: { _ in }
+        )
+        self.subErrors = {
+            root.wrappedValue.errorBag.errors(forPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
+        }
+        self.columns = columns
+        self.dataSource = KeyPathTableViewDataSource(root: root, path: path, columns: columns)
+    }
+    
+    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
+        self.valueBinding = value
+        self.errors = errors
+        self.subErrors = subErrors
+        self.columns = columns
+        self.dataSource = BindingTableViewDataSource(value: value, columns: columns)
+    }
+    
+    func errors(_ view: TableView<Config>, forRow _: Int) -> [[String]] {
+        columns.map { _ in [] }
+    }
+    
+    func addElement(_ view: TableView<Config>) {
+        dataSource.addElement()
+        objectWillChange.send()
+    }
+    
+    func deleteRow(_ view: TableView<Config>, row: Int) {
+        guard row < value.count else {
+            return
+        }
+        let offsets: IndexSet = view.selection.contains(row)
+            ? IndexSet(view.selection)
+            : [row]
+        dataSource.deleteElements(atOffsets: offsets)
+        objectWillChange.send()
+    }
+    
+    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
+        dataSource.deleteElements(atOffsets: offsets)
+        objectWillChange.send()
+    }
+    
+    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
+        view.selection.removeAll()
+        dataSource.moveElements(atOffsets: source, to: destination)
+        objectWillChange.send()
+    }
+    
+    func row(atIndex index: Int) -> [LineAttributeViewModel] {
+        if rows.count <= index {
+            rows.append(
+                contentsOf: (rows.count...index).map { row in
+                    columns.indices.map { column in
+                        LineAttributeViewModel(
+                            value: Binding(
+                                get: {
+                                    guard row < self.value.count && column < self.value[row].count else {
+                                        return .bool(false)
+                                    }
+                                    return self.value[row][column]
+                                },
+                                set: {
+                                    guard row < self.value.count && column < self.value[row].count else {
+                                        return
+                                    }
+                                    self.value[row][column] = $0
+                                }
+                            )
+                        )
+                    }
+                }
+            )
+        }
+        return rows[index]
+    }
+    
+}

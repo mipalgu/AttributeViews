@@ -100,3 +100,94 @@ final class AttributeViewModel: ObservableObject {
     }
     
 }
+
+final class LineAttributeViewModel: ObservableObject, Identifiable {
+    
+    let value: Binding<LineAttribute>
+    
+    var lineAttribute: LineAttribute {
+        get {
+            value.wrappedValue
+        } set {
+            value.wrappedValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    var lineAttributeBinding: Binding<LineAttribute> {
+        Binding(
+            get: { self.lineAttribute },
+            set: { self.lineAttribute = $0 }
+        )
+    }
+    
+    var boolValue: Bool {
+        get {
+            value.wrappedValue.boolValue
+        } set {
+            value.wrappedValue.boolValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    var integerValue: Int {
+        get {
+            value.wrappedValue.integerValue
+        } set {
+            value.wrappedValue.integerValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    var floatValue: Double {
+        get {
+            value.wrappedValue.floatValue
+        } set {
+            value.wrappedValue.floatValue = newValue
+        }
+    }
+    
+    var expressionValue: Expression {
+        get {
+            value.wrappedValue.expressionValue
+        } set {
+            value.wrappedValue.expressionValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    var enumeratedValue: String {
+        get {
+            value.wrappedValue.enumeratedValue
+        } set {
+            value.wrappedValue.enumeratedValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    var lineValue: String {
+        get {
+            value.wrappedValue.lineValue
+        } set {
+            value.wrappedValue.lineValue = newValue
+            objectWillChange.send()
+        }
+    }
+    
+    init(value: Binding<LineAttribute>) {
+        self.value = value
+    }
+    
+}
+
+extension LineAttributeViewModel: Hashable {
+    
+    static func ==(lhs: LineAttributeViewModel, rhs: LineAttributeViewModel) -> Bool {
+        lhs.lineAttribute == rhs.lineAttribute
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(lineAttribute)
+    }
+    
+}
