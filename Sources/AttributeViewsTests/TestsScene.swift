@@ -88,7 +88,7 @@ struct TestsScene: App {
     
     @Environment(\.scenePhase) private var scenePhase: ScenePhase
     
-    @State var machine: Machine = Machine.initialSwiftMachine()
+    @State var machine: Machine = try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))
     
     let config = DefaultAttributeViewsConfig()
     
@@ -104,16 +104,19 @@ struct TestsScene: App {
 //                    language: .swift
 //                )
 //                CodeView<DefaultAttributeViewsConfig, Text>(value: $text, label: "Binding", language: .swift)
-
-            ForEach(Array(machine.attributes.enumerated()), id: \.0) { (index, group) in
                 AttributeGroupView<DefaultAttributeViewsConfig>(
                     root: $machine,
-                    path: Machine.path.attributes[index],
-                    label: group.name
-                )//.environmentObject(config)
+                    path: Machine.path.attributes[0],
+                    label: "Variables"
+                )
+//            ForEach(Array(machine.attributes.enumerated()), id: \.0) { (index, group) in
+//                AttributeGroupView<DefaultAttributeViewsConfig>(
+//                    root: $machine,
+//                    path: Machine.path.attributes[index],
+//                    label: group.name
+//                )//.environmentObject(config)
 //            }
             }
-        }
         }
     }
 }

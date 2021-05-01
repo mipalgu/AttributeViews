@@ -65,7 +65,7 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class TableRowViewModel {
+final class TableRowViewModel: ObservableObject {
     
     let row: [LineAttributeViewModel]
     let errors: Binding<[[String]]>
@@ -93,17 +93,17 @@ final class TableRowViewModel {
 
 struct TableRowView<Config: AttributeViewConfig>: View {
     
-    let viewModel: TableRowViewModel
+    @StateObject var viewModel: TableRowViewModel
     let onDelete: () -> Void
     
 //    @EnvironmentObject var config: Config
     
     init(
-        row: [LineAttributeViewModel],
+        viewModel: TableRowViewModel,
         errors: Binding<[[String]]> = .constant([]),
         onDelete: @escaping () -> Void = {}
     ) {
-        self.viewModel = TableRowViewModel(row: row, errors: errors)
+        self._viewModel = StateObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
     
@@ -132,7 +132,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
 struct TableRowView_Previews: PreviewProvider {
     
 //    struct Root_Preview: View {
-//        
+//
 //        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
 //            AttributeGroup(
 //                name: "Fields", fields: [
@@ -191,9 +191,12 @@ struct TableRowView_Previews: PreviewProvider {
         
         var body: some View {
             TableRowView<DefaultAttributeViewsConfig>(
-                row: value.indices.map {
-                    LineAttributeViewModel(value: $value[$0])
-                },
+                viewModel: TableRowViewModel(
+                    row: value.indices.map {
+                        LineAttributeViewModel(value: $value[$0])
+                    },
+                    errors: $errors
+                ),
                 errors: $errors
             ).environmentObject(config)
         }

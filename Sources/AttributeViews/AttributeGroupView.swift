@@ -16,42 +16,23 @@ import Attributes
 
 public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
-    let value: Binding<AttributeGroup>
-    let errors: Binding<[String]>
-    let subErrors: (ReadOnlyPath<[String: Attribute], Attribute>) -> [String]
-    let label: String
+    let subView: () -> ComplexView<Config>
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String) {
-        self.init(
-            value: Binding(
-                get: { path.isNil(root.wrappedValue) ? AttributeGroup(name: "") : root.wrappedValue[keyPath: path.keyPath] },
-                set: {
-                    _ = root.wrappedValue.modify(attribute: path, value: $0)
-                }
-            ),
-            errors: Binding(
-                get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
-                set: { _ in }
-            ),
-            subErrors: {
-                root.wrappedValue.errorBag.errors(includingDescendantsForPath: ReadOnlyPath(keyPath: path.attributes.keyPath.appending(path: $0.keyPath), ancestors: path.ancestors)).map(\.message)
-            },
-            label: label
-        )
+        self.init {
+            ComplexView(root: root, path: path.attributes, label: label, fields: root.wrappedValue[keyPath: path.keyPath].fields)
+        }
     }
     
-    public init(value: Binding<AttributeGroup>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (Attributes.ReadOnlyPath<[String: Attribute], Attribute>) -> [String] = { _ in [] }, label: String) {
-        self.value = value
-        self.errors = errors
-        self.subErrors = subErrors
-        self.label = label
+    public init(subView: @escaping () -> ComplexView<Config>) {
+        self.subView = subView
     }
     
     @ViewBuilder
     public var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             Form {
-                ComplexView<Config>(value: value.attributes, errors: errors, subErrors: subErrors, label: label, fields: value.wrappedValue.fields)
+                subView()
             }
         }
     }
