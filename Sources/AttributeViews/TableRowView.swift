@@ -67,19 +67,23 @@ import GUUI
 
 final class TableRowViewModel: ObservableObject {
     
-    let row: [LineAttributeViewModel]
-    let errors: Binding<[[String]]>
+    private let table: Binding<[[LineAttribute]]>
     
-    init(row: [LineAttributeViewModel], errors: Binding<[[String]]>) {
-        self.row = row
-        self.errors = errors
+    @Published var rowIndex: Int
+    
+    private let errors: Binding<[[String]]>
+    
+    private let lineAttributeView: (Int, Int) -> AnyView
+    
+    var row: [LineAttribute] {
+        rowIndex >= table.wrappedValue.count ? [] : table.wrappedValue[rowIndex]
     }
     
-    func row(atIndex index: Int) -> LineAttributeViewModel {
-        guard index < row.count else {
-            return LineAttributeViewModel(value: .constant(.bool(false)))
-        }
-        return row[index]
+    init(table: Binding<[[LineAttribute]]>, rowIndex: Int, errors: Binding<[[String]]>, lineAttributeView: @escaping (Int, Int) -> AnyView) {
+        self.table = table
+        self.rowIndex = rowIndex
+        self.errors = errors
+        self.lineAttributeView = lineAttributeView
     }
     
     func errorBinding(atIndex index: Int) -> Binding<[String]> {
@@ -87,6 +91,13 @@ final class TableRowViewModel: ObservableObject {
             return .constant([])
         }
         return errors[index]
+    }
+    
+    func view(atIndex index: Int) -> AnyView {
+        guard rowIndex < table.wrappedValue.count && index < table.wrappedValue[rowIndex].count else {
+            return AnyView(EmptyView())
+        }
+        return lineAttributeView(rowIndex, index)
     }
     
 }
@@ -111,11 +122,7 @@ struct TableRowView<Config: AttributeViewConfig>: View {
         HStack {
             ForEach(viewModel.row.indices) { index in
                 VStack {
-                    LineAttributeView<Config>(
-                        attribute: viewModel.row(atIndex: index).lineAttributeBinding,
-                        errors: viewModel.errorBinding(atIndex: index),
-                        label: ""
-                    ).frame(minWidth: 0, maxWidth: .infinity)
+                    viewModel.view(atIndex: index).frame(minWidth: 0, maxWidth: .infinity)
                 }
             }
             VStack {
@@ -177,7 +184,7 @@ struct TableRowView_Previews: PreviewProvider {
     
     struct Binding_Preview: View {
         
-        @State var value: [LineAttribute] = [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
+        @State var value: [[LineAttribute]] = [[.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]]
         
         @State var errors: [[String]] = [
             ["bool error1", "bool error2"],
@@ -192,10 +199,17 @@ struct TableRowView_Previews: PreviewProvider {
         var body: some View {
             TableRowView<DefaultAttributeViewsConfig>(
                 viewModel: TableRowViewModel(
-                    row: value.indices.map {
-                        LineAttributeViewModel(value: $value[$0])
-                    },
-                    errors: $errors
+                    table: $value,
+                    rowIndex: 0,
+                    errors: $errors,
+                    lineAttributeView: { row, col in
+                        AnyView(
+                            LineAttributeView<DefaultAttributeViewsConfig>(
+                                attribute: Binding(get: { value[row][col] }, set: { value[row][col] = $0 }),
+                                label: ""
+                            )
+                        )
+                    }
                 ),
                 errors: $errors
             ).environmentObject(config)

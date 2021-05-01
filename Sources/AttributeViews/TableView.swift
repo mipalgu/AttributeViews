@@ -184,11 +184,11 @@ protocol TableViewDataSource {
     func addElement(_ row: [LineAttribute])
     func deleteElements(atOffsets offsets: IndexSet)
     func moveElements(atOffsets source: IndexSet, to destination: Int)
-    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel
+    func view(forElementAtRow row: Int, column: Int) -> AnyView
     
 }
 
-struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
+struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>: TableViewDataSource {
     
     let root: Binding<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
@@ -205,26 +205,13 @@ struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
         _ = root.wrappedValue.moveItems(table: path, from: source, to: destination)
     }
     
-    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
-        let elementPath = path[row][column]
-        return LineAttributeViewModel(
-            value: Binding(
-                get: {
-                    elementPath.isNil(root.wrappedValue) ? .bool(false) : root.wrappedValue[keyPath: elementPath.keyPath]
-                },
-                set: {
-                    guard !elementPath.isNil(root.wrappedValue) else {
-                        return
-                    }
-                    root.wrappedValue[keyPath: elementPath.path] = $0
-                }
-            )
-        )
+    func view(forElementAtRow row: Int, column: Int) -> AnyView {
+        AnyView(LineAttributeView<Config>(root: root, path: path[row][column], label: ""))
     }
     
 }
 
-struct BindingTableViewDataSource: TableViewDataSource {
+struct BindingTableViewDataSource<Config: AttributeViewConfig>: TableViewDataSource {
     
     let value: Binding<[[LineAttribute]]>
     
@@ -240,9 +227,9 @@ struct BindingTableViewDataSource: TableViewDataSource {
         value.wrappedValue.move(fromOffsets: source, toOffset: destination)
     }
     
-    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
-        return LineAttributeViewModel(
-            value: Binding(
+    func view(forElementAtRow row: Int, column: Int) -> AnyView {
+        AnyView(LineAttributeView<Config>(
+            attribute: Binding(
                 get: {
                     row < value.wrappedValue.count && column < value.wrappedValue[row].count ? value.wrappedValue[row][column] : .bool(false)
                 },
@@ -252,8 +239,9 @@ struct BindingTableViewDataSource: TableViewDataSource {
                     }
                     value.wrappedValue[row][column] = $0
                 }
-            )
-        )
+            ),
+            label: ""
+        ))
     }
     
 }
@@ -271,7 +259,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     @Published var rows: [TableRowViewModel] = []
     
-    var dataSource: TableViewDataSource
+    let dataSource: TableViewDataSource
     
     var value: [[LineAttribute]] {
         get {
@@ -300,7 +288,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         }
         self.columns = columns
         self.emptyRow = columns.map(\.type.defaultValue)
-        self.dataSource = KeyPathTableViewDataSource(root: root, path: path)
+        self.dataSource = KeyPathTableViewDataSource<Root, Config>(root: root, path: path)
         self.newRow = emptyRow
         syncRows()
     }
@@ -311,7 +299,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         self.subErrors = subErrors
         self.columns = columns
         self.emptyRow = columns.map(\.type.defaultValue)
-        self.dataSource = BindingTableViewDataSource(value: value)
+        self.dataSource = BindingTableViewDataSource<Config>(value: value)
         self.newRow = emptyRow
         syncRows()
     }
@@ -371,10 +359,12 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         if rows.count < value.count {
             rows.append(contentsOf: (rows.count..<value.count).map { row in
                 TableRowViewModel(
-                    row: columns.indices.map {
-                        dataSource.viewModel(forElementAtRow: row, column: $0)
-                    },
-                    errors: .constant([])
+                    table: valueBinding,
+                    rowIndex: row,
+                    errors: .constant([]),
+                    lineAttributeView: {
+                        self.dataSource.view(forElementAtRow: $0, column: $1)
+                    }
                 )
             })
         }
