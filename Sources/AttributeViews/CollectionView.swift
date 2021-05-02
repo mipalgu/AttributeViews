@@ -200,7 +200,8 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                     }.onDelete {
                         viewModel.deleteElements(self, atOffsets: $0)
                     }
-                }.frame(minHeight: min(CGFloat(value.count * (type == .line ? 30 : 80) + 15), 100))
+                    
+                }.frame(minHeight: max(CGFloat(value.reduce(0) { $0 + $1.data.underestimatedHeight }), 100))
             }
         }.padding(.top, 2)
     }

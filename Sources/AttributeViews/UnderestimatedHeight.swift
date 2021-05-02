@@ -1,8 +1,8 @@
 /*
- * Scene.swift
- * AttributeViewsTests
+ * UnderestimatedHeight.swift
+ * 
  *
- * Created by Callum McColl on 25/3/21.
+ * Created by Callum McColl on 2/5/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,69 +56,44 @@
  *
  */
 
-#if canImport(TokamakShims)
-import TokamakShims
-
-typealias State = TokamakShims.State
-#else
-import SwiftUI
-
-typealias State = SwiftUI.State
-#endif
-
-import AttributeViews
 import Attributes
-import Machines
 
-struct TestsScene: App {
+extension Attribute {
     
-    class AppDelegate: NSObject, NSApplicationDelegate {
-        
-        func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool {
-            return true
-        }
-        
-        func applicationWillFinishLaunching(_ notification: Notification) {
-            NSApp.setActivationPolicy(.regular)
-        }
-        
-    }
-    
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
-    @Environment(\.scenePhase) private var scenePhase: ScenePhase
-    
-    @State var machine: Machine = try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))
-    
-    let config = DefaultAttributeViewsConfig()
-    
-    @State var text: String = ""
-    
-    var body: some Scene {
-        WindowGroup {
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack {
-    //                CodeView<DefaultAttributeViewsConfig, Text>(
-    //                    root: $machine,
-    //                    path: Machine.path.states[0].actions[0].implementation,
-    //                    label: "Root",
-    //                    language: .swift
-    //                )
-    //                CodeView<DefaultAttributeViewsConfig, Text>(value: $text, label: "Binding", language: .swift)
-    //                AttributeGroupView<DefaultAttributeViewsConfig>(
-    //                    root: $machine,
-    //                    path: Machine.path.attributes[0],
-    //                    label: "Variables"
-    //                )
-                    ForEach(machine.attributes.indices, id: \.self) { index in
-                        AttributeGroupView<DefaultAttributeViewsConfig>(
-                            root: $machine,
-                            path: Machine.path.attributes[index],
-                            label: machine.attributes[index].name
-                        )//.environmentObject(config)
-                    }
-                }
-            }
+    var underestimatedHeight: Int {
+        switch self {
+        case .line(let lineAttribute):
+            return lineAttribute.underestimatedHeight
+        case .block(let blockAttribute):
+            return blockAttribute.underestimatedHeight
         }
     }
+    
+}
+
+extension LineAttribute {
+    
+    var underestimatedHeight: Int {
+        return 28
+    }
+    
+}
+
+extension BlockAttribute {
+    
+    var underestimatedHeight: Int {
+        switch self {
+        case .code, .text:
+            return 50
+        case .enumerableCollection(_, let validValues):
+            return validValues.count * LineAttribute.line("").underestimatedHeight / 4
+        case .collection(let values, type: _):
+            return values.reduce(0) { $0 + $1.underestimatedHeight }
+        case .complex(let attributes, _):
+            return attributes.reduce(0) { $0 + $1.value.underestimatedHeight }
+        case .table(let rows, _):
+            return rows.count * LineAttribute.line("").underestimatedHeight + 75
+        }
+    }
+    
 }

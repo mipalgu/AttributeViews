@@ -65,13 +65,13 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class TableRowViewModel: ObservableObject {
+final class TableRowViewModel: ObservableObject, Identifiable {
     
     private let table: Binding<[[LineAttribute]]>
     
     @Published var rowIndex: Int
     
-    private let errors: Binding<[[String]]>
+    @Published var redraw: Int = 0
     
     private let lineAttributeView: (Int, Int) -> AnyView
     
@@ -79,18 +79,10 @@ final class TableRowViewModel: ObservableObject {
         rowIndex >= table.wrappedValue.count ? [] : table.wrappedValue[rowIndex]
     }
     
-    init(table: Binding<[[LineAttribute]]>, rowIndex: Int, errors: Binding<[[String]]>, lineAttributeView: @escaping (Int, Int) -> AnyView) {
+    init(table: Binding<[[LineAttribute]]>, rowIndex: Int, lineAttributeView: @escaping (Int, Int) -> AnyView) {
         self.table = table
         self.rowIndex = rowIndex
-        self.errors = errors
         self.lineAttributeView = lineAttributeView
-    }
-    
-    func errorBinding(atIndex index: Int) -> Binding<[String]> {
-        guard index < errors.wrappedValue.count else {
-            return .constant([])
-        }
-        return errors[index]
     }
     
     func view(atIndex index: Int) -> AnyView {
@@ -104,7 +96,7 @@ final class TableRowViewModel: ObservableObject {
 
 struct TableRowView<Config: AttributeViewConfig>: View {
     
-    @StateObject var viewModel: TableRowViewModel
+    @ObservedObject var viewModel: TableRowViewModel
     let onDelete: () -> Void
     
 //    @EnvironmentObject var config: Config
@@ -114,13 +106,13 @@ struct TableRowView<Config: AttributeViewConfig>: View {
         errors: Binding<[[String]]> = .constant([]),
         onDelete: @escaping () -> Void = {}
     ) {
-        self._viewModel = StateObject(wrappedValue: viewModel)
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
     
     var body: some View {
         HStack {
-            ForEach(viewModel.row.indices) { index in
+            ForEach(viewModel.row.indices, id: \.self) { index in
                 VStack {
                     viewModel.view(atIndex: index).frame(minWidth: 0, maxWidth: .infinity)
                 }
@@ -201,7 +193,6 @@ struct TableRowView_Previews: PreviewProvider {
                 viewModel: TableRowViewModel(
                     table: $value,
                     rowIndex: 0,
-                    errors: $errors,
                     lineAttributeView: { row, col in
                         AnyView(
                             LineAttributeView<DefaultAttributeViewsConfig>(

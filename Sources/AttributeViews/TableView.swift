@@ -70,17 +70,17 @@ public struct TableView<Config: AttributeViewConfig>: View {
                             Spacer().frame(width: 20)
                         }
                     }
-                    ForEach(viewModel.rows.indices, id: \.self) { index in
+                    ForEach(viewModel.rows, id: \.id) { row in
                         TableRowView<Config>(
-                            viewModel: viewModel.rows[index],
-                            onDelete: { viewModel.deleteRow(self, row: index) }
+                            viewModel: row,
+                            onDelete: { viewModel.deleteRow(self, row: row.rowIndex) }
                         )
                     }.onMove {
                         viewModel.moveElements(self, atOffsets: $0, to: $1)
                     }.onDelete {
                         viewModel.deleteElements(self, atOffsets: $0)
                     }
-                }.frame(minHeight: CGFloat(28 * viewModel.rows.count) + 75)
+                }.frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + ($1.row.first?.underestimatedHeight ?? 5) }) + 75)
                 .onExitCommand {
                     viewModel.selection.removeAll(keepingCapacity: true)
                 }
@@ -202,7 +202,8 @@ struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>
     }
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        _ = root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        let result = root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        print(result)
     }
     
     func view(forElementAtRow row: Int, column: Int) -> AnyView {
@@ -255,7 +256,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     let emptyRow: [LineAttribute]
     
     @Published var newRow: [LineAttribute]
-    @Published var selection: Set<Int> = []
+    @Published var selection: Set<ObjectIdentifier> = []
     
     @Published var rows: [TableRowViewModel] = []
     
@@ -319,8 +320,8 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         guard row < value.count else {
             return
         }
-        let offsets: IndexSet = selection.contains(row)
-            ? IndexSet(selection)
+        let offsets: IndexSet = selection.contains(rows[row].id)
+            ? IndexSet(selection.compactMap { id in rows.firstIndex { $0.id == id } })
             : [row]
         dataSource.deleteElements(atOffsets: offsets)
         syncRows()
@@ -332,17 +333,30 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
             return
         }
         dataSource.deleteElements(atOffsets: offsets)
+        rows.remove(atOffsets: offsets)
+        updateChildren(from: offsets.reduce(rows.count) { min($0, $1) })
         syncRows()
-        notifyChildren(IndexSet(offsets.reduce(rows.count) { min($0, $1) }..<rows.count))
         objectWillChange.send()
     }
     
     func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
+        print(rows.map(\.rowIndex))
+        rows.move(fromOffsets: source, toOffset: destination)
+        print(rows.map(\.rowIndex))
+        updateChildren(from: source.reduce(destination) { min($0, $1) })
+        print(rows.map(\.rowIndex))
         syncRows()
-        notifyChildren(IndexSet(source.reduce(destination) { min($0, $1) }..<rows.count))
+        print(rows.map(\.rowIndex))
         objectWillChange.send()
+    }
+    
+    private func updateChildren(from index: Int) {
+        (index..<rows.count).forEach {
+            rows[$0].rowIndex = $0
+            rows[$0].redraw = rows[$0].redraw &+ 1
+        }
     }
     
     private func notifyChildren(_ indexes: IndexSet) {
@@ -361,7 +375,6 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
                 TableRowViewModel(
                     table: valueBinding,
                     rowIndex: row,
-                    errors: .constant([]),
                     lineAttributeView: {
                         self.dataSource.view(forElementAtRow: $0, column: $1)
                     }
