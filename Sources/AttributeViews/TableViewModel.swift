@@ -89,6 +89,7 @@ struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         let result = root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        print(result)
     }
     
     func view(forElementAtRow row: Int, column: Int) -> AnyView {
@@ -143,7 +144,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     @Published var newRow: [LineAttribute]
     @Published var selection: Set<ObjectIdentifier> = []
     
-    var rows: [TableRowViewModel] = []
+    @Published var rows: [TableRowViewModel] = []
     
     let dataSource: TableViewDataSource
     
@@ -209,26 +210,41 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
             ? IndexSet(selection.compactMap { id in rows.firstIndex { $0.id == id } })
             : [row]
         dataSource.deleteElements(atOffsets: offsets)
+        notifyChildren(IndexSet(integersIn: row..<rows.count))
         syncRows()
         objectWillChange.send()
     }
     
     func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
-        if offsets.isEmpty {
+        guard let min = offsets.min() else {
             return
         }
         dataSource.deleteElements(atOffsets: offsets)
-        rows.remove(atOffsets: offsets)
+        notifyChildren(IndexSet(integersIn: min..<rows.count))
         syncRows()
         objectWillChange.send()
     }
     
     func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
+        if source.isEmpty {
+            return
+        }
+        var temp = source
+        temp.insert(destination)
+        guard let min = temp.min(), let max = temp.max() else {
+            return
+        }
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
-        rows.move(fromOffsets: source, toOffset: destination)
+        notifyChildren(IndexSet(integersIn: min...max))
         syncRows()
         objectWillChange.send()
+    }
+    
+    private func notifyChildren(_ indexes: IndexSet) {
+        for index in indexes {
+            rows[index].objectWillChange.send()
+        }
     }
     
     private func syncRows() {

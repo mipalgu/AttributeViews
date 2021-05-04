@@ -9,6 +9,7 @@
 import TokamakShim
 #else
 import SwiftUI
+import Combine
 #endif
 
 import Attributes
@@ -65,6 +66,9 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
                     .font(.body)
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
+                    .onReceive(Just(value)) { _ in
+                        editingValue = value
+                    }
             } else {
                 TextField(label, value: $value, formatter: formatter)
                     .font(.body)

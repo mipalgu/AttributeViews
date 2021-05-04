@@ -9,6 +9,7 @@
 import TokamakShim
 #else
 import SwiftUI
+import Combine
 #endif
 
 import Attributes
@@ -74,6 +75,9 @@ public struct LineView<Config: AttributeViewConfig>: View {
                 TextField(label, text: $editingValue, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
+                    .onReceive(Just(value)) { _ in
+                        editingValue = value
+                    }
             } else {
                 TextField(label, text: $value)
 //                    .border(config.fieldColor)
