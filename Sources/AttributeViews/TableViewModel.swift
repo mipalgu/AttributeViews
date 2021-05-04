@@ -65,74 +65,6 @@ import SwiftUI
 import Attributes
 import GUUI
 
-protocol TableViewDataSource {
-    
-    func addElement(_ row: [LineAttribute])
-    func deleteElements(atOffsets offsets: IndexSet)
-    func moveElements(atOffsets source: IndexSet, to destination: Int)
-    func view(forElementAtRow row: Int, column: Int) -> AnyView
-    
-}
-
-struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>: TableViewDataSource {
-    
-    let root: Binding<Root>
-    let path: Attributes.Path<Root, [[LineAttribute]]>
-    
-    func addElement(_ row: [LineAttribute]) {
-        _ = root.wrappedValue.addItem(row, to: path)
-    }
-    
-    func deleteElements(atOffsets offsets: IndexSet) {
-        _ = root.wrappedValue.deleteItems(table: path, items: offsets)
-    }
-    
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        let result = root.wrappedValue.moveItems(table: path, from: source, to: destination)
-        print(result)
-    }
-    
-    func view(forElementAtRow row: Int, column: Int) -> AnyView {
-        AnyView(LineAttributeView<Config>(root: root, path: path[row][column], label: ""))
-    }
-    
-}
-
-struct BindingTableViewDataSource<Config: AttributeViewConfig>: TableViewDataSource {
-    
-    let value: Binding<[[LineAttribute]]>
-    
-    func addElement(_ row: [LineAttribute]) {
-        value.wrappedValue.append(row)
-    }
-    
-    func deleteElements(atOffsets offsets: IndexSet) {
-        value.wrappedValue.remove(atOffsets: offsets)
-    }
-    
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
-    }
-    
-    func view(forElementAtRow row: Int, column: Int) -> AnyView {
-        AnyView(LineAttributeView<Config>(
-            attribute: Binding(
-                get: {
-                    row < value.wrappedValue.count && column < value.wrappedValue[row].count ? value.wrappedValue[row][column] : .bool(false)
-                },
-                set: {
-                    guard row < value.wrappedValue.count && column < value.wrappedValue[row].count else {
-                        return
-                    }
-                    value.wrappedValue[row][column] = $0
-                }
-            ),
-            label: ""
-        ))
-    }
-    
-}
-
 final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     private let valueBinding: Binding<[[LineAttribute]]>
@@ -146,7 +78,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     @Published var rows: [TableRowViewModel] = []
     
-    let dataSource: TableViewDataSource
+    private let dataSource: TableViewDataSource
     
     var value: [[LineAttribute]] {
         get {
@@ -210,41 +142,21 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
             ? IndexSet(selection.compactMap { id in rows.firstIndex { $0.id == id } })
             : [row]
         dataSource.deleteElements(atOffsets: offsets)
-        notifyChildren(IndexSet(integersIn: row..<rows.count))
         syncRows()
         objectWillChange.send()
     }
     
     func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
-        guard let min = offsets.min() else {
-            return
-        }
         dataSource.deleteElements(atOffsets: offsets)
-        notifyChildren(IndexSet(integersIn: min..<rows.count))
         syncRows()
         objectWillChange.send()
     }
     
     func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
-        if source.isEmpty {
-            return
-        }
-        var temp = source
-        temp.insert(destination)
-        guard let min = temp.min(), let max = temp.max() else {
-            return
-        }
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
-        notifyChildren(IndexSet(integersIn: min...max))
         syncRows()
         objectWillChange.send()
-    }
-    
-    private func notifyChildren(_ indexes: IndexSet) {
-        for index in indexes {
-            rows[index].objectWillChange.send()
-        }
     }
     
     private func syncRows() {
@@ -263,6 +175,75 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
                 )
             })
         }
+    }
+    
+}
+
+
+fileprivate protocol TableViewDataSource {
+    
+    func addElement(_ row: [LineAttribute])
+    func deleteElements(atOffsets offsets: IndexSet)
+    func moveElements(atOffsets source: IndexSet, to destination: Int)
+    func view(forElementAtRow row: Int, column: Int) -> AnyView
+    
+}
+
+fileprivate struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>: TableViewDataSource {
+    
+    let root: Binding<Root>
+    let path: Attributes.Path<Root, [[LineAttribute]]>
+    
+    func addElement(_ row: [LineAttribute]) {
+        _ = root.wrappedValue.addItem(row, to: path)
+    }
+    
+    func deleteElements(atOffsets offsets: IndexSet) {
+        _ = root.wrappedValue.deleteItems(table: path, items: offsets)
+    }
+    
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
+        let result = root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        print(result)
+    }
+    
+    func view(forElementAtRow row: Int, column: Int) -> AnyView {
+        AnyView(LineAttributeView<Config>(root: root, path: path[row][column], label: ""))
+    }
+    
+}
+
+fileprivate struct BindingTableViewDataSource<Config: AttributeViewConfig>: TableViewDataSource {
+    
+    let value: Binding<[[LineAttribute]]>
+    
+    func addElement(_ row: [LineAttribute]) {
+        value.wrappedValue.append(row)
+    }
+    
+    func deleteElements(atOffsets offsets: IndexSet) {
+        value.wrappedValue.remove(atOffsets: offsets)
+    }
+    
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
+        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
+    }
+    
+    func view(forElementAtRow row: Int, column: Int) -> AnyView {
+        AnyView(LineAttributeView<Config>(
+            attribute: Binding(
+                get: {
+                    row < value.wrappedValue.count && column < value.wrappedValue[row].count ? value.wrappedValue[row][column] : .bool(false)
+                },
+                set: {
+                    guard row < value.wrappedValue.count && column < value.wrappedValue[row].count else {
+                        return
+                    }
+                    value.wrappedValue[row][column] = $0
+                }
+            ),
+            label: ""
+        ))
     }
     
 }
