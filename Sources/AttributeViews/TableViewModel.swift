@@ -203,8 +203,7 @@ fileprivate struct KeyPathTableViewDataSource<Root: Modifiable, Config: Attribut
     }
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        let result = root.wrappedValue.moveItems(table: path, from: source, to: destination)
-        print(result)
+        _ = root.wrappedValue.moveItems(table: path, from: source, to: destination)
     }
     
     func view(forElementAtRow row: Int, column: Int) -> AnyView {
