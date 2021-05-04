@@ -88,11 +88,15 @@ struct TestsScene: App {
     
     @Environment(\.scenePhase) private var scenePhase: ScenePhase
     
+    @State var expanded: [AnyKeyPath: Bool] = [:]
+    
     @State var machine: Machine = try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))
     
     let config = DefaultAttributeViewsConfig()
     
     @State var text: String = ""
+    
+    @State var loadError: String = ""
     
     var body: some Scene {
         WindowGroup {
@@ -110,6 +114,31 @@ struct TestsScene: App {
     //                    path: Machine.path.attributes[0],
     //                    label: "Variables"
     //                )
+                    
+                    VStack {
+                        HStack {
+                            TextField("URL", text: $text)
+                            Button("Load") {
+                                do {
+                                    machine = try Machine(filePath: URL(fileURLWithPath: text))
+                                    loadError = ""
+                                } catch let e {
+                                    loadError = "\(e)"
+                                }
+                            }
+                            Button("Reload") {
+                                do {
+                                    machine = try Machine(filePath: machine.filePath)
+                                    text = machine.filePath.path
+                                } catch let e {
+                                    loadError = "\(e)"
+                                }
+                            }
+                        }
+                        if !loadError.isEmpty {
+                            Text(loadError).foregroundColor(.red)
+                        }
+                    }.padding(.horizontal, 10)
                     ForEach(machine.attributes.indices, id: \.self) { index in
                         AttributeGroupView<DefaultAttributeViewsConfig>(
                             root: $machine,
@@ -118,6 +147,8 @@ struct TestsScene: App {
                         )//.environmentObject(config)
                     }
                 }
+            }.onAppear {
+                text = machine.filePath.path
             }
         }
     }

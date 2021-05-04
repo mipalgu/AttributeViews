@@ -80,7 +80,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     
     //@EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.init(
             value: Binding(
                 get: {
@@ -100,7 +100,8 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                 CollectionViewKeyPathViewModel(
                     root: root,
                     path: path,
-                    type: type
+                    type: type,
+                    expanded: expanded
                 )
             )
         )
@@ -259,15 +260,17 @@ fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, R
     let root: Binding<Root>
     let path: Attributes.Path<Root, [Attribute]>
     let type: AttributeType
+    let expanded: Binding<[AnyKeyPath: Bool]>?
     
     var newRow: Attribute {
         type.defaultValue
     }
     
-    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType) {
+    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.root = root
         self.path = path
         self.type = type
+        self.expanded = expanded
     }
     
     func errors(_ view: CollectionView<Config>, forRow row: Int) -> [String] {
@@ -275,7 +278,7 @@ fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, R
     }
     
     func rowView(_ view: CollectionView<Config>, forRow row: Int) -> AttributeView<Config> {
-        return AttributeView(root: root, path: path[row], label: "")
+        return AttributeView(root: root, path: path[row], label: "", expanded: expanded)
     }
     
     

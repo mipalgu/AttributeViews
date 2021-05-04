@@ -18,13 +18,13 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
     let subView: () -> ComplexView<Config>
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.init {
-            ComplexView(root: root, path: path.attributes, label: label, fields: root.wrappedValue[keyPath: path.keyPath].fields)
+            ComplexView(root: root, path: path.attributes, label: label, fields: root.wrappedValue[keyPath: path.keyPath].fields, expanded: expanded)
         }
     }
     
-    public init(subView: @escaping () -> ComplexView<Config>) {
+    private init(subView: @escaping () -> ComplexView<Config>) {
         self.subView = subView
     }
     

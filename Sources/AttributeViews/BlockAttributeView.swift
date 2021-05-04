@@ -17,7 +17,7 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
 
     let subView: () -> AnyView
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.subView = {
             switch root.wrappedValue[keyPath: path.keyPath].type {
             case .code(let language):
@@ -25,11 +25,11 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
             case .text:
                 return AnyView(TextView<Config>(root: root, path: path.textValue, label: label))
             case .collection(let type):
-                return AnyView(CollectionView<Config>(root: root, path: path.collectionValue, label: label, type: type))
+                return AnyView(CollectionView<Config>(root: root, path: path.collectionValue, label: label, type: type, expanded: expanded))
             case .table(let columns):
                 return AnyView(TableView<Config>(root: root, path: path.tableValue, label: label, columns: columns))
             case .complex(let fields):
-                return AnyView(ComplexView<Config>(root: root, path: path.complexValue, label: label, fields: fields))
+                return AnyView(ComplexView<Config>(root: root, path: path.complexValue, label: label, fields: fields, expanded: expanded))
             case .enumerableCollection(let validValues):
                 return AnyView(EnumerableCollectionView<Config>(root: root, path: path.enumerableCollectionValue, label: label, validValues: validValues))
             }

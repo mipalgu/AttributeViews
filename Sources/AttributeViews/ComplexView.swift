@@ -77,10 +77,22 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
     let label: String
     let fields: [Field]
     let subView: (String, String)-> AttributeView<Config>
+    let expanded: Binding<[AnyKeyPath: Bool]>?
+    let root: AnyKeyPath?
+    
+    func expandedBinding(_ fieldName: String) -> Binding<Bool>? {
+        guard expanded != nil, let root = root, let keyPath = root.appending(path: \[String: Attribute].[fieldName]) else {
+            return nil
+        }
+        return Binding(
+            get: { expanded?.wrappedValue[keyPath] ?? false },
+            set: { expanded?.wrappedValue[keyPath] = $0 }
+        )
+    }
     
     //@EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field]) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field], expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.init(
             viewModel: ComplexViewModel(
                 value: Binding(
@@ -98,9 +110,11 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                 set: { _ in }
             ),
             label: label,
-            fields: fields
+            fields: fields,
+            expanded: expanded,
+            root: path.keyPath
         ) {
-            AttributeView(root: root, path: path[$0].wrappedValue, label: $1)
+            AttributeView(root: root, path: path[$0].wrappedValue, label: $1, expanded: expanded)
         }
     }
     
@@ -121,11 +135,13 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
         }
     }
     
-    private init(viewModel: ComplexViewModel, errors: Binding<[String]>, label: String, fields: [Field], subView: @escaping (String, String)-> AttributeView<Config>) {
+    private init(viewModel: ComplexViewModel, errors: Binding<[String]>, label: String, fields: [Field], expanded: Binding<[AnyKeyPath: Bool]>? = nil, root: AnyKeyPath? = nil, subView: @escaping (String, String)-> AttributeView<Config>) {
         self._viewModel = StateObject(wrappedValue: viewModel)
         self._errors = errors
         self.label = label
         self.fields = fields
+        self.expanded = expanded
+        self.root = root
         self.subView = subView
     }
     
@@ -140,8 +156,14 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                         VStack(alignment: .leading) {
                             ForEach(fields, id: \.name) { field in
                                 if viewModel.attributes[field.name]?.value.wrappedValue.isBlock == true {
-                                    DisclosureGroup(field.name.pretty) {
-                                        subView(field.name, "")
+                                    if let binding = expandedBinding(field.name) {
+                                        DisclosureGroup(field.name.pretty, isExpanded: binding) {
+                                            subView(field.name, "")
+                                        }
+                                    } else {
+                                        DisclosureGroup(field.name.pretty) {
+                                            subView(field.name, "")
+                                        }
                                     }
                                 } else {
                                     subView(field.name, field.name.pretty)
@@ -161,6 +183,8 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
 struct ComplexView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
+        
+        @State var expanded: [AnyKeyPath: Bool] = [:]
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
@@ -184,7 +208,8 @@ struct ComplexView_Previews: PreviewProvider {
                 root: $modifiable,
                 path: path,
                 label: "Root",
-                fields: [Field(name: "bool", type: .bool), Field(name: "integer", type: .integer)]
+                fields: [Field(name: "bool", type: .bool), Field(name: "integer", type: .integer)],
+                expanded: $expanded
             ).environmentObject(config)
         }
         

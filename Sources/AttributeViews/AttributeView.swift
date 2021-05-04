@@ -68,13 +68,13 @@ public struct AttributeView<Config: AttributeViewConfig>: View {
     
     let subView: () -> AnyView
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Attribute>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Attribute>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.subView = {
             switch root.wrappedValue[keyPath: path.keyPath].type {
             case .line:
                 return AnyView(LineAttributeView<Config>(root: root, path: path.lineAttribute,label: label))
             case .block:
-                return AnyView(BlockAttributeView<Config>(root: root, path: path.blockAttribute, label: label))
+                return AnyView(BlockAttributeView<Config>(root: root, path: path.blockAttribute, label: label, expanded: expanded))
             }
         }
     }
