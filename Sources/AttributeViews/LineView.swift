@@ -74,7 +74,6 @@ public struct LineView<Config: AttributeViewConfig>: View {
                 TextField(label, text: $editingValue, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
-                    .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, text: $value)
 //                    .border(config.fieldColor)

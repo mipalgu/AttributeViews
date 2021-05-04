@@ -62,7 +62,6 @@ public struct ExpressionView<Config: AttributeViewConfig>: View {
                     .font(.body)
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
-                    .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, text: $value)
                     .font(.body)

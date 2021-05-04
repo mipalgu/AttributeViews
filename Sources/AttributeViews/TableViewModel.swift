@@ -89,7 +89,6 @@ struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         let result = root.wrappedValue.moveItems(table: path, from: source, to: destination)
-        print(result)
     }
     
     func view(forElementAtRow row: Int, column: Int) -> AnyView {
@@ -144,7 +143,7 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     @Published var newRow: [LineAttribute]
     @Published var selection: Set<ObjectIdentifier> = []
     
-    @Published var rows: [TableRowViewModel] = []
+    var rows: [TableRowViewModel] = []
     
     let dataSource: TableViewDataSource
     
@@ -220,7 +219,6 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         }
         dataSource.deleteElements(atOffsets: offsets)
         rows.remove(atOffsets: offsets)
-        updateChildren(from: offsets.reduce(rows.count) { min($0, $1) })
         syncRows()
         objectWillChange.send()
     }
@@ -228,27 +226,9 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
-        print(rows.map(\.rowIndex))
         rows.move(fromOffsets: source, toOffset: destination)
-        print(rows.map(\.rowIndex))
-        updateChildren(from: source.reduce(destination) { min($0, $1) })
-        print(rows.map(\.rowIndex))
         syncRows()
-        print(rows.map(\.rowIndex))
         objectWillChange.send()
-    }
-    
-    private func updateChildren(from index: Int) {
-        (index..<rows.count).forEach {
-            rows[$0].rowIndex = $0
-            rows[$0].redraw = rows[$0].redraw &+ 1
-        }
-    }
-    
-    private func notifyChildren(_ indexes: IndexSet) {
-        for index in indexes {
-            rows[index].objectWillChange.send()
-        }
     }
     
     private func syncRows() {

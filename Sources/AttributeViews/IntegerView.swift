@@ -65,7 +65,6 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
                     .font(.body)
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
-                    .onChange(of: value) { editingValue = $0 }
             } else {
                 TextField(label, value: $value, formatter: formatter)
                     .font(.body)
