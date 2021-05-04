@@ -19,6 +19,10 @@ final class ComplexViewModel: ObservableObject {
     
     let subErrors: (ReadOnlyPath<[String: Attribute], Attribute>) -> [String]
     
+    let expanded: Binding<[AnyKeyPath: Bool]>?
+    
+    let root: AnyKeyPath?
+    
     private var attributesViewModels: [String: AttributeViewModel] = [:]
     
     public var attributes: [String: AttributeViewModel] {
@@ -44,9 +48,11 @@ final class ComplexViewModel: ObservableObject {
         }
     }
     
-    init(value: Binding<[String: Attribute]>, subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String]) {
+    init(value: Binding<[String: Attribute]>, subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String], expanded: Binding<[AnyKeyPath: Bool]>?, root: AnyKeyPath?) {
         self.value = value
         self.subErrors = subErrors
+        self.expanded = expanded
+        self.root = root
     }
     
     func errorBinding(forAttribute fieldName: String) -> Binding<[String]> {
@@ -68,6 +74,16 @@ final class ComplexViewModel: ObservableObject {
         subErrors(path)
     }
     
+    func expandedBinding(_ fieldName: String) -> Binding<Bool>? {
+        guard expanded != nil, let root = root, let keyPath = root.appending(path: \[String: Attribute].[fieldName]) else {
+            return nil
+        }
+        return Binding(
+            get: { self.expanded?.wrappedValue[keyPath] ?? false },
+            set: { self.expanded?.wrappedValue[keyPath] = $0 }
+        )
+    }
+    
 }
 
 public struct ComplexView<Config: AttributeViewConfig>: View {
@@ -77,18 +93,6 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
     let label: String
     let fields: [Field]
     let subView: (String, String)-> AttributeView<Config>
-    let expanded: Binding<[AnyKeyPath: Bool]>?
-    let root: AnyKeyPath?
-    
-    func expandedBinding(_ fieldName: String) -> Binding<Bool>? {
-        guard expanded != nil, let root = root, let keyPath = root.appending(path: \[String: Attribute].[fieldName]) else {
-            return nil
-        }
-        return Binding(
-            get: { expanded?.wrappedValue[keyPath] ?? false },
-            set: { expanded?.wrappedValue[keyPath] = $0 }
-        )
-    }
     
     //@EnvironmentObject var config: Config
     
@@ -103,23 +107,23 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                 ),
                 subErrors: {
                     root.wrappedValue.errorBag.errors(includingDescendantsForPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
-                }
+                },
+                expanded: expanded,
+                root: path.keyPath
             ),
             errors: Binding(
                 get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map { $0.message } },
                 set: { _ in }
             ),
             label: label,
-            fields: fields,
-            expanded: expanded,
-            root: path.keyPath
+            fields: fields
         ) {
             AttributeView(root: root, path: path[$0].wrappedValue, label: $1, expanded: expanded)
         }
     }
     
     public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String] = { _ in [] }, label: String, fields: [Field]) {
-        let viewModel = ComplexViewModel(value: value, subErrors: subErrors)
+        let viewModel = ComplexViewModel(value: value, subErrors: subErrors, expanded: nil, root: nil)
         self.init(
             viewModel: viewModel,
             errors: errors,
@@ -135,13 +139,11 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
         }
     }
     
-    private init(viewModel: ComplexViewModel, errors: Binding<[String]>, label: String, fields: [Field], expanded: Binding<[AnyKeyPath: Bool]>? = nil, root: AnyKeyPath? = nil, subView: @escaping (String, String)-> AttributeView<Config>) {
+    private init(viewModel: ComplexViewModel, errors: Binding<[String]>, label: String, fields: [Field], subView: @escaping (String, String)-> AttributeView<Config>) {
         self._viewModel = StateObject(wrappedValue: viewModel)
         self._errors = errors
         self.label = label
         self.fields = fields
-        self.expanded = expanded
-        self.root = root
         self.subView = subView
     }
     
@@ -156,7 +158,7 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                         VStack(alignment: .leading) {
                             ForEach(fields, id: \.name) { field in
                                 if viewModel.attributes[field.name]?.value.wrappedValue.isBlock == true {
-                                    if let binding = expandedBinding(field.name) {
+                                    if let binding = viewModel.expandedBinding(field.name) {
                                         DisclosureGroup(field.name.pretty, isExpanded: binding) {
                                             subView(field.name, "")
                                         }
