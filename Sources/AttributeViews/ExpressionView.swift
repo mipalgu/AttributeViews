@@ -12,6 +12,8 @@ import SwiftUI
 import Combine
 #endif
 
+import Combine
+
 import Attributes
 
 public struct ExpressionView<Config: AttributeViewConfig>: View {

@@ -9,8 +9,9 @@
 import TokamakShim
 #else
 import SwiftUI
-import Combine
 #endif
+
+import Combine
 
 import Attributes
 
