@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-final class ComplexViewModel: ObservableObject {
+fileprivate final class ComplexViewModel: ObservableObject {
     
     let value: Binding<[String: Attribute]>
     
@@ -88,7 +88,7 @@ final class ComplexViewModel: ObservableObject {
 
 public struct ComplexView<Config: AttributeViewConfig>: View {
     
-    @StateObject var viewModel: ComplexViewModel
+    @StateObject fileprivate var viewModel: ComplexViewModel
     @Binding var errors: [String]
     let label: String
     let fields: [Field]
