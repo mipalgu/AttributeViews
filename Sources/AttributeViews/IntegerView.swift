@@ -18,6 +18,7 @@ import Attributes
 public struct IntegerView<Config: AttributeViewConfig>: View {
     
     @State var editingValue: Int
+    @State var editing: Bool = false
     
     @Binding var value: Int
     @Binding var errors: [String]
@@ -63,12 +64,14 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
     public var body: some View {
         VStack(alignment: .leading) {
             if let onCommit = onCommit {
-                TextField(label, value: $editingValue, formatter: formatter, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
+                TextField(label, value: $editingValue, formatter: formatter, onEditingChanged: { self.editing = $0; if !$0 { onCommit(editingValue); editingValue = value } })
                     .font(.body)
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
                     .onReceive(Just(value)) { _ in
-                        editingValue = value
+                        if !editing {
+                            editingValue = value
+                        }
                     }
             } else {
                 TextField(label, value: $value, formatter: formatter)

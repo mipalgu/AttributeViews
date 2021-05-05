@@ -18,6 +18,7 @@ import Attributes
 public struct LineView<Config: AttributeViewConfig>: View {
     
     @State var editingValue: String
+    @State var editing: Bool = false
     
     @Binding var value: String
     @Binding var errors: [String]
@@ -73,11 +74,13 @@ public struct LineView<Config: AttributeViewConfig>: View {
     public var body: some View {
         VStack(alignment: .leading) {
             if let onCommit = onCommit {
-                TextField(label, text: $editingValue, onEditingChanged: { if !$0 { onCommit(editingValue); editingValue = value } })
+                TextField(label, text: $editingValue, onEditingChanged: { self.editing = $0; if !$0 { onCommit(editingValue); editingValue = value } })
 //                    .border(config.fieldColor)
 //                    .foregroundColor(config.textColor)
                     .onReceive(Just(value)) { _ in
-                        editingValue = value
+                        if !editing {
+                            editingValue = value
+                        }
                     }
             } else {
                 TextField(label, text: $value)
