@@ -67,16 +67,72 @@ import GUUI
 
 final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     
-    private let valueBinding: Binding<[[LineAttribute]]>
-    let errors: Binding<[String]>
-    let subErrors: (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String]
-    let columns: [BlockAttributeType.TableColumn]
-    let emptyRow: [LineAttribute]
+    let newRowViewModel: NewRowViewModel<Config>
+    
+    let tableBodyViewModel: TableBodyViewModel<Config>
+    
+    private let errors: Binding<[String]>
+    
+    var listErrors: [String] {
+        errors.wrappedValue
+    }
+    
+    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
+        let emptyRow = columns.map(\.type.defaultValue)
+        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }))
+        self.tableBodyViewModel = TableBodyViewModel(root: root, path: path, columns: columns)
+        self.errors = Binding(
+            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
+            set: { _ in }
+        )
+        self.newRowViewModel.parent = self
+    }
+    
+    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
+        let emptyRow = columns.map(\.type.defaultValue)
+        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }))
+        self.tableBodyViewModel = TableBodyViewModel(value: value, subErrors: subErrors, columns: columns)
+        self.errors = errors
+        self.newRowViewModel.parent = self
+    }
+    
+    func addElement(newRow: [LineAttribute]) {
+        self.tableBodyViewModel.addElement(newRow: newRow)
+    }
+    
+}
+
+final class NewRowViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     @Published var newRow: [LineAttribute]
-    @Published var selection: Set<ObjectIdentifier> = []
+    
+    let emptyRow: [LineAttribute]
+    
+    let errors: Binding<[[String]]>
+    
+    weak var parent: TableViewModel<Config>?
+    
+    init(newRow: [LineAttribute], emptyRow: [LineAttribute], errors: Binding<[[String]]>) {
+        self.newRow = newRow
+        self.emptyRow = emptyRow
+        self.errors = errors
+    }
+    
+    func addElement() {
+        parent?.addElement(newRow: newRow)
+        newRow = emptyRow
+    }
+    
+}
+
+final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
+    
+    private let valueBinding: Binding<[[LineAttribute]]>
+    let subErrors: (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String]
+    let columns: [BlockAttributeType.TableColumn]
     
     @Published var rows: [TableRowViewModel] = []
+    @Published var selection: Set<ObjectIdentifier> = []
     
     private let dataSource: TableViewDataSource
     
@@ -89,52 +145,38 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         }
     }
     
-    var listErrors: [String] {
-        errors.wrappedValue
-    }
-    
     init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
         self.valueBinding = Binding(
             get: { root.wrappedValue[keyPath: path.keyPath] },
             set: { _ = root.wrappedValue.modify(attribute: path, value: $0) }
         )
-        self.errors = Binding(
-            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
-            set: { _ in }
-        )
         self.subErrors = {
             root.wrappedValue.errorBag.errors(forPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
         }
         self.columns = columns
-        self.emptyRow = columns.map(\.type.defaultValue)
         self.dataSource = KeyPathTableViewDataSource<Root, Config>(root: root, path: path)
-        self.newRow = emptyRow
         syncRows()
     }
     
-    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
+    init(value: Binding<[[LineAttribute]]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
         self.valueBinding = value
-        self.errors = errors
         self.subErrors = subErrors
         self.columns = columns
-        self.emptyRow = columns.map(\.type.defaultValue)
         self.dataSource = BindingTableViewDataSource<Config>(value: value)
-        self.newRow = emptyRow
         syncRows()
     }
     
-    func errors(_ view: TableView<Config>, forRow _: Int) -> [[String]] {
+    func errors(forRow _: Int) -> [[String]] {
         columns.map { _ in [] }
     }
     
-    func addElement(_ view: TableView<Config>) {
+    func addElement(newRow: [LineAttribute]) {
         dataSource.addElement(newRow)
         syncRows()
-        newRow = emptyRow
         objectWillChange.send()
     }
     
-    func deleteRow(_ view: TableView<Config>, row: Int) {
+    func deleteRow(row: Int) {
         guard row < value.count else {
             return
         }
@@ -146,13 +188,13 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         objectWillChange.send()
     }
     
-    func deleteElements(_ view: TableView<Config>, atOffsets offsets: IndexSet) {
+    func deleteElements(atOffsets offsets: IndexSet) {
         dataSource.deleteElements(atOffsets: offsets)
         syncRows()
         objectWillChange.send()
     }
     
-    func moveElements(_ view: TableView<Config>, atOffsets source: IndexSet, to destination: Int) {
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
         syncRows()

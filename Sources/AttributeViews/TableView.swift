@@ -57,56 +57,78 @@ public struct TableView<Config: AttributeViewConfig>: View {
                 Text(error).foregroundColor(.red)
             }
             ZStack(alignment: .bottom) {
-                List(selection: $viewModel.selection) {
-                    VStack {
-                        HStack {
-                            ForEach(viewModel.columns, id: \.name) { column in
-                                Text(column.name.pretty)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.leading)
-                                    .frame(minWidth: 0, maxWidth: .infinity)
-                            }
-                            Spacer().frame(width: 20)
-                        }
-                    }
-                    ForEach(viewModel.rows, id: \.id) { row in
-                        TableRowView<Config>(
-                            viewModel: row,
-                            onDelete: { viewModel.deleteRow(self, row: row.rowIndex) }
-                        )
-                    }.onMove {
-                        viewModel.moveElements(self, atOffsets: $0, to: $1)
-                    }.onDelete {
-                        viewModel.deleteElements(self, atOffsets: $0)
-                    }
-                }.frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + ($1.row.first?.underestimatedHeight ?? 5) }) + 75)
-                .onExitCommand {
-                    viewModel.selection.removeAll(keepingCapacity: true)
-                }
-                VStack {
-                    HStack {
-                        ForEach(viewModel.newRow.indices, id: \.self) { index in
-                            VStack {
-                                LineAttributeView<Config>(
-                                    attribute: $viewModel.newRow[index],
-                                    errors: Binding(get: { viewModel.errors(self, forRow: viewModel.value.count)[index] }, set: {_ in }),
-                                    label: ""
-                                )
-                            }.frame(minWidth: 0, maxWidth: .infinity)
-                        }
-                        VStack {
-                            Button(action: { viewModel.addElement(self) }, label: {
-                                Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                            }).buttonStyle(PlainButtonStyle())
-                              .foregroundColor(.blue)
-                        }.frame(width: 20)
-                    }
-                }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+                TableBodyView(viewModel: viewModel.tableBodyViewModel)
+                NewRowView<Config>(viewModel: viewModel.newRowViewModel)
             }
         }
     }
 
+}
+
+struct TableBodyView<Config: AttributeViewConfig>: View {
+    
+    @ObservedObject var viewModel: TableBodyViewModel<Config>
+    
+    var body: some View {
+        List(selection: $viewModel.selection) {
+            VStack {
+                HStack {
+                    ForEach(viewModel.columns, id: \.name) { column in
+                        Text(column.name.pretty)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .frame(minWidth: 0, maxWidth: .infinity)
+                    }
+                    Spacer().frame(width: 20)
+                }
+            }
+            ForEach(viewModel.rows, id: \.id) { row in
+                TableRowView<Config>(
+                    viewModel: row,
+                    onDelete: { viewModel.deleteRow(row: row.rowIndex) }
+                )
+            }.onMove {
+                viewModel.moveElements(atOffsets: $0, to: $1)
+            }.onDelete {
+                viewModel.deleteElements(atOffsets: $0)
+            }
+        }.frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + ($1.row.first?.underestimatedHeight ?? 5) }) + 75)
+        .onExitCommand {
+            viewModel.selection.removeAll(keepingCapacity: true)
+        }
+    }
+    
+}
+
+struct NewRowView<Config: AttributeViewConfig>: View {
+    
+    @ObservedObject var viewModel: NewRowViewModel<Config>
+    
+    //@EnvironmentObject var config: Config
+    
+    var body: some View {
+        VStack {
+            HStack {
+                ForEach(viewModel.newRow.indices, id: \.self) { index in
+                    VStack {
+                        LineAttributeView<Config>(
+                            attribute: $viewModel.newRow[index],
+                            errors: viewModel.errors[index],
+                            label: ""
+                        )
+                    }.frame(minWidth: 0, maxWidth: .infinity)
+                }
+                VStack {
+                    Button(action: viewModel.addElement, label: {
+                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                    }).buttonStyle(PlainButtonStyle())
+                      .foregroundColor(.blue)
+                }.frame(width: 20)
+            }
+        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+    }
+    
 }
 
 struct TableView_Previews: PreviewProvider {
