@@ -76,7 +76,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     private let viewModel: CollectionViewViewModel<Config>
     
     @State var selection: Set<Int> = []
-    @State var creating: Bool = false
+    @State var editing: Int? = nil
     @State var newRow: Attribute
     
     //@EnvironmentObject var config: Config
@@ -161,27 +161,33 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                         }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                     }
                 case .block:
-                    if creating {
+                    if let editingIndex = editing {
                         HStack {
                             Spacer()
                             Button(action: {
-                                viewModel.addElement(self)
-                                creating = false
+                                if editingIndex == value.count {
+                                    viewModel.addElement(self)
+                                }
+                                editing = nil
                             }, label: {
                                 Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular))
                             }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                             Divider()
                             Button(action: {
-                                creating = false
+                                editing = nil
                             }, label: {
                                 Image(systemName: "trash").font(.system(size: 16, weight: .regular))
                             }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.red)
                         }
-                        AttributeView<Config>(attribute: $newRow, label: "")
+                        if editingIndex >= value.count {
+                            AttributeView<Config>(attribute: $newRow, label: "")
+                        } else {
+                            viewModel.rowView(self, forRow: editingIndex)
+                        }
                     } else {
                         HStack {
                             Spacer()
-                            Button(action: { creating = true }, label: {
+                            Button(action: { editing = value.count }, label: {
                                 Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                             }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                         }
@@ -189,16 +195,24 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                 }
             }.padding(.bottom, 5)
             Divider()
-            if !value.isEmpty {
+            if !value.isEmpty && ((editing == nil && type.isBlock == true) || type.isLine) {
                 List(selection: $selection) {
                     ForEach(value.indices, id: \.self) { index in
                         HStack(spacing: 1) {
-                            if let display = display {
-                                Text(value[index].data[keyPath: display.keyPath].strValue)
-                            } else {
-                                Text(value[index].data.strValue ?? "\(index)")
+                            switch type {
+                            case .line:
+                                viewModel.rowView(self, forRow: index)
+                                Spacer()
+                            case .block:
+                                if let display = display {
+                                    Text(value[index].data[keyPath: display.keyPath].strValue)
+                                } else {
+                                    Text(value[index].data.strValue ?? "\(index)")
+                                }
+                                Spacer()
+                                Button(action: { editing = index }, label: { Image(systemName: "pencil").font(.system(size: 16, weight: .regular)) })
+                                    .buttonStyle(PlainButtonStyle())
                             }
-                            Spacer()
                             Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
                         }.contextMenu {
                             Button("Delete") {
