@@ -87,7 +87,7 @@ extension BlockAttribute {
             return 50
         case .enumerableCollection(_, let validValues):
             return validValues.count * LineAttribute.line("").underestimatedHeight / 4
-        case .collection(let values, type: _):
+        case .collection(let values, _, type: _):
             return values.reduce(0) { $0 + $1.underestimatedHeight }
         case .complex(let attributes, _):
             return attributes.reduce(0) { $0 + $1.value.underestimatedHeight }

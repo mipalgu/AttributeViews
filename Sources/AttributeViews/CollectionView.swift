@@ -69,6 +69,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     
     @Binding var value: [Row<Attribute>]
     @Binding var errors: [String]
+    let display: ReadOnlyPath<Attribute, LineAttribute>?
     let label: String
     let type: AttributeType
     
@@ -80,7 +81,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     
     //@EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
         self.init(
             value: Binding(
                 get: {
@@ -94,6 +95,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                 get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
                 set: { _ in }
             ),
+            display: display,
             label: label,
             type: type,
             viewModel: CollectionViewViewModel(
@@ -107,10 +109,11 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
         )
     }
     
-    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), label: String, type: AttributeType) {
+    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType) {
         self.init(
             value: value,
             errors: errors,
+            display: display,
             label: label,
             type: type,
             viewModel: CollectionViewViewModel(
@@ -123,7 +126,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
         )
     }
     
-    private init(value: Binding<[Attribute]>, errors: Binding<[String]>, label: String, type: AttributeType, viewModel: CollectionViewViewModel<Config>) {
+    private init(value: Binding<[Attribute]>, errors: Binding<[String]>, display: ReadOnlyPath<Attribute, LineAttribute>?, label: String, type: AttributeType, viewModel: CollectionViewViewModel<Config>) {
         var idCache = IDCache<Attribute>()
         self._value = Binding(
             get: {
@@ -136,6 +139,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
             }
         )
         self._errors = errors
+        self.display = display
         self.label = label
         self.type = type
         self.viewModel = viewModel
@@ -189,7 +193,12 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                 List(selection: $selection) {
                     ForEach(value.indices, id: \.self) { index in
                         HStack(spacing: 1) {
-                            viewModel.rowView(self, forRow: index)
+                            if let display = display {
+                                Text(value[index].data[keyPath: display.keyPath].strValue)
+                            } else {
+                                Text(value[index].data.strValue ?? "\(index)")
+                            }
+                            Spacer()
                             Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
                         }.contextMenu {
                             Button("Delete") {

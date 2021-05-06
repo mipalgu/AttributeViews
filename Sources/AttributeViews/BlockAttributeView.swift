@@ -25,7 +25,7 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
             case .text:
                 return AnyView(TextView<Config>(root: root, path: path.textValue, label: label))
             case .collection(let type):
-                return AnyView(CollectionView<Config>(root: root, path: path.collectionValue, label: label, type: type, expanded: expanded))
+                return AnyView(CollectionView<Config>(root: root, path: path.collectionValue, display: root.wrappedValue[keyPath: path.keyPath].collectionDisplay, label: label, type: type, expanded: expanded))
             case .table(let columns):
                 return AnyView(TableView<Config>(root: root, path: path.tableValue, label: label, columns: columns))
             case .complex(let fields):
@@ -44,7 +44,7 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
             case .text:
                 return AnyView(TextView<Config>(value: attribute.textValue, label: label))
             case .collection(let type):
-                return AnyView(CollectionView<Config>(value: attribute.collectionValue, label: label, type: type))
+                return AnyView(CollectionView<Config>(value: attribute.collectionValue, display: attribute.wrappedValue.collectionDisplay, label: label, type: type))
             case .table(let columns):
                 return AnyView(TableView<Config>(value: attribute.tableValue, label: label, columns: columns))
             case .complex(let fields):
