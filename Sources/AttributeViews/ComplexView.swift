@@ -123,7 +123,7 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
             label: label,
             fields: fields
         ) {
-            AttributeView(root: root, path: path[$0].wrappedValue, label: $1, expanded: expanded)
+            AttributeView(root: root, path: path[$0].wrappedValue, label: $1, expanded: expanded, notifier: notifier)
         }
     }
     
