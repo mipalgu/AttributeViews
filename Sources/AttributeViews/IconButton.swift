@@ -77,10 +77,12 @@ struct IconButton<Label: View>: View {
     @State var highlighted: Bool = false
     
     var body: some View {
-        VStack {
+        ZStack {
+            Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 0.01).frame(width: 28, height: 28)
             Button(action: action, label: { label().foregroundColor(highlighted ? highlightColor : foregroundColor) })
                 .buttonStyle(PlainButtonStyle())
-        }.padding(5).onHover {
+        }
+        .onHover {
             highlighted = $0
             #if canImport(SwiftUI)
             if $0 {
@@ -90,6 +92,7 @@ struct IconButton<Label: View>: View {
             }
             #endif
         }
+        .clipShape(RoundedRectangle(cornerSize: CGSize(width: 5, height: 5)))
     }
     
 }
