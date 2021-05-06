@@ -79,25 +79,21 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
         let emptyRow = columns.map(\.type.defaultValue)
-        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }))
-        self.tableBodyViewModel = TableBodyViewModel(root: root, path: path, columns: columns)
+        let bodyViewModel = TableBodyViewModel<Config>(root: root, path: path, columns: columns)
+        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }), bodyViewModel: bodyViewModel)
+        self.tableBodyViewModel = bodyViewModel
         self.errors = Binding(
             get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
             set: { _ in }
         )
-        self.newRowViewModel.parent = self
     }
     
     init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
         let emptyRow = columns.map(\.type.defaultValue)
-        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }))
-        self.tableBodyViewModel = TableBodyViewModel(value: value, subErrors: subErrors, columns: columns)
+        let bodyViewModel = TableBodyViewModel<Config>(value: value, subErrors: subErrors, columns: columns)
+        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }), bodyViewModel: bodyViewModel)
+        self.tableBodyViewModel = bodyViewModel
         self.errors = errors
-        self.newRowViewModel.parent = self
-    }
-    
-    func addElement(newRow: [LineAttribute]) {
-        self.tableBodyViewModel.addElement(newRow: newRow)
     }
     
 }
@@ -110,16 +106,17 @@ final class NewRowViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     let errors: Binding<[[String]]>
     
-    weak var parent: TableViewModel<Config>?
+    let bodyViewModel: TableBodyViewModel<Config>
     
-    init(newRow: [LineAttribute], emptyRow: [LineAttribute], errors: Binding<[[String]]>) {
+    init(newRow: [LineAttribute], emptyRow: [LineAttribute], errors: Binding<[[String]]>, bodyViewModel: TableBodyViewModel<Config>) {
         self.newRow = newRow
         self.emptyRow = emptyRow
         self.errors = errors
+        self.bodyViewModel = bodyViewModel
     }
     
     func addElement() {
-        parent?.addElement(newRow: newRow)
+        bodyViewModel.addElement(newRow: newRow)
         newRow = emptyRow
     }
     

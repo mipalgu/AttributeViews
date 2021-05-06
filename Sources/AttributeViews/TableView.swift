@@ -25,10 +25,6 @@ public struct TableView<Config: AttributeViewConfig>: View {
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
         self.init(
-            value: Binding(
-                get: { root.wrappedValue[keyPath: path.keyPath] },
-                set: { root.wrappedValue.modify(attribute: path, value: $0) }
-            ),
             viewModel: TableViewModel(root: root, path: path, columns: columns),
             label: label
         )
@@ -36,13 +32,12 @@ public struct TableView<Config: AttributeViewConfig>: View {
     
     public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String] = { _ in [] }, label: String, columns: [BlockAttributeType.TableColumn]) {
         self.init(
-            value: value,
             viewModel: TableViewModel(value: value, errors: errors, subErrors: subErrors, columns: columns),
             label: label
         )
     }
     
-    private init(value: Binding<[[LineAttribute]]>, viewModel: TableViewModel<Config>, label: String) {
+    private init(viewModel: TableViewModel<Config>, label: String) {
         //self._value = value
         self._viewModel = StateObject(wrappedValue: viewModel)
         self.label = label
