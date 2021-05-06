@@ -105,7 +105,7 @@ struct NewRowView<Config: AttributeViewConfig>: View {
     var body: some View {
         VStack {
             HStack {
-                ForEach(viewModel.newRow.indices, id: \.self) { index in
+                ForEach(0..<viewModel.newRow.count) { index in
                     VStack {
                         LineAttributeView<Config>(
                             attribute: $viewModel.newRow[index],
