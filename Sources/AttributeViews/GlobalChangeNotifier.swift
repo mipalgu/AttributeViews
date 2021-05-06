@@ -1,9 +1,9 @@
 /*
- * AttributeView.swift
- * MachineViews
+ * GlobalChangeNotifier.swift
+ * 
  *
- * Created by Callum McColl on 16/11/20.
- * Copyright © 2020 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 6/5/21.
+ * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,52 +56,8 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
-import Attributes
-
-public struct AttributeView<Config: AttributeViewConfig>: View {
+public protocol GlobalChangeNotifier: AnyObject {
     
-    let subView: () -> AnyView
+    func send()
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Attribute>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
-        self.subView = {
-            switch root.wrappedValue[keyPath: path.keyPath].type {
-            case .line:
-                return AnyView(LineAttributeView<Config>(root: root, path: path.lineAttribute,label: label, notifier: notifier))
-            case .block:
-                return AnyView(BlockAttributeView<Config>(root: root, path: path.blockAttribute, label: label, expanded: expanded, notifier: notifier))
-            }
-        }
-    }
-    
-    public init(attribute: Binding<Attribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<Attribute, Attribute>) -> [String] = { _ in [] }, label: String) {
-        self.subView = {
-            switch attribute.wrappedValue.type {
-            case .line:
-                return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, errors: errors, label: label))
-            case .block:
-                return AnyView(
-                    BlockAttributeView<Config>(
-                        attribute: attribute.blockAttribute,
-                        errors: errors,
-                        subErrors: {
-                            let keyPath: KeyPath<Attribute, BlockAttribute> = \.blockAttribute
-                            let path = ReadOnlyPath(keyPath: keyPath.appending(path: $0.keyPath), ancestors: [])
-                            return subErrors(path)
-                        },
-                        label: label
-                    )
-                )
-            }
-        }
-    }
-    
-    public var body: some View {
-        subView()
-    }
 }

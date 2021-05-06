@@ -77,9 +77,9 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         errors.wrappedValue
     }
     
-    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
+    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         let emptyRow = columns.map(\.type.defaultValue)
-        let bodyViewModel = TableBodyViewModel<Config>(root: root, path: path, columns: columns)
+        let bodyViewModel = TableBodyViewModel<Config>(root: root, path: path, columns: columns, notifier: notifier)
         self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }), bodyViewModel: bodyViewModel)
         self.tableBodyViewModel = bodyViewModel
         self.errors = Binding(
@@ -142,7 +142,7 @@ final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
         }
     }
     
-    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn]) {
+    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         self.valueBinding = Binding(
             get: { root.wrappedValue[keyPath: path.keyPath] },
             set: { _ = root.wrappedValue.modify(attribute: path, value: $0) }
@@ -151,7 +151,7 @@ final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
             root.wrappedValue.errorBag.errors(forPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
         }
         self.columns = columns
-        self.dataSource = KeyPathTableViewDataSource<Root, Config>(root: root, path: path)
+        self.dataSource = KeyPathTableViewDataSource<Root, Config>(root: root, path: path, notifier: notifier)
         syncRows()
     }
     
@@ -232,6 +232,7 @@ fileprivate struct KeyPathTableViewDataSource<Root: Modifiable, Config: Attribut
     
     let root: Binding<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
+    weak var notifier: GlobalChangeNotifier?
     
     func addElement(_ row: [LineAttribute]) {
         _ = root.wrappedValue.addItem(row, to: path)
@@ -246,7 +247,7 @@ fileprivate struct KeyPathTableViewDataSource<Root: Modifiable, Config: Attribut
     }
     
     func view(forElementAtRow row: Int, column: Int) -> AnyView {
-        AnyView(LineAttributeView<Config>(root: root, path: path[row][column], label: ""))
+        AnyView(LineAttributeView<Config>(root: root, path: path[row][column], label: "", notifier: notifier))
     }
     
 }

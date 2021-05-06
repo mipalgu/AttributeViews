@@ -35,7 +35,7 @@ public struct FloatView<Config: AttributeViewConfig>: View {
         return formatter
     }
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Double>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Double>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? 0.0 : root.wrappedValue[keyPath: path.keyPath] },
@@ -47,7 +47,12 @@ public struct FloatView<Config: AttributeViewConfig>: View {
             ),
             label: label
         ) {
-            _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+            let result = root.wrappedValue.modify(attribute: path, value: $0)
+            switch result {
+            case .success(true), .failure:
+                notifier?.send()
+            default: return
+            }
         }
     }
     

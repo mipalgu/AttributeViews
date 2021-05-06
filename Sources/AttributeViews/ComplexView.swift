@@ -96,13 +96,18 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
     
     //@EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field], expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field], expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             viewModel: ComplexViewModel(
                 value: Binding(
                     get: { path.isNil(root.wrappedValue) ? [:] : root.wrappedValue[keyPath: path.keyPath] },
                     set: {
-                        _ = root.wrappedValue.modify(attribute: path, value: $0)
+                        let result = root.wrappedValue.modify(attribute: path, value: $0)
+                        switch result {
+                        case .success(true), .failure:
+                            notifier?.send()
+                        default: return
+                        }
                     }
                 ),
                 subErrors: {

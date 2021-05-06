@@ -17,21 +17,21 @@ public struct LineAttributeView<Config: AttributeViewConfig>: View {
     
     let subView: () -> AnyView
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, LineAttribute>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, LineAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.subView = {
             switch root.wrappedValue[keyPath: path.keyPath].type {
             case .bool:
-                return AnyView(BoolView<Config>(root: root, path: path.boolValue, label: label))
+                return AnyView(BoolView<Config>(root: root, path: path.boolValue, label: label, notifier: notifier))
             case .integer:
-                return AnyView(IntegerView<Config>(root: root, path: path.integerValue, label: label))
+                return AnyView(IntegerView<Config>(root: root, path: path.integerValue, label: label, notifier: notifier))
             case .float:
-                return AnyView(FloatView<Config>(root: root, path: path.floatValue, label: label))
+                return AnyView(FloatView<Config>(root: root, path: path.floatValue, label: label, notifier: notifier))
             case .expression(let language):
-                return AnyView(ExpressionView<Config>(root: root, path: path.expressionValue, label: label, language: language))
+                return AnyView(ExpressionView<Config>(root: root, path: path.expressionValue, label: label, language: language, notifier: notifier))
             case .enumerated(let validValues):
-                return AnyView(EnumeratedView<Config>(root: root, path: path.enumeratedValue, label: label, validValues: validValues))
+                return AnyView(EnumeratedView<Config>(root: root, path: path.enumeratedValue, label: label, validValues: validValues, notifier: notifier))
             case .line:
-                return AnyView(LineView<Config>(root: root, path: path.lineValue, label: label))
+                return AnyView(LineView<Config>(root: root, path: path.lineValue, label: label, notifier: notifier))
             }
         }
     }

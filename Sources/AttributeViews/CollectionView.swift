@@ -81,14 +81,19 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
     
     //@EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
                 get: {
                     path.isNil(root.wrappedValue) ? [] : root.wrappedValue[keyPath: path.keyPath]
                 },
                 set: {
-                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                    let result = root.wrappedValue.modify(attribute: path, value: $0)
+                    switch result {
+                    case .success(true), .failure:
+                        notifier?.send()
+                    default: return
+                    }
                 }
             ),
             errors: Binding(

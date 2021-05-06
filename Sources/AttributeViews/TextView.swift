@@ -22,7 +22,7 @@ public struct TextView<Config: AttributeViewConfig>: View {
     
 //    @EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? "" : root.wrappedValue[keyPath: path.keyPath] },
@@ -34,7 +34,12 @@ public struct TextView<Config: AttributeViewConfig>: View {
             ),
             label: label
         ) {
-            try? root.wrappedValue.modify(attribute: path, value: $0)
+            let result = root.wrappedValue.modify(attribute: path, value: $0)
+            switch result {
+            case .success(true), .failure:
+                notifier?.send()
+            default: return
+            }
         }
     }
     

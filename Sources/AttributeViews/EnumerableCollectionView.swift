@@ -23,12 +23,17 @@ public struct EnumerableCollectionView<Config: AttributeViewConfig>: View {
     
     //@EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Set<String>>, label: String, validValues: Set<String>) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Set<String>>, label: String, validValues: Set<String>, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? [] : root.wrappedValue[keyPath: path.keyPath] },
                 set: {
-                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                    let result = root.wrappedValue.modify(attribute: path, value: $0)
+                    switch result {
+                    case .success(true), .failure:
+                        notifier?.send()
+                    default: return
+                    }
                 }
             ),
             errors: Binding(

@@ -20,12 +20,17 @@ public struct BoolView<Config: AttributeViewConfig>: View {
     
     let label: String
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Bool>, label: String) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Bool>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? false : root.wrappedValue[keyPath: path.keyPath] },
                 set: {
-                    _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+                    let result = root.wrappedValue.modify(attribute: path, value: $0)
+                    switch result {
+                    case .success(true), .failure:
+                        notifier?.send()
+                    default: return
+                    }
                 }
             ),
             errors: Binding(

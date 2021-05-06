@@ -18,9 +18,9 @@ public struct AttributeGroupView<Config: AttributeViewConfig>: View {
     
     let subView: () -> ComplexView<Config>
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
         self.init {
-            ComplexView(root: root, path: path.attributes, label: label, fields: root.wrappedValue[keyPath: path.keyPath].fields, expanded: expanded)
+            ComplexView(root: root, path: path.attributes, label: label, fields: root.wrappedValue[keyPath: path.keyPath].fields, expanded: expanded, notifier: notifier)
         }
     }
     

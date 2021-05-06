@@ -23,9 +23,9 @@ public struct TableView<Config: AttributeViewConfig>: View {
     
 //    @EnvironmentObject var config: Config
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn]) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         self.init(
-            viewModel: TableViewModel(root: root, path: path, columns: columns),
+            viewModel: TableViewModel(root: root, path: path, columns: columns, notifier: notifier),
             label: label
         )
     }

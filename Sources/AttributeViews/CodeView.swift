@@ -22,15 +22,15 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
     let language: Language
     let onCommit: ((Code) -> Void)?
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, label: String, language: Language) where Label == Text {
-        self.init(root: root, path: path, language: language, label: { Text(label.capitalized) })
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, label: String, language: Language, notifier: GlobalChangeNotifier? = nil) where Label == Text {
+        self.init(root: root, path: path, language: language, notifier: notifier, label: { Text(label.capitalized) })
     }
     
     public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language) where Label == Text {
         self.init(value: value, errors: errors, language: language, label: { Text(label.capitalized) }, onCommit: nil)
     }
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, label: @escaping () -> Label) {
+    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, notifier: GlobalChangeNotifier? = nil, label: @escaping () -> Label) {
         self.init(
             value: Binding(
                 get: { path.isNil(root.wrappedValue) ? "" : root.wrappedValue[keyPath: path.keyPath] },
@@ -43,7 +43,12 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
             language: language,
             label: label
         ) {
-            _ = try? root.wrappedValue.modify(attribute: path, value: $0)
+            let result = root.wrappedValue.modify(attribute: path, value: $0)
+            switch result {
+            case .success(true), .failure:
+                notifier?.send()
+            default: return
+            }
         }
     }
     
