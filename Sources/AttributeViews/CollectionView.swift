@@ -164,20 +164,30 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                     if let editingIndex = editing {
                         HStack {
                             Spacer()
-                            Button(action: {
-                                if editingIndex == value.count {
-                                    viewModel.addElement(self)
-                                }
-                                editing = nil
-                            }, label: {
-                                Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular))
-                            }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
+                            IconButton(
+                                action: {
+                                    if editingIndex == value.count {
+                                        viewModel.addElement(self)
+                                    }
+                                    editing = nil
+                                },
+                                label: {
+                                    Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular))
+                                },
+                                foregroundColor: .blue,
+                                highlightColor: .red
+                            )
                             Divider()
-                            Button(action: {
-                                editing = nil
-                            }, label: {
-                                Image(systemName: "trash").font(.system(size: 16, weight: .regular))
-                            }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.red)
+                            IconButton(
+                                action: {
+                                    editing = nil
+                                },
+                                label: {
+                                    Image(systemName: "trash").font(.system(size: 16, weight: .regular))
+                                },
+                                foregroundColor: .red,
+                                highlightColor: .blue
+                            ).animation(.easeOut)
                         }
                         if editingIndex >= value.count {
                             AttributeView<Config>(attribute: $newRow, label: "")
@@ -187,9 +197,9 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                     } else {
                         HStack {
                             Spacer()
-                            Button(action: { editing = value.count }, label: {
+                            IconButton(action: { editing = value.count }, label: {
                                 Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                            }).animation(.easeOut).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
+                            }, foregroundColor: .blue, highlightColor: .blue).animation(.easeOut)
                         }
                     }
                 }
@@ -198,33 +208,36 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
             if !value.isEmpty && ((editing == nil && type.isBlock == true) || type.isLine) {
                 List(selection: $selection) {
                     ForEach(value.indices, id: \.self) { index in
-                        HStack(spacing: 1) {
-                            switch type {
-                            case .line:
-                                viewModel.rowView(self, forRow: index)
-                                Spacer()
-                            case .block:
-                                if let display = display {
-                                    Text(value[index].data[keyPath: display.keyPath].strValue)
-                                } else {
-                                    Text(value[index].data.strValue ?? "\(index)")
+                        VStack {
+                            HStack(spacing: 1) {
+                                Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
+                                switch type {
+                                case .line:
+                                    viewModel.rowView(self, forRow: index)
+                                    Spacer()
+                                case .block:
+                                    if let display = display {
+                                        Text(value[index].data[keyPath: display.keyPath].strValue)
+                                    } else {
+                                        Text(value[index].data.strValue ?? "\(index)")
+                                    }
+                                    Spacer()
+                                    IconButton(action: { editing = index }, label: {
+                                        Image(systemName: "pencil").font(.system(size: 16, weight: .regular))
+                                    }, foregroundColor: .blue, highlightColor: .blue)
                                 }
-                                Spacer()
-                                Button(action: { editing = index }, label: { Image(systemName: "pencil").font(.system(size: 16, weight: .regular)) })
-                                    .buttonStyle(PlainButtonStyle())
+                            }.contextMenu {
+                                Button("Delete") {
+                                    viewModel.deleteRow(self, row: index)
+                                }.keyboardShortcut(.delete)
                             }
-                            Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
-                        }.contextMenu {
-                            Button("Delete") {
-                                viewModel.deleteRow(self, row: index)
-                            }.keyboardShortcut(.delete)
+                            Divider()
                         }
                     }.onMove {
                         viewModel.moveElements(self, atOffsets: $0, to: $1)
                     }.onDelete {
                         viewModel.deleteElements(self, atOffsets: $0)
                     }
-                    
                 }.frame(minHeight: max(CGFloat(value.reduce(0) { $0 + $1.data.underestimatedHeight }), 100))
             }
         }.padding(.top, 2)
