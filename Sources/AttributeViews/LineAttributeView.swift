@@ -36,21 +36,21 @@ public struct LineAttributeView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(attribute: Binding<LineAttribute>, errors: Binding<[String]> = .constant([]), label: String) {
+    public init(attribute: Binding<LineAttribute>, errors: Binding<[String]> = .constant([]), label: String, delayEdits: Bool = false) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .bool:
                 return AnyView(BoolView<Config>(value: attribute.boolValue, errors: errors, label: label))
             case .integer:
-                return AnyView(IntegerView<Config>(value: attribute.integerValue, errors: errors, label: label))
+                return AnyView(IntegerView<Config>(value: attribute.integerValue, errors: errors, label: label, delayEdits: delayEdits))
             case .float:
-                return AnyView(FloatView<Config>(value: attribute.floatValue, errors: errors, label: label))
+                return AnyView(FloatView<Config>(value: attribute.floatValue, errors: errors, label: label, delayEdits: delayEdits))
             case .expression(let language):
-                return AnyView(ExpressionView<Config>(value: attribute.expressionValue, errors: errors, label: label, language: language))
+                return AnyView(ExpressionView<Config>(value: attribute.expressionValue, errors: errors, label: label, language: language, delayEdits: delayEdits))
             case .enumerated(let validValues):
                 return AnyView(EnumeratedView<Config>(value: attribute.enumeratedValue, errors: errors, label: label, validValues: validValues))
             case .line:
-                return AnyView(LineView<Config>(value: attribute.lineValue, errors: errors, label: label))
+                return AnyView(LineView<Config>(value: attribute.lineValue, errors: errors, label: label, delayEdits: delayEdits))
             }
         }
     }

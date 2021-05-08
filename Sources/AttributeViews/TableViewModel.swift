@@ -88,9 +88,9 @@ final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
         )
     }
     
-    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
+    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         let emptyRow = columns.map(\.type.defaultValue)
-        let bodyViewModel = TableBodyViewModel<Config>(value: value, subErrors: subErrors, columns: columns)
+        let bodyViewModel = TableBodyViewModel<Config>(value: value, subErrors: subErrors, columns: columns, delayEdits: delayEdits)
         self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }), bodyViewModel: bodyViewModel)
         self.tableBodyViewModel = bodyViewModel
         self.errors = errors
@@ -155,11 +155,11 @@ final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
         syncRows()
     }
     
-    init(value: Binding<[[LineAttribute]]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn]) {
+    init(value: Binding<[[LineAttribute]]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         self.valueBinding = value
         self.subErrors = subErrors
         self.columns = columns
-        self.dataSource = BindingTableViewDataSource<Config>(value: value)
+        self.dataSource = BindingTableViewDataSource<Config>(value: value, delayEdits: delayEdits)
         syncRows()
     }
     
@@ -256,6 +256,8 @@ fileprivate struct BindingTableViewDataSource<Config: AttributeViewConfig>: Tabl
     
     let value: Binding<[[LineAttribute]]>
     
+    let delayEdits: Bool
+    
     func addElement(_ row: [LineAttribute]) {
         value.wrappedValue.append(row)
     }
@@ -281,7 +283,8 @@ fileprivate struct BindingTableViewDataSource<Config: AttributeViewConfig>: Tabl
                     value.wrappedValue[row][column] = $0
                 }
             ),
-            label: ""
+            label: "",
+            delayEdits: delayEdits
         ))
     }
     

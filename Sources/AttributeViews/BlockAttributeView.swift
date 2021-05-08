@@ -36,17 +36,17 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
         }
     }
     
-    public init(attribute: Binding<BlockAttribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<BlockAttribute, Attribute>) -> [String], label: String) {
+    public init(attribute: Binding<BlockAttribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<BlockAttribute, Attribute>) -> [String], label: String, delayEdits: Bool = false) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .code(let language):
-                return AnyView(CodeView<Config, Text>(value: attribute.codeValue, label: label, language: language))
+                return AnyView(CodeView<Config, Text>(value: attribute.codeValue, label: label, language: language, delayEdits: delayEdits))
             case .text:
-                return AnyView(TextView<Config>(value: attribute.textValue, label: label))
+                return AnyView(TextView<Config>(value: attribute.textValue, label: label, delayEdits: delayEdits))
             case .collection(let type):
-                return AnyView(CollectionView<Config>(value: attribute.collectionValue, display: attribute.wrappedValue.collectionDisplay, label: label, type: type))
+                return AnyView(CollectionView<Config>(value: attribute.collectionValue, display: attribute.wrappedValue.collectionDisplay, label: label, type: type, delayEdits: delayEdits))
             case .table(let columns):
-                return AnyView(TableView<Config>(value: attribute.tableValue, label: label, columns: columns))
+                return AnyView(TableView<Config>(value: attribute.tableValue, label: label, columns: columns, delayEdits: delayEdits))
             case .complex(let fields):
                 return AnyView(
                     ComplexView<Config>(
@@ -58,7 +58,8 @@ public struct BlockAttributeView<Config: AttributeViewConfig>: View{
                             return subErrors(path)
                         },
                         label: label,
-                        fields: fields
+                        fields: fields,
+                        delayEdits: delayEdits
                     )
                 )
             case .enumerableCollection(let validValues):

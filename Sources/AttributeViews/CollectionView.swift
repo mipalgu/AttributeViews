@@ -114,7 +114,7 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
         )
     }
     
-    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType) {
+    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, delayEdits: Bool = false) {
         self.init(
             value: value,
             errors: errors,
@@ -125,7 +125,8 @@ public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtoco
                 CollectionViewBindingViewModel(
                     value: value,
                     errors: errors,
-                    type: type
+                    type: type,
+                    delayEdits: delayEdits
                 )
             )
         )
@@ -331,15 +332,17 @@ fileprivate struct CollectionViewBindingViewModel<Config: AttributeViewConfig>: 
     let value: Binding<[Attribute]>
     let errors: Binding<[String]>
     let type: AttributeType
+    let delayEdits: Bool
     
     var newRow: Attribute {
         type.defaultValue
     }
     
-    init(value: Binding<[Attribute]>, errors: Binding<[String]>, type: AttributeType) {
+    init(value: Binding<[Attribute]>, errors: Binding<[String]>, type: AttributeType, delayEdits: Bool = false) {
         self.value = value
         self.errors = errors
         self.type = type
+        self.delayEdits = delayEdits
     }
     
     func errors(_ view: CollectionView<Config>, forRow _: Int) -> [String] {
@@ -347,7 +350,7 @@ fileprivate struct CollectionViewBindingViewModel<Config: AttributeViewConfig>: 
     }
     
     func rowView(_ view: CollectionView<Config>, forRow row: Int) -> AttributeView<Config> {
-        return AttributeView(attribute: value[row], label: "")
+        return AttributeView(attribute: value[row], label: "", delayEdits: delayEdits)
     }
     
 }

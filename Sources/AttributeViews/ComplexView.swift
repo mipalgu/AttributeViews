@@ -127,7 +127,7 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String] = { _ in [] }, label: String, fields: [Field]) {
+    public init(value: Binding<[String: Attribute]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[String: Attribute], Attribute>) -> [String] = { _ in [] }, label: String, fields: [Field], delayEdits: Bool = false) {
         let viewModel = ComplexViewModel(value: value, subErrors: subErrors, expanded: nil, root: nil)
         self.init(
             viewModel: viewModel,
@@ -139,7 +139,8 @@ public struct ComplexView<Config: AttributeViewConfig>: View {
                 attribute: viewModel.attributes[$0]?.value ?? .constant(.bool(false)),
                 errors: viewModel.errorBinding(forAttribute: $0),
                 subErrors: viewModel.subErrors(forAttribute: $0),
-                label: $1
+                label: $1,
+                delayEdits: delayEdits
             )
         }
     }

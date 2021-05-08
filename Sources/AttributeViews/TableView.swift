@@ -30,9 +30,9 @@ public struct TableView<Config: AttributeViewConfig>: View {
         )
     }
     
-    public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String] = { _ in [] }, label: String, columns: [BlockAttributeType.TableColumn]) {
+    public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String] = { _ in [] }, label: String, columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         self.init(
-            viewModel: TableViewModel(value: value, errors: errors, subErrors: subErrors, columns: columns),
+            viewModel: TableViewModel(value: value, errors: errors, subErrors: subErrors, columns: columns, delayEdits: delayEdits),
             label: label
         )
     }

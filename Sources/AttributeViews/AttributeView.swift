@@ -79,11 +79,11 @@ public struct AttributeView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(attribute: Binding<Attribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<Attribute, Attribute>) -> [String] = { _ in [] }, label: String) {
+    public init(attribute: Binding<Attribute>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<Attribute, Attribute>) -> [String] = { _ in [] }, label: String, delayEdits: Bool = false) {
         self.subView = {
             switch attribute.wrappedValue.type {
             case .line:
-                return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, errors: errors, label: label))
+                return AnyView(LineAttributeView<Config>(attribute: attribute.lineAttribute, errors: errors, label: label, delayEdits: delayEdits))
             case .block:
                 return AnyView(
                     BlockAttributeView<Config>(
@@ -94,7 +94,8 @@ public struct AttributeView<Config: AttributeViewConfig>: View {
                             let path = ReadOnlyPath(keyPath: keyPath.appending(path: $0.keyPath), ancestors: [])
                             return subErrors(path)
                         },
-                        label: label
+                        label: label,
+                        delayEdits: delayEdits
                     )
                 )
             }

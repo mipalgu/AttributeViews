@@ -26,8 +26,8 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         self.init(root: root, path: path, language: language, notifier: notifier, label: { Text(label.capitalized) })
     }
     
-    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language) where Label == Text {
-        self.init(value: value, errors: errors, language: language, label: { Text(label.capitalized) }, onCommit: nil)
+    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language, delayEdits: Bool = false) where Label == Text {
+        self.init(value: value, errors: errors, language: language, delayEdits: delayEdits, label: { Text(label.capitalized) })
     }
     
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, notifier: GlobalChangeNotifier? = nil, label: @escaping () -> Label) {
@@ -52,7 +52,11 @@ public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
         }
     }
     
-    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label, onCommit: ((Code) -> Void)?) {
+    public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, delayEdits: Bool = false, label: @escaping () -> Label) {
+        self.init(value: value, errors: errors, language: language, label: label, onCommit: delayEdits ? { value.wrappedValue = $0 } : nil)
+    }
+    
+    private init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label, onCommit: ((Code) -> Void)?) {
         self._value = value
         self._errors = errors
         self.label = label

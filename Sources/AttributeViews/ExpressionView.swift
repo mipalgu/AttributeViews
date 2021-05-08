@@ -51,8 +51,8 @@ public struct ExpressionView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(value: Binding<Expression>, errors: Binding<[String]> = .constant([]), label: String, language: Language) {
-        self.init(value: value, errors: errors, label: label, language: language, onCommit: nil)
+    public init(value: Binding<Expression>, errors: Binding<[String]> = .constant([]), label: String, language: Language, delayEdits: Bool = false) {
+        self.init(value: value, errors: errors, label: label, language: language, onCommit: delayEdits ? { value.wrappedValue = $0 } : nil)
     }
     
     private init(value: Binding<Expression>, errors: Binding<[String]>, label: String, language: Language, onCommit: ((Expression) -> Void)?) {

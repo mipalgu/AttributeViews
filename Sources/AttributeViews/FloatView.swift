@@ -56,8 +56,8 @@ public struct FloatView<Config: AttributeViewConfig>: View {
         }
     }
     
-    public init(value: Binding<Double>, errors: Binding<[String]> = .constant([]), label: String) {
-        self.init(value: value, errors: errors, label: label, onCommit: nil)
+    public init(value: Binding<Double>, errors: Binding<[String]> = .constant([]), label: String, delayEdits: Bool = false) {
+        self.init(value: value, errors: errors, label: label, onCommit: delayEdits ? { value.wrappedValue = $0 } : nil)
     }
     
     private init(value: Binding<Double>, errors: Binding<[String]>, label: String, onCommit: ((Double) -> Void)?) {
