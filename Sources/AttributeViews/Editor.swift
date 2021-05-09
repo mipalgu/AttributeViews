@@ -67,7 +67,27 @@ import SwiftUI
 import Foundation
 import Cocoa
 
-struct Editor: NSViewRepresentable {
+final class EditorViewController: NSViewController {
+    
+    let coordinator: Editor.Coordinator
+    
+    init(coordinator: Editor.Coordinator) {
+        self.coordinator = coordinator
+        super.init()
+    }
+    
+    required init?(coder: NSCoder) {
+        return nil
+    }
+    
+    override func viewWillDisappear() {
+        coordinator.viewWillDisappear()
+    }
+    
+}
+
+struct Editor: NSViewControllerRepresentable {
+    
     
     @Binding var editingText: String
     let size: CGSize
@@ -87,19 +107,23 @@ struct Editor: NSViewRepresentable {
         )
     }
     
-    func makeNSView(context: Context) -> NSScrollView {
+    func makeNSViewController(context: Context) -> EditorViewController {
         let scrollView = NSTextView.scrollableTextView()
         scrollView.setFrameSize(size)
         let textView = scrollView.documentView as! NSTextView
         textView.string = editingText
         context.coordinator.textView = textView
         textView.delegate = context.coordinator
-        return scrollView
+        let controller = EditorViewController(coordinator: context.coordinator)
+        controller.view = scrollView
+        return controller
     }
     
-    func updateNSView(_ nsView: NSScrollView, context: Context) {}
+    func updateNSViewController(_ nsViewController: EditorViewController, context: Context) {}
     
     final class Coordinator: NSObject, NSTextViewDelegate {
+        
+        var editing: Bool = false
         
         var textView: NSTextView!
         
@@ -112,12 +136,21 @@ struct Editor: NSViewRepresentable {
             self.onCommit = onCommit
         }
         
+        func viewWillDisappear() {
+            if editing {
+                onCommit(textView.string)
+                editing = false
+            }
+        }
+        
         func textDidEndEditing(_ notification: Notification) {
             onCommit(textView.string)
+            editing = false
         }
         
         func textDidChange(_ notification: Notification) {
             changeValue(textView.string)
+            editing = true
         }
         
     }
