@@ -73,7 +73,7 @@ final class EditorViewController: NSViewController {
     
     init(coordinator: Editor.Coordinator) {
         self.coordinator = coordinator
-        super.init()
+        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
