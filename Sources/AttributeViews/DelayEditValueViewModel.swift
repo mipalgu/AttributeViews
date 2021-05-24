@@ -86,13 +86,17 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             ref.value
         } set {
             ref.value = newValue
-            //objectWillChange.send()
+            objectWillChange.send()
         }
     }
     
     var editingValue: T {
         get {
-            nil == onCommit ? value : editValue
+            if nil == onCommit {
+                return value
+            } else {
+                return editValue
+            }
         } set {
             if nil == onCommit {
                 value = newValue

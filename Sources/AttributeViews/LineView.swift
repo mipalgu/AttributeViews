@@ -19,8 +19,6 @@ public struct LineView: View {
     
     @ObservedObject var viewModel: LineViewModel
     
-//    @EnvironmentObject var config: Config
-    
     public init(viewModel: LineViewModel) {
         self.viewModel = viewModel
     }
@@ -36,42 +34,63 @@ public struct LineView: View {
     }
 }
 
-//struct LineView_Previews: PreviewProvider {
-//    
-//    struct Root_Preview: View {
-//        
-//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-//            AttributeGroup(
-//                name: "Fields", fields: [Field(name: "line", type: .line)], attributes: ["line": .line("hello")], metaData: [:])
-//        ])
-//        
-//        let path = EmptyModifiable.path.attributes[0].attributes["line"].wrappedValue.lineValue
-//        
-//        var body: some View {
-//            LineView(
-//                root: $modifiable,
-//                path: path,
-//                label: "Root"
-//            )
-//        }
-//        
-//    }
-//    
-//    struct Binding_Preview: View {
-//        
-//        @State var value: String = "world"
-//        @State var errors: [String] = ["An error", "A second error"]
-//        
-//        var body: some View {
-//            LineView(value: $value, errors: $errors, label: "Binding")
-//        }
-//        
-//    }
-//    
-//    static var previews: some View {
-//        VStack {
-//            Root_Preview()
-//            Binding_Preview()
-//        }
-//    }
-//}
+import GUUI
+
+struct LineView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields", fields: [Field(name: "line", type: .line)], attributes: ["line": .line("hello")], metaData: [:])
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["line"].wrappedValue.lineValue
+        
+        var body: some View {
+            LineViewPreviewView(
+                viewModel: LineViewModel(
+                    root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
+                    path: path,
+                    label: "Root"
+                )
+            )
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: String = "world"
+        @State var errors: [String] = ["An error", "A second error"]
+        
+        var body: some View {
+            LineViewPreviewView(
+                viewModel: LineViewModel(
+                    valueRef: Ref(get: { self.value }, set: { self.value = $0 }),
+                    errorsRef: ConstRef { self.errors },
+                    label: "Binding",
+                    delayEdits: false
+                )
+            )
+        }
+        
+    }
+    
+    struct LineViewPreviewView: View {
+        
+        @StateObject var viewModel: LineViewModel
+        
+        var body: some View {
+            LineView(viewModel: viewModel)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}

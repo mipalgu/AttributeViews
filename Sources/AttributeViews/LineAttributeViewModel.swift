@@ -171,66 +171,20 @@ public final class LineAttributeViewModel: ObservableObject, Identifiable, Globa
         } set {
             objectWillChange.send()
             ref.value = newValue
-        }
-    }
-    
-    var lineAttributeBinding: Binding<LineAttribute> {
-        Binding(
-            get: { self.lineAttribute },
-            set: { self.lineAttribute = $0 }
-        )
-    }
-    
-    var boolValue: Bool {
-        get {
-            ref.value.boolValue
-        } set {
-            ref.value.boolValue = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    var integerValue: Int {
-        get {
-            ref.value.integerValue
-        } set {
-            ref.value.integerValue = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    var floatValue: Double {
-        get {
-            ref.value.floatValue
-        } set {
-            ref.value.floatValue = newValue
-        }
-    }
-    
-    var expressionValue: Expression {
-        get {
-            ref.value.expressionValue
-        } set {
-            ref.value.expressionValue = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    var enumeratedValue: String {
-        get {
-            ref.value.enumeratedValue
-        } set {
-            ref.value.enumeratedValue = newValue
-            objectWillChange.send()
-        }
-    }
-    
-    var lineValue: String {
-        get {
-            ref.value.lineValue
-        } set {
-            ref.value.lineValue = newValue
-            objectWillChange.send()
+            switch newValue.type {
+            case .bool:
+                boolViewModel.send()
+            case .integer:
+                integerViewModel.send()
+            case .float:
+                floatViewModel.send()
+            case .expression:
+                expressionViewModel.send()
+            case .enumerated:
+                enumeratedViewModel.send()
+            case .line:
+                lineViewModel.send()
+            }
         }
     }
     
