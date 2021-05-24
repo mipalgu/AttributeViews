@@ -107,7 +107,9 @@ final class AppViewModel<Root: Modifiable>: ObservableObject, GlobalChangeNotifi
     
     func send() {
         objectWillChange.send()
-        viewModels = [:]
+        viewModels.values.forEach {
+            $0.send()
+        }
     }
     
 }

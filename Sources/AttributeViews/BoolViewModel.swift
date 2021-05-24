@@ -3,7 +3,7 @@
  * File.swift
  * 
  *
- * Created by Callum McColl on 8/5/21.
+ * Created by Callum McColl on 24/5/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,25 +57,16 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
+import Attributes
 
-import Combine
+public typealias BoolViewModel = ValueViewModel<Bool>
 
-public protocol GlobalChangeNotifierDelegator: GlobalChangeNotifier {
-    
-    var notifier: GlobalChangeNotifier? { get }
-    
-}
+public typealias IntegerViewModel = DelayEditValueViewModel<Int>
 
-public extension GlobalChangeNotifierDelegator where Self: ObservableObject, Self.ObjectWillChangePublisher == ObservableObjectPublisher {
-    
-    func send() {
-        self.objectWillChange.send()
-        self.notifier?.send()
-    }
-    
-}
+public typealias FloatViewModel = DelayEditValueViewModel<Double>
+
+public typealias ExpressionViewModel = DelayEditValueViewModel<Expression>
+
+public typealias EnumeratedViewModel = ValueViewModel<String>
+
+public typealias LineViewModel = DelayEditValueViewModel<String>

@@ -1,8 +1,8 @@
 /*
- * AttributeViewModel.swift
+ * ValueViewModel.swift
  * 
  *
- * Created by Callum McColl on 1/5/21.
+ * Created by Callum McColl on 24/5/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,82 +65,37 @@ import SwiftUI
 import Attributes
 import GUUI
 
-fileprivate final class AttributeValue: Value<Attribute> {
+public final class ValueViewModel<T>: ObservableObject, GlobalChangeNotifier {
     
-    private let _lineAttributeViewModel: () -> LineAttributeViewModel
+    private let ref: Value<T>
     
-    private let _blockAttributeViewModel: () -> BlockAttributeViewModel
+    public let label: String
     
-    var lineAttributeViewModel: LineAttributeViewModel {
-        _lineAttributeViewModel()
+    var errors: [String] {
+        ref.errors
     }
     
-    var blockAttributeViewModel: BlockAttributeViewModel {
-        _blockAttributeViewModel()
-    }
-    
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
-        self._lineAttributeViewModel = {
-            LineAttributeViewModel(root: root, path: path.lineAttribute, label: label, notifier: notifier)
-        }
-        self._blockAttributeViewModel = {
-            BlockAttributeViewModel(root: root, path: path.blockAttribute, label: label, notifier: notifier)
-        }
-        super.init(root: root, path: path, notifier: notifier)
-    }
-    
-    init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
-        self._lineAttributeViewModel = {
-            LineAttributeViewModel(valueRef: valueRef.lineAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
-        }
-        self._blockAttributeViewModel = {
-            BlockAttributeViewModel(valueRef: valueRef.blockAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
-        }
-        super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-    
-}
-
-public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
-    
-    private let ref: AttributeValue
-    
-    lazy var lineAttributeViewModel: LineAttributeViewModel = {
-        ref.lineAttributeViewModel
-    }()
-    
-    lazy var blockAttributeViewModel: BlockAttributeViewModel = {
-        ref.blockAttributeViewModel
-    }()
-    
-    var attribute: Attribute {
-        ref.value
-    }
-    
-    var subView: AnyView {
-        switch ref.value.type {
-        case .block:
-            return AnyView(BlockAttributeView(viewModel: ref.blockAttributeViewModel))
-        case .line:
-            return AnyView(LineAttributeView(viewModel: ref.lineAttributeViewModel))
+    var value: T {
+        get {
+            ref.value
+        } set {
+            objectWillChange.send()
+            ref.value = newValue
         }
     }
     
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
-        self.ref = AttributeValue(root: root, path: path, label: label, notifier: notifier)
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = Value(root: root, path: path, notifier: notifier)
+        self.label = label
     }
     
-    public init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, delayEdits: Bool = false) {
-        self.ref = AttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
+    public init(valueRef: Ref<T>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String) {
+        self.ref = Value(valueRef: valueRef, errorsRef: errorsRef)
+        self.label = label
     }
     
     public func send() {
         objectWillChange.send()
-        if ref.value.isBlock {
-            blockAttributeViewModel.send()
-        } else {
-            lineAttributeViewModel.send()
-        }
     }
     
 }

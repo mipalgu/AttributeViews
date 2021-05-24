@@ -15,50 +15,26 @@ import Attributes
 
 public struct BoolView: View {
     
-    @Binding var value: Bool
-    @Binding var errors: [String]
+    @ObservedObject var viewModel: BoolViewModel
     
-    let label: String
-    
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Bool>, label: String, notifier: GlobalChangeNotifier? = nil) {
-        self.init(
-            value: Binding(
-                get: { path.isNil(root.wrappedValue) ? false : root.wrappedValue[keyPath: path.keyPath] },
-                set: {
-                    let result = root.wrappedValue.modify(attribute: path, value: $0)
-                    switch result {
-                    case .success(true), .failure:
-                        notifier?.send()
-                    default: return
-                    }
-                }
-            ),
-            errors: Binding(
-                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
-                set: { _ in }
-            ),
-            label: label
-        )
-    }
-    
-    public init(value: Binding<Bool>, errors: Binding<[String]> = .constant([]), label: String) {
-        self._value = value
-        self._errors = errors
-        self.label = label
+    public init(viewModel: BoolViewModel) {
+        self.viewModel = viewModel
     }
     
     public var body: some View {
         VStack(alignment: .leading) {
-            Toggle(label, isOn: $value)
+            Toggle(viewModel.label, isOn: $viewModel.value)
                 .animation(.easeOut)
                 .font(.body)
 //                .foregroundColor(config.textColor)
-            ForEach(errors, id: \.self) { error in
+            ForEach(viewModel.errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
         }
     }
 }
+
+import GUUI
 
 struct BoolView_Previews: PreviewProvider {
     
@@ -76,10 +52,12 @@ struct BoolView_Previews: PreviewProvider {
         let path = EmptyModifiable.path.attributes[0].attributes["bool"].wrappedValue.boolValue
         
         var body: some View {
-            BoolView(
-                root: $modifiable,
-                path: path,
-                label: "Root"
+            BoolPreviewView(
+                viewModel: BoolViewModel(
+                    root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
+                    path: path,
+                    label: "Root"
+                )
             )
         }
         
@@ -92,7 +70,23 @@ struct BoolView_Previews: PreviewProvider {
         @State var errors: [String] = ["An Error."]
         
         var body: some View {
-            BoolView(value: $value, errors: $errors, label: "Binding")
+            BoolPreviewView(
+                viewModel: BoolViewModel(
+                    valueRef: Ref(get: { self.value }, set: { self.value = $0 }),
+                    errorsRef: ConstRef { self.errors },
+                    label: "Binding"
+                )
+            )
+        }
+        
+    }
+    
+    struct BoolPreviewView: View {
+        
+        @StateObject var viewModel: BoolViewModel
+        
+        var body: some View {
+            BoolView(viewModel: viewModel)
         }
         
     }

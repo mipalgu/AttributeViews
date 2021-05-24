@@ -22,7 +22,20 @@ public struct LineAttributeView: View {
     }
     
     public var body: some View {
-        viewModel.subView
+        switch viewModel.lineAttribute.type {
+        case .bool:
+            BoolView(viewModel: viewModel.boolViewModel)
+        case .integer:
+            IntegerView(viewModel: viewModel.integerViewModel)
+        case .float:
+            FloatView(viewModel: viewModel.floatViewModel)
+        case .expression:
+            ExpressionView(viewModel: viewModel.expressionViewModel)
+        case .enumerated(let validValues):
+            EnumeratedView(viewModel: viewModel.enumeratedViewModel, validValues: validValues)
+        case .line:
+            LineView(viewModel: viewModel.lineViewModel)
+        }
     }
 }
 

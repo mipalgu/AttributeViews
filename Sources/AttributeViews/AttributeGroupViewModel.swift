@@ -108,9 +108,7 @@ public final class AttributeGroupViewModel: ObservableObject, Identifiable, Glob
     
     public func send() {
         objectWillChange.send()
-        if ref.isValid {
-            complexViewModel = ref.viewModel
-        }
+        complexViewModel.send()
     }
     
 }
