@@ -178,7 +178,11 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
     
     var value: [[LineAttribute]] {
         get {
-            ref.value
+            if ref.isValid {
+                return ref.value
+            } else {
+                return []
+            }
         } set {
             ref.value = newValue
             objectWillChange.send()

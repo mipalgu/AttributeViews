@@ -35,12 +35,10 @@ public struct ComplexView: View {
                             ForEach(viewModel.fields, id: \.name) { field in
                                 if viewModel.viewModel(forField: field.name).attribute.isBlock {
                                     DisclosureGroup(field.name.pretty, isExpanded: viewModel.expandedBinding(field.name)) {
-                                        //AttributeView(viewModel: viewModel.viewModel(forField: field.name))
-                                        Text(field.name)
+                                        AttributeView(viewModel: viewModel.viewModel(forField: field.name))
                                     }
                                 } else {
-                                    //AttributeView(viewModel: viewModel.viewModel(forField: field.name))
-                                    Text(field.name)
+                                    AttributeView(viewModel: viewModel.viewModel(forField: field.name))
                                     Spacer()
                                 }
                             }

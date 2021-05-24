@@ -174,12 +174,21 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
             case .table(let cols):
                 columns = cols
             default:
-                columns = []
+                return TableViewModel(valueRef: Ref(copying: []), errorsRef: ConstRef(copying: []), label: label, columns: [])
             }
             return TableViewModel(root: root, path: path.tableValue, label: label, columns: columns, notifier: notifier)
         }
         self._complexViewModel = {
-            let fields = path.isNil(root.value) ? [] : root.value[keyPath: path.keyPath].complexFields
+            if path.isNil(root.value) {
+                return ComplexViewModel(root: root, path: path.complexValue, label: label, fields: [], notifier: notifier)
+            }
+            let fields: [Field]
+            switch root.value[keyPath: path.keyPath].type {
+            case .complex(let layout):
+                fields = layout
+            default:
+                fields = []
+            }
             return ComplexViewModel(root: root, path: path.complexValue, label: label, fields: fields, notifier: notifier)
         }
         self._subView = { (tableViewModel, complexViewModel) in

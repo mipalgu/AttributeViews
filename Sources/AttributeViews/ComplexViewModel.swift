@@ -116,7 +116,10 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
     func expandedBinding(_ fieldName: String) -> Binding<Bool> {
         return Binding(
             get: { self.expanded[fieldName] ?? false },
-            set: { self.expanded[fieldName] = $0 }
+            set: {
+                self.objectWillChange.send()
+                self.expanded[fieldName] = $0
+            }
         )
     }
     
