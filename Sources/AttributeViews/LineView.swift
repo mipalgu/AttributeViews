@@ -15,7 +15,7 @@ import Combine
 
 import Attributes
 
-public struct LineView<Config: AttributeViewConfig>: View {
+public struct LineView: View {
     
     @State var editingValue: String
     @State var editing: Bool = false
@@ -115,14 +115,12 @@ struct LineView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["line"].wrappedValue.lineValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            LineView<DefaultAttributeViewsConfig>(
+            LineView(
                 root: $modifiable,
                 path: path,
                 label: "Root"
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -132,10 +130,8 @@ struct LineView_Previews: PreviewProvider {
         @State var value: String = "world"
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            LineView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+            LineView(value: $value, errors: $errors, label: "Binding")
         }
         
     }

@@ -14,55 +14,33 @@ import SwiftUI
 import Attributes
 import GUUI
 
-public struct TableView<Config: AttributeViewConfig>: View {
+public struct TableView: View {
     
-    //@Binding var value: [[LineAttribute]]
-    let label: String
+    @ObservedObject var viewModel: TableViewModel
     
-    @StateObject var viewModel: TableViewModel<Config>
-    
-//    @EnvironmentObject var config: Config
-    
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
-        self.init(
-            viewModel: TableViewModel(root: root, path: path, columns: columns, notifier: notifier),
-            label: label
-        )
-    }
-    
-    public init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]> = .constant([]), subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String] = { _ in [] }, label: String, columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
-        self.init(
-            viewModel: TableViewModel(value: value, errors: errors, subErrors: subErrors, columns: columns, delayEdits: delayEdits),
-            label: label
-        )
-    }
-    
-    private init(viewModel: TableViewModel<Config>, label: String) {
-        //self._value = value
-        self._viewModel = StateObject(wrappedValue: viewModel)
-        self.label = label
+    public init(viewModel: TableViewModel) {
+        self.viewModel = viewModel
     }
     
     public var body: some View {
         VStack(alignment: .leading) {
-            Text(label.pretty.capitalized)
+            Text(viewModel.label.pretty.capitalized)
                 .font(.headline)
-//                .foregroundColor(config.textColor)
             ForEach(viewModel.listErrors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }
             ZStack(alignment: .bottom) {
                 TableBodyView(viewModel: viewModel.tableBodyViewModel)
-                NewRowView<Config>(viewModel: viewModel.newRowViewModel)
+                NewRowView(viewModel: viewModel.newRowViewModel)
             }
         }
     }
 
 }
 
-struct TableBodyView<Config: AttributeViewConfig>: View {
+struct TableBodyView: View {
     
-    @ObservedObject var viewModel: TableBodyViewModel<Config>
+    @ObservedObject var viewModel: TableBodyViewModel
     
     var body: some View {
         List(selection: $viewModel.selection) {
@@ -79,7 +57,7 @@ struct TableBodyView<Config: AttributeViewConfig>: View {
                 }
             }
             ForEach(viewModel.rows, id: \.id) { row in
-                TableRowView<Config>(
+                TableRowView(
                     viewModel: row,
                     onDelete: { viewModel.deleteRow(row: row.rowIndex) }
                 )
@@ -96,9 +74,9 @@ struct TableBodyView<Config: AttributeViewConfig>: View {
     
 }
 
-struct NewRowView<Config: AttributeViewConfig>: View {
+struct NewRowView: View {
     
-    @ObservedObject var viewModel: NewRowViewModel<Config>
+    @ObservedObject var viewModel: NewRowViewModel
     
     //@EnvironmentObject var config: Config
     
@@ -107,11 +85,7 @@ struct NewRowView<Config: AttributeViewConfig>: View {
             HStack {
                 ForEach(0..<viewModel.newRow.count) { index in
                     VStack {
-                        LineAttributeView<Config>(
-                            attribute: $viewModel.newRow[index],
-                            errors: viewModel.errors[index],
-                            label: ""
-                        )
+                        LineAttributeView(viewModel: viewModel.newRow[index])
                     }.frame(minWidth: 0, maxWidth: .infinity)
                 }
                 VStack {
@@ -126,72 +100,68 @@ struct NewRowView<Config: AttributeViewConfig>: View {
     
 }
 
-struct TableView_Previews: PreviewProvider {
-    
-    struct Root_Preview: View {
-        
-        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-            AttributeGroup(
-                name: "Fields",
-                fields: [
-                    Field(
-                        name: "table",
-                        type: .table(columns: [("b", .bool), ("i", .integer), ("f", .float)])
-                    )
-                ],
-                attributes: [
-                    "table": .table([
-                        [.bool(false), .integer(1), .float(1.1)],
-                        [.bool(true), .integer(2), .float(2.2)]
-                    ], columns: [("b", .bool), ("i", .integer), ("f", .float)]
-                    )
-                ],
-                metaData: [:]
-            )
-        ])
-        
-        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            TableView<DefaultAttributeViewsConfig>(
-                root: $modifiable,
-                path: path,
-                label: "Root",
-                columns: [.init(name: "b", type: .bool), .init(name: "i", type: .integer), .init(name: "f", type: .float)]
-            ).environmentObject(config)
-        }
-        
-    }
-    
-    struct Binding_Preview: View {
-        
-        @State var value: [[LineAttribute]] = []
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            TableView<DefaultAttributeViewsConfig>(
-                value: $value,
-                label: "Binding",
-                columns: [
-                    .init(name: "Bool", type: .bool),
-                    .init(name: "Integer", type: .integer),
-                    .init(name: "Float", type: .float),
-                    .init(name: "Expression", type: .expression(language: .swift)),
-                    .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
-                    .init(name: "Line", type: .line)
-                ]
-            ).environmentObject(config)
-        }
-        
-    }
-    
-    static var previews: some View {
-        VStack {
-            Root_Preview()
-            Binding_Preview()
-        }
-    }
-}
+//struct TableView_Previews: PreviewProvider {
+//    
+//    struct Root_Preview: View {
+//        
+//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+//            AttributeGroup(
+//                name: "Fields",
+//                fields: [
+//                    Field(
+//                        name: "table",
+//                        type: .table(columns: [("b", .bool), ("i", .integer), ("f", .float)])
+//                    )
+//                ],
+//                attributes: [
+//                    "table": .table([
+//                        [.bool(false), .integer(1), .float(1.1)],
+//                        [.bool(true), .integer(2), .float(2.2)]
+//                    ], columns: [("b", .bool), ("i", .integer), ("f", .float)]
+//                    )
+//                ],
+//                metaData: [:]
+//            )
+//        ])
+//        
+//        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
+//        
+//        var body: some View {
+//            TableView(
+//                root: $modifiable,
+//                path: path,
+//                label: "Root",
+//                columns: [.init(name: "b", type: .bool), .init(name: "i", type: .integer), .init(name: "f", type: .float)]
+//            )
+//        }
+//        
+//    }
+//    
+//    struct Binding_Preview: View {
+//        
+//        @State var value: [[LineAttribute]] = []
+//        
+//        var body: some View {
+//            TableView(
+//                value: $value,
+//                label: "Binding",
+//                columns: [
+//                    .init(name: "Bool", type: .bool),
+//                    .init(name: "Integer", type: .integer),
+//                    .init(name: "Float", type: .float),
+//                    .init(name: "Expression", type: .expression(language: .swift)),
+//                    .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
+//                    .init(name: "Line", type: .line)
+//                ]
+//            )
+//        }
+//        
+//    }
+//    
+//    static var previews: some View {
+//        VStack {
+//            Root_Preview()
+//            Binding_Preview()
+//        }
+//    }
+//}

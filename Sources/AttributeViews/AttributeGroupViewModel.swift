@@ -65,37 +65,53 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class AttributeGroupViewModel<Root: Modifiable>: ObservableObject, Identifiable, GlobalChangeNotifier {
+fileprivate final class AttributeGroupValue: Value<AttributeGroup> {
     
-    weak var notifier: GlobalChangeNotifier?
+    private let _viewModel: () -> ComplexViewModel
     
-    private let rootRef: Ref<Root>
-    
-    private let arrPath: Attributes.Path<Root, [AttributeGroup]>
-    
-    @Published var index: Int
-    
-    var path: Attributes.Path<Root, AttributeGroup> {
-        arrPath[index]
+    var viewModel: ComplexViewModel {
+        _viewModel()
     }
     
-    var group: AttributeGroup {
-        path.isNil(rootRef.value) ? AttributeGroup(name: "") : rootRef.value[keyPath: path.keyPath]
+    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, notifier: GlobalChangeNotifier? = nil) {
+        self._viewModel = {
+            let group = path.isNil(root.value) ? nil : root.value[keyPath: path.keyPath]
+            return ComplexViewModel(root: root, path: path.attributes, label: group?.name ?? "", fields: group?.fields ?? [], notifier: notifier)
+        }
+        super.init(root: root, path: path, notifier: notifier)
     }
     
-    var name: String {
-        path.isNil(rootRef.value) ? "" : rootRef.value[keyPath: path.keyPath].name
+    init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
+        self._viewModel = {
+            ComplexViewModel(valueRef: valueRef.attributes, label: valueRef.value.name, fields: valueRef.value.fields, delayEdits: delayEdits)
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
     
-    init(rootRef: Ref<Root>, arrPath: Attributes.Path<Root, [AttributeGroup]>, index: Int, notifier: GlobalChangeNotifier? = nil) {
-        self.rootRef = rootRef
-        self.arrPath = arrPath
-        self.index = index
-        self.notifier = notifier
+}
+
+public final class AttributeGroupViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
+    
+    private let ref: AttributeGroupValue
+    
+    lazy var complexViewModel: ComplexViewModel = {
+        ref.viewModel
+    }()
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = AttributeGroupValue(root: root, path: path, notifier: notifier)
     }
     
-    func send() {
+    public init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), delayEdits: Bool = false) {
+        self.ref = AttributeGroupValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
+    }
+    
+    public func send() {
         objectWillChange.send()
+        if ref.isValid {
+            complexViewModel = ref.viewModel
+        }
+        complexViewModel.objectWillChange.send()
     }
     
 }

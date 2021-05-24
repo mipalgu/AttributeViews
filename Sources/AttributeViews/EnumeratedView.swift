@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct EnumeratedView<Config: AttributeViewConfig>: View {
+public struct EnumeratedView: View {
     
     @Binding var value: Expression
     @Binding var errors: [String]
@@ -78,15 +78,13 @@ struct EnumeratedView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["enumerated"].wrappedValue.enumeratedValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            EnumeratedView<DefaultAttributeViewsConfig>(
+            EnumeratedView(
                 root: $modifiable,
                 path: path,
                 label: "Root",
                 validValues: ["a", "b", "c"]
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -96,10 +94,8 @@ struct EnumeratedView_Previews: PreviewProvider {
         @State var value: String = "B"
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            EnumeratedView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", validValues: ["A", "B", "C"]).environmentObject(config)
+            EnumeratedView(value: $value, errors: $errors, label: "Binding", validValues: ["A", "B", "C"])
         }
         
     }

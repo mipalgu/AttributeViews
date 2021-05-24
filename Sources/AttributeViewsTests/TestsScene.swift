@@ -92,8 +92,6 @@ struct TestsScene: App {
     
     @State var machine: Machine = try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))
     
-    let config = DefaultAttributeViewsConfig()
-    
     @State var text: String = ""
     
     @State var loadError: String = ""
@@ -139,13 +137,13 @@ struct TestsScene: App {
                             Text(loadError).foregroundColor(.red)
                         }
                     }.padding(.horizontal, 10)
-                    ForEach(machine.attributes.indices, id: \.self) { index in
-                        AttributeGroupView<DefaultAttributeViewsConfig>(
-                            root: $machine,
-                            path: Machine.path.attributes[index],
-                            label: machine.attributes[index].name
-                        )//.environmentObject(config)
-                    }
+//                    ForEach(machine.attributes.indices, id: \.self) { index in
+//                        AttributeGroupView(
+//                            root: $machine,
+//                            path: Machine.path.attributes[index],
+//                            label: machine.attributes[index].name
+//                        )
+//                    }
                 }
             }.onAppear {
                 text = machine.filePath.path

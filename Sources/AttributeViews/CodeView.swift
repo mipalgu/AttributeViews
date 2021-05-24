@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct CodeView<Config: AttributeViewConfig, Label: View>: View {
+public struct CodeView<Label: View>: View {
     
     @Binding var value: Code
     @Binding var errors: [String]
@@ -94,15 +94,13 @@ struct CodeView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["code"].wrappedValue.codeValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            CodeView<DefaultAttributeViewsConfig, Text>(
+            CodeView(
                 root: $modifiable,
                 path: path,
                 label: "Root",
                 language: .swift
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -112,10 +110,8 @@ struct CodeView_Previews: PreviewProvider {
         @State var value: String = "let f = 2.3\nlet s = \"hello\""
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            CodeView<DefaultAttributeViewsConfig, Text>(value: $value, errors: $errors, label: "Binding", language: .swift).environmentObject(config)
+            CodeView(value: $value, errors: $errors, label: "Binding", language: .swift)
         }
         
     }

@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct EnumerableCollectionView<Config: AttributeViewConfig>: View {
+public struct EnumerableCollectionView: View {
     
     @Binding var value: Set<String>
     @Binding var errors: [String]
@@ -95,15 +95,13 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["enumerableCollection"].wrappedValue.enumerableCollectionValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            EnumerableCollectionView<DefaultAttributeViewsConfig>(
+            EnumerableCollectionView(
                 root: $modifiable,
                 path: path,
                 label: "Root",
                 validValues: ["a", "b", "c", "d", "e", "f"]
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -113,15 +111,13 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
         @State var value: Set<String> = ["A", "D", "F"]
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            EnumerableCollectionView<DefaultAttributeViewsConfig>(
+            EnumerableCollectionView(
                 value: $value,
                 errors: $errors,
                 label: "Binding",
                 validValues: ["A", "B", "C", "D", "E", "F"]
-            ).environmentObject(config)
+            )
         }
         
     }

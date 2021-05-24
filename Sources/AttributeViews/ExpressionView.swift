@@ -16,7 +16,7 @@ import Combine
 
 import Attributes
 
-public struct ExpressionView<Config: AttributeViewConfig>: View {
+public struct ExpressionView: View {
     
     @State var editingValue: Expression
     @State var editing: Bool = false
@@ -101,15 +101,13 @@ struct ExpressionView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["expression"].wrappedValue.expressionValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            ExpressionView<DefaultAttributeViewsConfig>(
+            ExpressionView(
                 root: $modifiable,
                 path: path,
                 label: "Root",
                 language: .swift
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -119,10 +117,8 @@ struct ExpressionView_Previews: PreviewProvider {
         @State var value: Expression = "let b = true"
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            ExpressionView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", language: .swift).environmentObject(config)
+            ExpressionView(value: $value, errors: $errors, label: "Binding", language: .swift)
         }
         
     }

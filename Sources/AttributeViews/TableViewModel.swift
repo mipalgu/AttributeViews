@@ -65,67 +65,97 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class TableViewModel<Config: AttributeViewConfig>: ObservableObject {
+public final class TableViewModel: ObservableObject {
     
-    let newRowViewModel: NewRowViewModel<Config>
+    let newRowViewModel: NewRowViewModel
     
-    let tableBodyViewModel: TableBodyViewModel<Config>
+    let tableBodyViewModel: TableBodyViewModel
     
-    private let errors: Binding<[String]>
+    let label: String
+    
+    private let errorsRef: ConstRef<[String]>
     
     var listErrors: [String] {
-        errors.wrappedValue
+        errorsRef.value
     }
     
-    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         let emptyRow = columns.map(\.type.defaultValue)
-        let bodyViewModel = TableBodyViewModel<Config>(root: root, path: path, columns: columns, notifier: notifier)
-        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }), bodyViewModel: bodyViewModel)
+        let bodyViewModel = TableBodyViewModel(root: root, path: path, columns: columns, notifier: notifier)
+        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: ConstRef(copying: columns.map { _ in [] }), bodyViewModel: bodyViewModel)
         self.tableBodyViewModel = bodyViewModel
-        self.errors = Binding(
-            get: { root.wrappedValue.errorBag.errors(forPath: path).map(\.message) },
-            set: { _ in }
+        self.label = label
+        self.errorsRef = ConstRef(
+            get: { root.value.errorBag.errors(forPath: path).map(\.message) }
         )
     }
     
-    init(value: Binding<[[LineAttribute]]>, errors: Binding<[String]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
+    public init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>, label: String, columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         let emptyRow = columns.map(\.type.defaultValue)
-        let bodyViewModel = TableBodyViewModel<Config>(value: value, subErrors: subErrors, columns: columns, delayEdits: delayEdits)
-        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: .constant(columns.map { _ in [] }), bodyViewModel: bodyViewModel)
+        let bodyViewModel = TableBodyViewModel(valueRef: valueRef, errorsRef: ConstRef(copying: []), columns: columns, delayEdits: delayEdits)
+        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: ConstRef(copying: columns.map { _ in [] }), bodyViewModel: bodyViewModel)
         self.tableBodyViewModel = bodyViewModel
-        self.errors = errors
+        self.label = label
+        self.errorsRef = errorsRef
     }
     
 }
 
-final class NewRowViewModel<Config: AttributeViewConfig>: ObservableObject {
+final class NewRowViewModel: ObservableObject {
     
-    @Published var newRow: [LineAttribute]
+    @Published var newRow: [LineAttributeViewModel]
     
     let emptyRow: [LineAttribute]
     
-    let errors: Binding<[[String]]>
+    let errors: ConstRef<[[String]]>
     
-    let bodyViewModel: TableBodyViewModel<Config>
+    let bodyViewModel: TableBodyViewModel
     
-    init(newRow: [LineAttribute], emptyRow: [LineAttribute], errors: Binding<[[String]]>, bodyViewModel: TableBodyViewModel<Config>) {
-        self.newRow = newRow
+    init(newRow: [LineAttribute], emptyRow: [LineAttribute], errors: ConstRef<[[String]]>, bodyViewModel: TableBodyViewModel) {
+        self.newRow = newRow.map {
+            LineAttributeViewModel(valueRef: Ref(copying: $0), errorsRef: ConstRef(copying: []), label: "")
+        }
         self.emptyRow = emptyRow
         self.errors = errors
         self.bodyViewModel = bodyViewModel
     }
     
     func addElement() {
-        bodyViewModel.addElement(newRow: newRow)
-        newRow = emptyRow
+        bodyViewModel.addElement(newRow: newRow.map(\.lineAttribute))
+        zip(newRow, emptyRow).forEach {
+            $0.lineAttribute = $1
+        }
     }
     
 }
 
-final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
+fileprivate final class TableBodyValue: Value<[[LineAttribute]]> {
     
-    private let valueBinding: Binding<[[LineAttribute]]>
-    let subErrors: (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String]
+    private let _lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
+    
+    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, notifier: GlobalChangeNotifier? = nil) {
+        self._lineAttributeViewModel = {
+            LineAttributeViewModel(root: root, path: path[$0][$1], label: "", notifier: notifier)
+        }
+        super.init(root: root, path: path, notifier: notifier)
+    }
+    
+    override init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>) {
+        self._lineAttributeViewModel = {
+            LineAttributeViewModel(valueRef: valueRef[$0][$1], errorsRef: ConstRef(copying: []), label: "")
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
+    }
+    
+    func viewModel(forRow row: Int) -> TableRowViewModel {
+        TableRowViewModel(table: valueRef, rowIndex: row, lineAttributeViewModel: _lineAttributeViewModel)
+    }
+    
+}
+
+final class TableBodyViewModel: ObservableObject {
+    
+    private let ref: TableBodyValue
     let columns: [BlockAttributeType.TableColumn]
     
     @Published var rows: [TableRowViewModel] = []
@@ -135,31 +165,24 @@ final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
     
     var value: [[LineAttribute]] {
         get {
-            valueBinding.wrappedValue
+            ref.value
         } set {
-            valueBinding.wrappedValue = newValue
+            ref.value = newValue
             objectWillChange.send()
         }
     }
     
-    init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
-        self.valueBinding = Binding(
-            get: { root.wrappedValue[keyPath: path.keyPath] },
-            set: { _ = root.wrappedValue.modify(attribute: path, value: $0) }
-        )
-        self.subErrors = {
-            root.wrappedValue.errorBag.errors(forPath: ReadOnlyPath(keyPath: path.keyPath.appending(path: $0.keyPath), ancestors: [])).map(\.message)
-        }
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
+        self.ref = TableBodyValue(root: root, path: path, notifier: notifier)
         self.columns = columns
-        self.dataSource = KeyPathTableViewDataSource<Root, Config>(root: root, path: path, notifier: notifier)
+        self.dataSource = KeyPathTableViewDataSource<Root>(root: root, path: path, notifier: notifier)
         syncRows()
     }
     
-    init(value: Binding<[[LineAttribute]]>, subErrors: @escaping (ReadOnlyPath<[[LineAttribute]], LineAttribute>) -> [String], columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
-        self.valueBinding = value
-        self.subErrors = subErrors
+    init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
+        self.ref = TableBodyValue(valueRef: valueRef, errorsRef: errorsRef)
         self.columns = columns
-        self.dataSource = BindingTableViewDataSource<Config>(value: value, delayEdits: delayEdits)
+        self.dataSource = BindingTableViewDataSource(ref: valueRef, delayEdits: delayEdits)
         syncRows()
     }
     
@@ -206,10 +229,10 @@ final class TableBodyViewModel<Config: AttributeViewConfig>: ObservableObject {
         if rows.count < value.count {
             rows.append(contentsOf: (rows.count..<value.count).map { row in
                 TableRowViewModel(
-                    table: valueBinding,
+                    table: ref.valueRef,
                     rowIndex: row,
-                    lineAttributeView: {
-                        self.dataSource.view(forElementAtRow: $0, column: $1)
+                    lineAttributeViewModel: {
+                        self.dataSource.viewModel(forElementAtRow: $0, column: $1)
                     }
                 )
             })
@@ -224,68 +247,54 @@ fileprivate protocol TableViewDataSource {
     func addElement(_ row: [LineAttribute])
     func deleteElements(atOffsets offsets: IndexSet)
     func moveElements(atOffsets source: IndexSet, to destination: Int)
-    func view(forElementAtRow row: Int, column: Int) -> AnyView
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel
     
 }
 
-fileprivate struct KeyPathTableViewDataSource<Root: Modifiable, Config: AttributeViewConfig>: TableViewDataSource {
+fileprivate struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
     
-    let root: Binding<Root>
+    let root: Ref<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
     weak var notifier: GlobalChangeNotifier?
     
     func addElement(_ row: [LineAttribute]) {
-        _ = root.wrappedValue.addItem(row, to: path)
+        _ = root.value.addItem(row, to: path)
     }
     
     func deleteElements(atOffsets offsets: IndexSet) {
-        _ = root.wrappedValue.deleteItems(table: path, items: offsets)
+        _ = root.value.deleteItems(table: path, items: offsets)
     }
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        _ = root.wrappedValue.moveItems(table: path, from: source, to: destination)
+        _ = root.value.moveItems(table: path, from: source, to: destination)
     }
     
-    func view(forElementAtRow row: Int, column: Int) -> AnyView {
-        AnyView(LineAttributeView<Config>(root: root, path: path[row][column], label: "", notifier: notifier))
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
+        LineAttributeViewModel(root: root, path: path[row][column], label: "", notifier: notifier)
     }
     
 }
 
-fileprivate struct BindingTableViewDataSource<Config: AttributeViewConfig>: TableViewDataSource {
+fileprivate struct BindingTableViewDataSource: TableViewDataSource {
     
-    let value: Binding<[[LineAttribute]]>
+    let ref: Ref<[[LineAttribute]]>
     
     let delayEdits: Bool
     
     func addElement(_ row: [LineAttribute]) {
-        value.wrappedValue.append(row)
+        ref.value.append(row)
     }
     
     func deleteElements(atOffsets offsets: IndexSet) {
-        value.wrappedValue.remove(atOffsets: offsets)
+        ref.value.remove(atOffsets: offsets)
     }
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        value.wrappedValue.move(fromOffsets: source, toOffset: destination)
+        ref.value.move(fromOffsets: source, toOffset: destination)
     }
     
-    func view(forElementAtRow row: Int, column: Int) -> AnyView {
-        AnyView(LineAttributeView<Config>(
-            attribute: Binding(
-                get: {
-                    row < value.wrappedValue.count && column < value.wrappedValue[row].count ? value.wrappedValue[row][column] : .bool(false)
-                },
-                set: {
-                    guard row < value.wrappedValue.count && column < value.wrappedValue[row].count else {
-                        return
-                    }
-                    value.wrappedValue[row][column] = $0
-                }
-            ),
-            label: "",
-            delayEdits: delayEdits
-        ))
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
+        LineAttributeViewModel(valueRef: ref[row][column], errorsRef: ConstRef(copying: []), label: "")
     }
     
 }

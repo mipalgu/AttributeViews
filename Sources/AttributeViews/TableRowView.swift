@@ -67,45 +67,46 @@ import GUUI
 
 final class TableRowViewModel: ObservableObject, Identifiable {
     
-    private let table: Binding<[[LineAttribute]]>
+    private let table: Ref<[[LineAttribute]]>
     
     @Published var rowIndex: Int
     
     @Published var redraw: Int = 0
     
-    private let lineAttributeView: (Int, Int) -> AnyView
+    private var viewModels: [Int: LineAttributeViewModel] = [:]
+    
+    private let lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
     
     var row: [LineAttribute] {
-        rowIndex >= table.wrappedValue.count ? [] : table.wrappedValue[rowIndex]
+        rowIndex >= table.value.count ? [] : table.value[rowIndex]
     }
     
-    init(table: Binding<[[LineAttribute]]>, rowIndex: Int, lineAttributeView: @escaping (Int, Int) -> AnyView) {
+    init(table: Ref<[[LineAttribute]]>, rowIndex: Int, lineAttributeViewModel: @escaping (Int, Int) -> LineAttributeViewModel) {
         self.table = table
         self.rowIndex = rowIndex
-        self.lineAttributeView = lineAttributeView
+        self.lineAttributeViewModel = lineAttributeViewModel
     }
     
     func view(atIndex index: Int) -> AnyView {
-        guard rowIndex < table.wrappedValue.count && index < table.wrappedValue[rowIndex].count else {
+        guard rowIndex < table.value.count && index < table.value[rowIndex].count else {
             return AnyView(EmptyView())
         }
-        return lineAttributeView(rowIndex, index)
+        if let viewModel = viewModels[index] {
+            return AnyView(LineAttributeView(viewModel: viewModel))
+        }
+        let viewModel = self.lineAttributeViewModel(rowIndex, index)
+        viewModels[index] = viewModel
+        return AnyView(LineAttributeView(viewModel: viewModel))
     }
     
 }
 
-struct TableRowView<Config: AttributeViewConfig>: View {
+struct TableRowView: View {
     
     @ObservedObject var viewModel: TableRowViewModel
     let onDelete: () -> Void
     
-//    @EnvironmentObject var config: Config
-    
-    init(
-        viewModel: TableRowViewModel,
-        errors: Binding<[[String]]> = .constant([]),
-        onDelete: @escaping () -> Void = {}
-    ) {
+    init(viewModel: TableRowViewModel, onDelete: @escaping () -> Void = {}) {
         self._viewModel = ObservedObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
@@ -186,24 +187,30 @@ struct TableRowView_Previews: PreviewProvider {
             ["Really long line error that is very long in length"]
         ]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            TableRowView<DefaultAttributeViewsConfig>(
+            TableRowPreviewView(
                 viewModel: TableRowViewModel(
-                    table: $value,
+                    table: Ref(get: { self.value }, set: { self.value = $0 }),
                     rowIndex: 0,
-                    lineAttributeView: { row, col in
-                        AnyView(
-                            LineAttributeView<DefaultAttributeViewsConfig>(
-                                attribute: Binding(get: { value[row][col] }, set: { value[row][col] = $0 }),
-                                label: ""
-                            )
+                    lineAttributeViewModel: { (row, col) in
+                        LineAttributeViewModel(
+                            valueRef: Ref(get: { self.value[row][col] }, set: { self.value[row][col] = $0 }),
+                            errorsRef: ConstRef(copying: []),
+                            label: ""
                         )
                     }
-                ),
-                errors: $errors
-            ).environmentObject(config)
+                )
+            )
+        }
+        
+    }
+    
+    struct TableRowPreviewView: View {
+        
+        @StateObject var viewModel: TableRowViewModel
+        
+        var body: some View {
+            TableRowView(viewModel: viewModel)
         }
         
     }

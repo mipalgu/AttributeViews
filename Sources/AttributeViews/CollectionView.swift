@@ -65,292 +65,288 @@ import SwiftUI
 import Attributes
 import GUUI
 
-public struct CollectionView<Config: AttributeViewConfig>: View, ListViewProtocol {
-    
-    @Binding var value: [Row<Attribute>]
-    @Binding var errors: [String]
-    let display: ReadOnlyPath<Attribute, LineAttribute>?
-    let label: String
-    let type: AttributeType
-    
-    private let viewModel: CollectionViewViewModel<Config>
-    
-    @State var selection: Set<Int> = []
-    @State var editing: Int? = nil
-    @State var newRow: Attribute
-    
-    //@EnvironmentObject var config: Config
-    
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
-        self.init(
-            value: Binding(
-                get: {
-                    path.isNil(root.wrappedValue) ? [] : root.wrappedValue[keyPath: path.keyPath]
-                },
-                set: {
-                    let result = root.wrappedValue.modify(attribute: path, value: $0)
-                    switch result {
-                    case .success(true), .failure:
-                        notifier?.send()
-                    default: return
-                    }
-                }
-            ),
-            errors: Binding(
-                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
-                set: { _ in }
-            ),
-            display: display,
-            label: label,
-            type: type,
-            viewModel: CollectionViewViewModel(
-                CollectionViewKeyPathViewModel(
-                    root: root,
-                    path: path,
-                    type: type,
-                    expanded: expanded
-                )
-            )
-        )
-    }
-    
-    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, delayEdits: Bool = false) {
-        self.init(
-            value: value,
-            errors: errors,
-            display: display,
-            label: label,
-            type: type,
-            viewModel: CollectionViewViewModel(
-                CollectionViewBindingViewModel(
-                    value: value,
-                    errors: errors,
-                    type: type,
-                    delayEdits: delayEdits
-                )
-            )
-        )
-    }
-    
-    private init(value: Binding<[Attribute]>, errors: Binding<[String]>, display: ReadOnlyPath<Attribute, LineAttribute>?, label: String, type: AttributeType, viewModel: CollectionViewViewModel<Config>) {
-        var idCache = IDCache<Attribute>()
-        self._value = Binding(
-            get: {
-                value.wrappedValue.enumerated().map { (index, row) in
-                    Row(id: idCache.id(for: row), index: index, data: row)
-                }
-            },
-            set: {
-                value.wrappedValue = $0.map(\.data)
-            }
-        )
-        self._errors = errors
-        self.display = display
-        self.label = label
-        self.type = type
-        self.viewModel = viewModel
-        self._newRow = State(initialValue: viewModel.newRow)
-    }
-    
-    public var body: some View {
-        VStack(alignment: .leading) {
-            VStack {
-                Text(label.pretty).font(.headline)
-                switch type {
-                case .line:
-                    HStack {
-                        AttributeView<Config>(attribute: $newRow, label: "New " + label)
-                        Button(action: {
-                            viewModel.addElement(self)
-                        }, label: {
-                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                        }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
-                    }
-                case .block:
-                    if let editingIndex = editing {
-                        HStack {
-                            Spacer()
-                            IconButton(
-                                action: {
-                                    if editingIndex == value.count {
-                                        viewModel.addElement(self)
-                                    }
-                                    editing = nil
-                                },
-                                label: {
-                                    Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular))
-                                },
-                                foregroundColor: .blue,
-                                highlightColor: .red
-                            )
-                            Divider()
-                            IconButton(
-                                action: {
-                                    editing = nil
-                                },
-                                label: {
-                                    Image(systemName: "trash").font(.system(size: 16, weight: .regular))
-                                },
-                                foregroundColor: .red,
-                                highlightColor: .blue
-                            ).animation(.easeOut)
-                        }
-                        if editingIndex >= value.count {
-                            AttributeView<Config>(attribute: $newRow, label: "")
-                        } else {
-                            viewModel.rowView(self, forRow: editingIndex)
-                        }
-                    } else {
-                        HStack {
-                            Spacer()
-                            IconButton(action: { editing = value.count }, label: {
-                                Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                            }, foregroundColor: .blue, highlightColor: .blue).animation(.easeOut)
-                        }
-                    }
-                }
-            }.padding(.bottom, 5)
-            Divider()
-            if !value.isEmpty && ((editing == nil && type.isBlock == true) || type.isLine) {
-                List(selection: $selection) {
-                    ForEach(value.indices, id: \.self) { index in
-                        VStack {
-                            HStack(spacing: 1) {
-                                Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
-                                switch type {
-                                case .line:
-                                    viewModel.rowView(self, forRow: index)
-                                    Spacer()
-                                case .block:
-                                    if let display = display {
-                                        Text(value[index].data[keyPath: display.keyPath].strValue)
-                                    } else {
-                                        Text(value[index].data.strValue ?? "\(index)")
-                                    }
-                                    Spacer()
-                                    IconButton(action: { editing = index }, label: {
-                                        Image(systemName: "pencil").font(.system(size: 16, weight: .regular))
-                                    }, foregroundColor: .blue, highlightColor: .blue)
-                                }
-                            }.contextMenu {
-                                Button("Delete") {
-                                    viewModel.deleteRow(self, row: index)
-                                }.keyboardShortcut(.delete)
-                            }
-                            Divider()
-                        }
-                    }.onMove {
-                        viewModel.moveElements(self, atOffsets: $0, to: $1)
-                    }.onDelete {
-                        viewModel.deleteElements(self, atOffsets: $0)
-                    }
-                }.frame(minHeight: max(CGFloat(value.reduce(0) { $0 + $1.data.underestimatedHeight }), 100))
-            }
-        }.padding(.top, 2)
-    }
-}
-
-struct CollectionView_Previews: PreviewProvider {
-    
-    struct Root_Preview: View {
-        
-        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-            AttributeGroup(
-                name: "Fields", fields: [Field(name: "collection", type: .collection(type: .integer))], attributes: ["collection": .collection(integers: [1, 2, 3, 4, 5])], metaData: [:])
-        ])
-        
-        let path = EmptyModifiable.path.attributes[0].attributes["collection"].wrappedValue.collectionValue
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            CollectionView<DefaultAttributeViewsConfig>(
-                root: $modifiable,
-                path: path,
-                label: "Root",
-                type: .integer
-            ).environmentObject(config)
-        }
-        
-    }
-    
-    struct Binding_Preview: View {
-        
-        @State var value: [Attribute] = [1, 2, 3, 4, 5].map { Attribute.integer($0) }
-        @State var errors: [String] = ["An error", "A second error"]
-        
-        let config = DefaultAttributeViewsConfig()
-        
-        var body: some View {
-            CollectionView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding", type: .integer).environmentObject(config)
-        }
-        
-    }
-    
-    static var previews: some View {
-        VStack {
-            Root_Preview()
-            Binding_Preview()
-        }
-    }
-}
-
-fileprivate typealias CollectionViewViewModel<Config: AttributeViewConfig> = AnyListViewModel<CollectionView<Config>, Attribute, AttributeView<Config>, String>
-
-fileprivate struct CollectionViewKeyPathViewModel<Config: AttributeViewConfig, Root: Modifiable>: ListViewModelProtocol, RootPathContainer {
-    
-    let root: Binding<Root>
-    let path: Attributes.Path<Root, [Attribute]>
-    let type: AttributeType
-    let expanded: Binding<[AnyKeyPath: Bool]>?
-    
-    var newRow: Attribute {
-        type.defaultValue
-    }
-    
-    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
-        self.root = root
-        self.path = path
-        self.type = type
-        self.expanded = expanded
-    }
-    
-    func errors(_ view: CollectionView<Config>, forRow row: Int) -> [String] {
-        return root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row]).map(\.message)
-    }
-    
-    func rowView(_ view: CollectionView<Config>, forRow row: Int) -> AttributeView<Config> {
-        return AttributeView(root: root, path: path[row], label: "", expanded: expanded)
-    }
-    
-    
-    
-}
-
-fileprivate struct CollectionViewBindingViewModel<Config: AttributeViewConfig>: ListViewModelProtocol, ValueErrorsContainer {
-    
-    let value: Binding<[Attribute]>
-    let errors: Binding<[String]>
-    let type: AttributeType
-    let delayEdits: Bool
-    
-    var newRow: Attribute {
-        type.defaultValue
-    }
-    
-    init(value: Binding<[Attribute]>, errors: Binding<[String]>, type: AttributeType, delayEdits: Bool = false) {
-        self.value = value
-        self.errors = errors
-        self.type = type
-        self.delayEdits = delayEdits
-    }
-    
-    func errors(_ view: CollectionView<Config>, forRow _: Int) -> [String] {
-        return []
-    }
-    
-    func rowView(_ view: CollectionView<Config>, forRow row: Int) -> AttributeView<Config> {
-        return AttributeView(attribute: value[row], label: "", delayEdits: delayEdits)
-    }
-    
-}
+//public struct CollectionView: View {
+//    
+//    @Binding var value: [Row<Attribute>]
+//    @Binding var errors: [String]
+//    let display: ReadOnlyPath<Attribute, LineAttribute>?
+//    let label: String
+//    let type: AttributeType
+//    
+//    private let viewModel: CollectionViewViewModel
+//    
+//    @State var selection: Set<Int> = []
+//    @State var editing: Int? = nil
+//    @StateObject var newRow: AttributeViewModel
+//    
+//    //@EnvironmentObject var config: Config
+//    
+//    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
+//        self.init(
+//            value: Binding(
+//                get: {
+//                    path.isNil(root.wrappedValue) ? [] : root.wrappedValue[keyPath: path.keyPath]
+//                },
+//                set: {
+//                    let result = root.wrappedValue.modify(attribute: path, value: $0)
+//                    switch result {
+//                    case .success(true), .failure:
+//                        notifier?.send()
+//                    default: return
+//                    }
+//                }
+//            ),
+//            errors: Binding(
+//                get: { root.wrappedValue.errorBag.errors(forPath: AnyPath(path)).map(\.message) },
+//                set: { _ in }
+//            ),
+//            display: display,
+//            label: label,
+//            type: type,
+//            viewModel: CollectionViewViewModel(
+//                CollectionViewKeyPathViewModel(
+//                    root: root,
+//                    path: path,
+//                    type: type,
+//                    expanded: expanded
+//                )
+//            )
+//        )
+//    }
+//    
+//    init(value: Binding<[Attribute]>, errors: Binding<[String]> = .constant([]), display: ReadOnlyPath<Attribute, LineAttribute>? = nil, label: String, type: AttributeType, delayEdits: Bool = false) {
+//        self.init(
+//            value: value,
+//            errors: errors,
+//            display: display,
+//            label: label,
+//            type: type,
+//            viewModel: CollectionViewViewModel(
+//                CollectionViewBindingViewModel(
+//                    value: value,
+//                    errors: errors,
+//                    type: type,
+//                    delayEdits: delayEdits
+//                )
+//            )
+//        )
+//    }
+//    
+//    private init(value: Binding<[Attribute]>, errors: Binding<[String]>, display: ReadOnlyPath<Attribute, LineAttribute>?, label: String, type: AttributeType, viewModel: CollectionViewViewModel) {
+//        var idCache = IDCache<Attribute>()
+//        self._value = Binding(
+//            get: {
+//                value.wrappedValue.enumerated().map { (index, row) in
+//                    Row(id: idCache.id(for: row), index: index, data: row)
+//                }
+//            },
+//            set: {
+//                value.wrappedValue = $0.map(\.data)
+//            }
+//        )
+//        self._errors = errors
+//        self.display = display
+//        self.label = label
+//        self.type = type
+//        self.viewModel = viewModel
+//        self._newRow = StateObject(wrappedValue: AttributeViewModel(valueRef: Ref(copying: viewModel.newRow), errorsRef: ConstRef(copying: []), label: "New " + label, delayEdits: false))
+//    }
+//    
+//    public var body: some View {
+//        VStack(alignment: .leading) {
+//            VStack {
+//                Text(label.pretty).font(.headline)
+//                switch type {
+//                case .line:
+//                    HStack {
+//                        AttributeView(viewModel: newRow)
+//                        Button(action: {
+//                            viewModel.addElement(self)
+//                        }, label: {
+//                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+//                        }).buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
+//                    }
+//                case .block:
+//                    if let editingIndex = editing {
+//                        HStack {
+//                            Spacer()
+//                            IconButton(
+//                                action: {
+//                                    if editingIndex == value.count {
+//                                        viewModel.addElement(self)
+//                                    }
+//                                    editing = nil
+//                                },
+//                                label: {
+//                                    Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular))
+//                                },
+//                                foregroundColor: .blue,
+//                                highlightColor: .red
+//                            )
+//                            Divider()
+//                            IconButton(
+//                                action: {
+//                                    editing = nil
+//                                },
+//                                label: {
+//                                    Image(systemName: "trash").font(.system(size: 16, weight: .regular))
+//                                },
+//                                foregroundColor: .red,
+//                                highlightColor: .blue
+//                            ).animation(.easeOut)
+//                        }
+//                        if editingIndex >= value.count {
+//                            AttributeView(attribute: $newRow, label: "")
+//                        } else {
+//                            viewModel.rowView(self, forRow: editingIndex)
+//                        }
+//                    } else {
+//                        HStack {
+//                            Spacer()
+//                            IconButton(action: { editing = value.count }, label: {
+//                                Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+//                            }, foregroundColor: .blue, highlightColor: .blue).animation(.easeOut)
+//                        }
+//                    }
+//                }
+//            }.padding(.bottom, 5)
+//            Divider()
+//            if !value.isEmpty && ((editing == nil && type.isBlock == true) || type.isLine) {
+//                List(selection: $selection) {
+//                    ForEach(value.indices, id: \.self) { index in
+//                        VStack {
+//                            HStack(spacing: 1) {
+//                                Image(systemName: "ellipsis").font(.system(size: 16, weight: .regular)).rotationEffect(.degrees(90))
+//                                switch type {
+//                                case .line:
+//                                    viewModel.rowView(self, forRow: index)
+//                                    Spacer()
+//                                case .block:
+//                                    if let display = display {
+//                                        Text(value[index].data[keyPath: display.keyPath].strValue)
+//                                    } else {
+//                                        Text(value[index].data.strValue ?? "\(index)")
+//                                    }
+//                                    Spacer()
+//                                    IconButton(action: { editing = index }, label: {
+//                                        Image(systemName: "pencil").font(.system(size: 16, weight: .regular))
+//                                    }, foregroundColor: .blue, highlightColor: .blue)
+//                                }
+//                            }.contextMenu {
+//                                Button("Delete") {
+//                                    viewModel.deleteRow(self, row: index)
+//                                }.keyboardShortcut(.delete)
+//                            }
+//                            Divider()
+//                        }
+//                    }.onMove {
+//                        viewModel.moveElements(self, atOffsets: $0, to: $1)
+//                    }.onDelete {
+//                        viewModel.deleteElements(self, atOffsets: $0)
+//                    }
+//                }.frame(minHeight: max(CGFloat(value.reduce(0) { $0 + $1.data.underestimatedHeight }), 100))
+//            }
+//        }.padding(.top, 2)
+//    }
+//}
+//
+//struct CollectionView_Previews: PreviewProvider {
+//    
+//    struct Root_Preview: View {
+//        
+//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+//            AttributeGroup(
+//                name: "Fields", fields: [Field(name: "collection", type: .collection(type: .integer))], attributes: ["collection": .collection(integers: [1, 2, 3, 4, 5])], metaData: [:])
+//        ])
+//        
+//        let path = EmptyModifiable.path.attributes[0].attributes["collection"].wrappedValue.collectionValue
+//        
+//        var body: some View {
+//            CollectionView(
+//                root: $modifiable,
+//                path: path,
+//                label: "Root",
+//                type: .integer
+//            )
+//        }
+//        
+//    }
+//    
+//    struct Binding_Preview: View {
+//        
+//        @State var value: [Attribute] = [1, 2, 3, 4, 5].map { Attribute.integer($0) }
+//        @State var errors: [String] = ["An error", "A second error"]
+//        
+//        var body: some View {
+//            CollectionView(value: $value, errors: $errors, label: "Binding", type: .integer)
+//        }
+//        
+//    }
+//    
+//    static var previews: some View {
+//        VStack {
+//            Root_Preview()
+//            Binding_Preview()
+//        }
+//    }
+//}
+//
+//fileprivate typealias CollectionViewViewModel = AnyListViewModel<CollectionView, Attribute, AttributeView, String>
+//
+//fileprivate struct CollectionViewKeyPathViewModel<Root: Modifiable>: ListViewModelProtocol, RootPathContainer {
+//    
+//    let root: Binding<Root>
+//    let path: Attributes.Path<Root, [Attribute]>
+//    let type: AttributeType
+//    let expanded: Binding<[AnyKeyPath: Bool]>?
+//    
+//    var newRow: Attribute {
+//        type.defaultValue
+//    }
+//    
+//    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
+//        self.root = root
+//        self.path = path
+//        self.type = type
+//        self.expanded = expanded
+//    }
+//    
+//    func errors(_ view: CollectionView, forRow row: Int) -> [String] {
+//        return root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row]).map(\.message)
+//    }
+//    
+//    func rowView(_ view: CollectionView, forRow row: Int) -> AttributeView {
+//        return AttributeView(root: root, path: path[row], label: "", expanded: expanded)
+//    }
+//    
+//    
+//    
+//}
+//
+//fileprivate struct CollectionViewBindingViewModel: ListViewModelProtocol, ValueErrorsContainer {
+//    
+//    let value: Binding<[Attribute]>
+//    let errors: Binding<[String]>
+//    let type: AttributeType
+//    let delayEdits: Bool
+//    
+//    var newRow: Attribute {
+//        type.defaultValue
+//    }
+//    
+//    init(value: Binding<[Attribute]>, errors: Binding<[String]>, type: AttributeType, delayEdits: Bool = false) {
+//        self.value = value
+//        self.errors = errors
+//        self.type = type
+//        self.delayEdits = delayEdits
+//    }
+//    
+//    func errors(_ view: CollectionView, forRow _: Int) -> [String] {
+//        return []
+//    }
+//    
+//    func rowView(_ view: CollectionView, forRow row: Int) -> AttributeView {
+//        return AttributeView(attribute: value[row], label: "", delayEdits: delayEdits)
+//    }
+//    
+//}

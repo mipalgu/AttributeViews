@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct BoolView<Config: AttributeViewConfig>: View {
+public struct BoolView: View {
     
     @Binding var value: Bool
     @Binding var errors: [String]
@@ -73,16 +73,14 @@ struct BoolView_Previews: PreviewProvider {
             )
         ])
         
-        let config = DefaultAttributeViewsConfig()
-        
         let path = EmptyModifiable.path.attributes[0].attributes["bool"].wrappedValue.boolValue
         
         var body: some View {
-            BoolView<DefaultAttributeViewsConfig>(
+            BoolView(
                 root: $modifiable,
                 path: path,
                 label: "Root"
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -93,10 +91,8 @@ struct BoolView_Previews: PreviewProvider {
         
         @State var errors: [String] = ["An Error."]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            BoolView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+            BoolView(value: $value, errors: $errors, label: "Binding")
         }
         
     }

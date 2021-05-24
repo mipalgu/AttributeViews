@@ -14,30 +14,26 @@ import SwiftUI
 
 import Attributes
 
-public struct AttributeGroupView<Config: AttributeViewConfig>: View {
+public struct AttributeGroupView: View {
     
-    let subView: () -> ComplexView<Config>
+    @ObservedObject var viewModel: AttributeGroupViewModel
     
-    public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, AttributeGroup>, label: String, expanded: Binding<[AnyKeyPath: Bool]>? = nil, notifier: GlobalChangeNotifier? = nil) {
-        self.init {
-            ComplexView(root: root, path: path.attributes, label: label, fields: root.wrappedValue[keyPath: path.keyPath].fields, expanded: expanded, notifier: notifier)
-        }
-    }
-    
-    private init(subView: @escaping () -> ComplexView<Config>) {
-        self.subView = subView
+    public init(viewModel: AttributeGroupViewModel) {
+        self.viewModel = viewModel
     }
     
     @ViewBuilder
     public var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             Form {
-                subView()
+                ComplexView(viewModel: viewModel.complexViewModel)
             }
         }
     }
     
 }
+
+import GUUI
 
 struct AttributeGroupView_Previews: PreviewProvider {
     
@@ -45,19 +41,32 @@ struct AttributeGroupView_Previews: PreviewProvider {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
-                name: "Fields", fields: [Field(name: "float", type: .float)], attributes: ["float": .float(0.1)], metaData: [:])
+                name: "Fields",
+                fields: [Field(name: "float", type: .float)],
+                attributes: ["float": .float(0.1)],
+                metaData: [:]
+            )
         ])
         
         let path = EmptyModifiable.path.attributes[0]
         
-        let config = DefaultAttributeViewsConfig()
+        var body: some View {
+            AttributeGroupPreviewView(
+                viewModel: AttributeGroupViewModel(
+                    root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
+                    path: path
+                )
+            )
+        }
+        
+    }
+    
+    struct AttributeGroupPreviewView: View {
+        
+        @StateObject var viewModel: AttributeGroupViewModel
         
         var body: some View {
-            AttributeGroupView<DefaultAttributeViewsConfig>(
-                root: $modifiable,
-                path: path,
-                label: "Root"
-            ).environmentObject(config)
+            AttributeGroupView(viewModel: viewModel)
         }
         
     }

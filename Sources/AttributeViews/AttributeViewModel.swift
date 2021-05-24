@@ -63,54 +63,249 @@ import SwiftUI
 #endif
 
 import Attributes
+import GUUI
 
-final class AttributeViewModel: ObservableObject {
+fileprivate final class AttributeValue: Value<Attribute> {
     
-    let value: Binding<Attribute>
+    private let _lineAttributeViewModel: () -> LineAttributeViewModel
     
-    var attribute: Attribute {
-        get {
-            value.wrappedValue
-        } set {
-            value.wrappedValue = newValue
-            objectWillChange.send()
-        }
+    private let _blockAttributeViewModel: () -> BlockAttributeViewModel
+    
+    var lineAttributeViewModel: LineAttributeViewModel {
+        _lineAttributeViewModel()
     }
     
-    var blockAttribute: BlockAttribute {
-        get {
-            value.wrappedValue.blockAttribute
-        } set {
-            value.wrappedValue.blockAttribute = newValue
-            objectWillChange.send()
-        }
+    var blockAttributeViewModel: BlockAttributeViewModel {
+        _blockAttributeViewModel()
     }
     
-    var lineAttribute: LineAttribute {
-        get {
-            value.wrappedValue.lineAttribute
-        } set {
-            value.wrappedValue.lineAttribute = newValue
-            objectWillChange.send()
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self._lineAttributeViewModel = {
+            LineAttributeViewModel(root: root, path: path.lineAttribute, label: label, notifier: notifier)
         }
+        self._blockAttributeViewModel = {
+            BlockAttributeViewModel(root: root, path: path.blockAttribute, label: label, notifier: notifier)
+        }
+        super.init(root: root, path: path, notifier: notifier)
     }
     
-    init(value: Binding<Attribute>) {
-        self.value = value
+    init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
+        self._lineAttributeViewModel = {
+            LineAttributeViewModel(valueRef: valueRef.lineAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
+        }
+        self._blockAttributeViewModel = {
+            BlockAttributeViewModel(valueRef: valueRef.blockAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
     
 }
 
-final class LineAttributeViewModel: ObservableObject, Identifiable {
+public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
     
-    let value: Binding<LineAttribute>
+    private let ref: AttributeValue
+    
+    lazy var lineAttributeViewModel: LineAttributeViewModel = {
+        ref.lineAttributeViewModel
+    }()
+    
+    lazy var blockAttributeViewModel: BlockAttributeViewModel = {
+        ref.blockAttributeViewModel
+    }()
+    
+    var attribute: Attribute {
+        ref.value
+    }
+    
+    var subView: AnyView {
+        switch ref.value.type {
+        case .block:
+            return AnyView(BlockAttributeView(viewModel: ref.blockAttributeViewModel))
+        case .line:
+            return AnyView(LineAttributeView(viewModel: ref.lineAttributeViewModel))
+        }
+    }
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = AttributeValue(root: root, path: path, label: label, notifier: notifier)
+    }
+    
+    public init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, delayEdits: Bool = false) {
+        self.ref = AttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
+    }
+    
+    public func send() {
+        if ref.value.isBlock {
+            blockAttributeViewModel.send()
+        } else {
+            lineAttributeViewModel.send()
+        }
+        objectWillChange.send()
+    }
+    
+}
+
+fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
+    
+    private let _subView: () -> AnyView
+    
+    var subView: AnyView {
+        _subView()
+    }
+    
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self._subView = {
+            switch root.value[keyPath: path.keyPath].type {
+            case .code(let language):
+                return AnyView(CodeView(root: root.asBinding, path: path.codeValue, label: label, language: language, notifier: notifier))
+            case .text:
+                return AnyView(TextView(root: root.asBinding, path: path.textValue, label: label, notifier: notifier))
+            case .collection(let type):
+                return AnyView(EmptyView())
+                //return AnyView(CollectionView(root: root.asBinding, path: path.collectionValue, display: root.value[keyPath: path.keyPath].collectionDisplay, label: label, type: type, expanded: .constant([:]), notifier: notifier))
+            case .table(let columns):
+                return AnyView(EmptyView())
+                //return AnyView(TableView(root: root.asBinding, path: path.tableValue, label: label, columns: columns, notifier: notifier))
+            case .complex(let fields):
+                return AnyView(
+                    ComplexView(
+                        viewModel: ComplexViewModel(
+                            root: root,
+                            path: path.complexValue,
+                            label: label,
+                            fields: fields,
+                            notifier: notifier
+                        )
+                    )
+                )
+            case .enumerableCollection(let validValues):
+                return AnyView(EnumerableCollectionView(root: root.asBinding, path: path.enumerableCollectionValue, label: label, validValues: validValues, notifier: notifier))
+            }
+        }
+        super.init(root: root, path: path, notifier: notifier)
+    }
+    
+    init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
+        var complexViewModel: ComplexViewModel?
+        self._subView = {
+            switch valueRef.value.type {
+            case .code(let language):
+                return AnyView(CodeView(value: valueRef.codeValue.asBinding, label: label, language: language, delayEdits: delayEdits))
+            case .text:
+                return AnyView(TextView(value: valueRef.textValue.asBinding, label: label, delayEdits: delayEdits))
+            case .collection(let type):
+                return AnyView(EmptyView())
+                //return AnyView(CollectionView(value: valueRef.collectionValue.asBinding, display: valueRef.value.collectionDisplay, label: label, type: type, delayEdits: delayEdits))
+            case .table(let columns):
+                return AnyView(EmptyView())
+                //return AnyView(TableView(value: valueRef.tableValue.asBinding, label: label, columns: columns, delayEdits: delayEdits))
+            case .complex(let fields):
+                let viewModel = complexViewModel ?? ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: fields)
+                complexViewModel = viewModel
+                return AnyView(ComplexView(viewModel: viewModel))
+            case .enumerableCollection(let validValues):
+                return AnyView(EnumerableCollectionView(value: valueRef.enumerableCollectionValue.asBinding, label: label, validValues: validValues))
+            }
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
+    }
+    
+}
+
+public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifier {
+    
+    private let ref: BlockAttributeValue
+    
+    var blockAttribute: BlockAttribute {
+        get {
+            ref.value
+        } set {
+            objectWillChange.send()
+            ref.value = newValue
+        }
+    }
+    
+    var subView: AnyView {
+        ref.subView
+    }
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = BlockAttributeValue(root: root, path: path, label: label, notifier: notifier)
+    }
+    
+    public init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool = false) {
+        self.ref = BlockAttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
+    }
+    
+    public func send() {
+        objectWillChange.send()
+    }
+    
+}
+
+fileprivate final class LineAttributeValue: Value<LineAttribute> {
+    
+    private let _subView: () -> AnyView
+    
+    var subView: AnyView {
+        _subView()
+    }
+    
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, LineAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self._subView = {
+            if path.isNil(root.value) {
+                return AnyView(EmptyView())
+            }
+            switch root.value[keyPath: path.keyPath].type {
+            case .bool:
+                return AnyView(BoolView(root: root.asBinding, path: path.boolValue, label: label, notifier: notifier))
+            case .integer:
+                return AnyView(IntegerView(root: root.asBinding, path: path.integerValue, label: label, notifier: notifier))
+            case .float:
+                return AnyView(FloatView(root: root.asBinding, path: path.floatValue, label: label, notifier: notifier))
+            case .expression(let language):
+                return AnyView(ExpressionView(root: root.asBinding, path: path.expressionValue, label: label, language: language, notifier: notifier))
+            case .enumerated(let validValues):
+                return AnyView(EnumeratedView(root: root.asBinding, path: path.enumeratedValue, label: label, validValues: validValues, notifier: notifier))
+            case .line:
+                return AnyView(LineView(root: root.asBinding, path: path.lineValue, label: label, notifier: notifier))
+            }
+        }
+        super.init(root: root, path: path, notifier: notifier)
+    }
+    
+    init(valueRef: Ref<LineAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
+        self._subView = {
+            switch valueRef.value.type {
+            case .bool:
+                return AnyView(BoolView(value: valueRef.boolValue.asBinding, errors: errorsRef.asReadOnlyBinding, label: label))
+            case .integer:
+                return AnyView(IntegerView(value: valueRef.integerValue.asBinding, errors: errorsRef.asReadOnlyBinding, label: label, delayEdits: delayEdits))
+            case .float:
+                return AnyView(FloatView(value: valueRef.floatValue.asBinding, errors: errorsRef.asReadOnlyBinding, label: label, delayEdits: delayEdits))
+            case .expression(let language):
+                return AnyView(ExpressionView(value: valueRef.expressionValue.asBinding, errors: errorsRef.asReadOnlyBinding, label: label, language: language, delayEdits: delayEdits))
+            case .enumerated(let validValues):
+                return AnyView(EnumeratedView(value: valueRef.enumeratedValue.asBinding, errors: errorsRef.asReadOnlyBinding, label: label, validValues: validValues))
+            case .line:
+                return AnyView(LineView(value: valueRef.lineValue.asBinding, errors: errorsRef.asReadOnlyBinding, label: label, delayEdits: delayEdits))
+            }
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
+    }
+    
+}
+
+public final class LineAttributeViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
+    
+    private let ref: LineAttributeValue
     
     var lineAttribute: LineAttribute {
         get {
-            value.wrappedValue
+            ref.value
         } set {
-            value.wrappedValue = newValue
             objectWillChange.send()
+            ref.value = newValue
         }
     }
     
@@ -123,70 +318,82 @@ final class LineAttributeViewModel: ObservableObject, Identifiable {
     
     var boolValue: Bool {
         get {
-            value.wrappedValue.boolValue
+            ref.value.boolValue
         } set {
-            value.wrappedValue.boolValue = newValue
+            ref.value.boolValue = newValue
             objectWillChange.send()
         }
     }
     
     var integerValue: Int {
         get {
-            value.wrappedValue.integerValue
+            ref.value.integerValue
         } set {
-            value.wrappedValue.integerValue = newValue
+            ref.value.integerValue = newValue
             objectWillChange.send()
         }
     }
     
     var floatValue: Double {
         get {
-            value.wrappedValue.floatValue
+            ref.value.floatValue
         } set {
-            value.wrappedValue.floatValue = newValue
+            ref.value.floatValue = newValue
         }
     }
     
     var expressionValue: Expression {
         get {
-            value.wrappedValue.expressionValue
+            ref.value.expressionValue
         } set {
-            value.wrappedValue.expressionValue = newValue
+            ref.value.expressionValue = newValue
             objectWillChange.send()
         }
     }
     
     var enumeratedValue: String {
         get {
-            value.wrappedValue.enumeratedValue
+            ref.value.enumeratedValue
         } set {
-            value.wrappedValue.enumeratedValue = newValue
+            ref.value.enumeratedValue = newValue
             objectWillChange.send()
         }
     }
     
     var lineValue: String {
         get {
-            value.wrappedValue.lineValue
+            ref.value.lineValue
         } set {
-            value.wrappedValue.lineValue = newValue
+            ref.value.lineValue = newValue
             objectWillChange.send()
         }
     }
     
-    init(value: Binding<LineAttribute>) {
-        self.value = value
+    var subView: AnyView {
+        ref.subView
+    }
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, LineAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = LineAttributeValue(root: root, path: path, label: label, notifier: notifier)
+    }
+    
+    public init(valueRef: Ref<LineAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool = false) {
+        self.ref = LineAttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
+    }
+    
+    public func send() {
+        objectWillChange.send()
     }
     
 }
 
 extension LineAttributeViewModel: Hashable {
     
-    static func ==(lhs: LineAttributeViewModel, rhs: LineAttributeViewModel) -> Bool {
+    public static func ==(lhs: LineAttributeViewModel, rhs: LineAttributeViewModel) -> Bool {
         lhs.lineAttribute == rhs.lineAttribute
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(lineAttribute)
     }
     

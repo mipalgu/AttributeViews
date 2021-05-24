@@ -15,7 +15,7 @@ import Combine
 
 import Attributes
 
-public struct IntegerView<Config: AttributeViewConfig>: View {
+public struct IntegerView: View {
     
     @State var editingValue: Int
     @State var editing: Bool = false
@@ -24,8 +24,6 @@ public struct IntegerView<Config: AttributeViewConfig>: View {
     @Binding var errors: [String]
     let label: String
     let onCommit: ((Int) -> Void)?
-    
-    @EnvironmentObject var config: Config
     
     var formatter: NumberFormatter {
         let formatter = NumberFormatter()
@@ -103,14 +101,12 @@ struct IntegerView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["integer"].wrappedValue.integerValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            IntegerView<DefaultAttributeViewsConfig>(
+            IntegerView(
                 root: $modifiable,
                 path: path,
                 label: "Root"
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -120,10 +116,8 @@ struct IntegerView_Previews: PreviewProvider {
         @State var value: Int = 12
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            IntegerView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+            IntegerView(value: $value, errors: $errors, label: "Binding")
         }
         
     }

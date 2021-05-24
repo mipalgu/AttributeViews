@@ -1,9 +1,9 @@
 /*
- * AttributeView.swift
- * MachineViews
+ * Value.swift
+ * 
  *
- * Created by Callum McColl on 16/11/20.
- * Copyright © 2020 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 24/5/21.
+ * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,23 +56,58 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
 import Attributes
+import GUUI
 
-public struct AttributeView: View {
+class Value<Value> {
     
-    @ObservedObject var viewModel: AttributeViewModel
+    private let _isValid: () -> Bool
     
-    public init(viewModel: AttributeViewModel) {
-        self.viewModel = viewModel
+    let valueRef: Ref<Value>
+    
+    let errorsRef: ConstRef<[String]>
+    
+    var isValid: Bool {
+        _isValid()
     }
     
-    public var body: some View {
-        viewModel.subView
+    var value: Value {
+        get {
+            valueRef.value
+        } set {
+            valueRef.value = newValue
+        }
     }
+    
+    var errors: [String] {
+        errorsRef.value
+    }
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value>, notifier: GlobalChangeNotifier? = nil) {
+        self.valueRef = Ref(
+            get: {
+                root.value[keyPath: path.keyPath]
+            },
+            set: {
+                let result = root.value.modify(attribute: path, value: $0)
+                switch result {
+                case .success(false):
+                    return
+                default:
+                    notifier?.send()
+                }
+            }
+        )
+        self.errorsRef = ConstRef {
+                root.value.errorBag.errors(forPath: path).map(\.message)
+            }
+        self._isValid = { !path.isNil(root.value) }
+    }
+    
+    public init(valueRef: Ref<Value>, errorsRef: ConstRef<[String]>) {
+        self.valueRef = valueRef
+        self.errorsRef = errorsRef
+        self._isValid = { true }
+    }
+    
 }

@@ -15,7 +15,7 @@ import Combine
 
 import Attributes
 
-public struct FloatView<Config: AttributeViewConfig>: View {
+public struct FloatView: View {
     
     @State var editingValue: Double
     @State var editing: Bool = false
@@ -104,14 +104,12 @@ struct FloatView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["float"].wrappedValue.floatValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            FloatView<DefaultAttributeViewsConfig>(
+            FloatView(
                 root: $modifiable,
                 path: path,
                 label: "Root"
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -121,10 +119,8 @@ struct FloatView_Previews: PreviewProvider {
         @State var value: Double = 12.5123
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            FloatView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+            FloatView(value: $value, errors: $errors, label: "Binding")
         }
         
     }

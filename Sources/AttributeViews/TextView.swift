@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct TextView<Config: AttributeViewConfig>: View {
+public struct TextView: View {
     
     @Binding var value: String
     @Binding var errors: [String]
@@ -85,14 +85,12 @@ struct TextView_Previews: PreviewProvider {
         
         let path = EmptyModifiable.path.attributes[0].attributes["text"].wrappedValue.textValue
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            TextView<DefaultAttributeViewsConfig>(
+            TextView(
                 root: $modifiable,
                 path: path,
                 label: "Root"
-            ).environmentObject(config)
+            )
         }
         
     }
@@ -102,10 +100,8 @@ struct TextView_Previews: PreviewProvider {
         @State var value: String = "More text\non separate lines"
         @State var errors: [String] = ["An error", "A second error"]
         
-        let config = DefaultAttributeViewsConfig()
-        
         var body: some View {
-            TextView<DefaultAttributeViewsConfig>(value: $value, errors: $errors, label: "Binding").environmentObject(config)
+            TextView(value: $value, errors: $errors, label: "Binding")
         }
         
     }
