@@ -60,19 +60,11 @@ struct LineView_Previews: PreviewProvider {
     }
     
     struct Binding_Preview: View {
-        
-        @State var value: String = "world"
-        @State var errors: [String] = ["An error", "A second error"]
+    
+        @StateObject var viewModel: LineViewModel = LineViewModel(valueRef: Ref(copying: "world"), errorsRef: ConstRef { ["An error", "A second error"] }, label: "Binding")
         
         var body: some View {
-            LineViewPreviewView(
-                viewModel: LineViewModel(
-                    valueRef: Ref(get: { self.value }, set: { self.value = $0 }),
-                    errorsRef: ConstRef { self.errors },
-                    label: "Binding",
-                    delayEdits: false
-                )
-            )
+            LineView(viewModel: viewModel)
         }
         
     }
