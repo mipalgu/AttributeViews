@@ -135,26 +135,35 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
     }
     
     public func send() {
-        if ref.value.isBlock {
-            blockAttributeViewModel.send()
-        } else {
-            lineAttributeViewModel.send()
-        }
         objectWillChange.send()
+        if !ref.isValid {
+            return
+        }
+        if ref.value.isBlock {
+            blockAttributeViewModel = ref.blockAttributeViewModel
+        } else {
+            lineAttributeViewModel = ref.lineAttributeViewModel
+        }
     }
     
 }
 
 fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
     
-    private let _subView: () -> AnyView
+    private let _complexViewModel: () -> ComplexViewModel
     
-    var subView: AnyView {
-        _subView()
+    private let _subView: (ComplexViewModel) -> AnyView
+    
+    var complexViewModel: ComplexViewModel {
+        _complexViewModel()
     }
     
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
-        self._subView = {
+        self._complexViewModel = {
+            let fields = path.isNil(root.value) ? [] : root.value[keyPath: path.keyPath].complexFields
+            return ComplexViewModel(root: root, path: path.complexValue, label: label, fields: fields, notifier: notifier)
+        }
+        self._subView = { complexViewModel in
             switch root.value[keyPath: path.keyPath].type {
             case .code(let language):
                 return AnyView(CodeView(root: root.asBinding, path: path.codeValue, label: label, language: language, notifier: notifier))
@@ -167,17 +176,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
                 return AnyView(EmptyView())
                 //return AnyView(TableView(root: root.asBinding, path: path.tableValue, label: label, columns: columns, notifier: notifier))
             case .complex(let fields):
-                return AnyView(
-                    ComplexView(
-                        viewModel: ComplexViewModel(
-                            root: root,
-                            path: path.complexValue,
-                            label: label,
-                            fields: fields,
-                            notifier: notifier
-                        )
-                    )
-                )
+                return AnyView(ComplexView(viewModel: complexViewModel))
             case .enumerableCollection(let validValues):
                 return AnyView(EnumerableCollectionView(root: root.asBinding, path: path.enumerableCollectionValue, label: label, validValues: validValues, notifier: notifier))
             }
@@ -186,8 +185,10 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
     }
     
     init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
-        var complexViewModel: ComplexViewModel?
-        self._subView = {
+        self._complexViewModel = {
+            ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: valueRef.value.complexFields)
+        }
+        self._subView = { complexViewModel in
             switch valueRef.value.type {
             case .code(let language):
                 return AnyView(CodeView(value: valueRef.codeValue.asBinding, label: label, language: language, delayEdits: delayEdits))
@@ -200,9 +201,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
                 return AnyView(EmptyView())
                 //return AnyView(TableView(value: valueRef.tableValue.asBinding, label: label, columns: columns, delayEdits: delayEdits))
             case .complex(let fields):
-                let viewModel = complexViewModel ?? ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: fields)
-                complexViewModel = viewModel
-                return AnyView(ComplexView(viewModel: viewModel))
+                return AnyView(ComplexView(viewModel: complexViewModel))
             case .enumerableCollection(let validValues):
                 return AnyView(EnumerableCollectionView(value: valueRef.enumerableCollectionValue.asBinding, label: label, validValues: validValues))
             }
@@ -210,11 +209,19 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
     
+    func subView(complexViewModel: ComplexViewModel) -> AnyView {
+        _subView(complexViewModel)
+    }
+    
 }
 
 public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifier {
     
     private let ref: BlockAttributeValue
+    
+    lazy var complexViewModel: ComplexViewModel = {
+        ref.complexViewModel
+    }()
     
     var blockAttribute: BlockAttribute {
         get {
@@ -226,7 +233,7 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
     }
     
     var subView: AnyView {
-        ref.subView
+        ref.subView(complexViewModel: complexViewModel)
     }
     
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
@@ -239,6 +246,7 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
     
     public func send() {
         objectWillChange.send()
+        complexViewModel = ref.complexViewModel
     }
     
 }

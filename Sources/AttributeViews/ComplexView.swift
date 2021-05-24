@@ -12,80 +12,6 @@ import SwiftUI
 #endif
 
 import Attributes
-import GUUI
-
-final class ComplexValue: Value<[String: Attribute]> {
-    
-    private let _viewModel: (String) -> AttributeViewModel
-    
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, notifier: GlobalChangeNotifier? = nil) {
-        self._viewModel = { AttributeViewModel(root: root, path: path[$0].wrappedValue, label: $0, notifier: notifier) }
-        super.init(root: root, path: path, notifier: notifier)
-    }
-    
-    init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
-        self._viewModel = { AttributeViewModel(valueRef: valueRef[$0].wrappedValue, errorsRef: ConstRef(copying: []), label: $0, delayEdits: delayEdits) }
-        super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-    
-    func viewModel(forAttribute attribute: String) -> AttributeViewModel {
-        self._viewModel(attribute)
-    }
-    
-}
-
-public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
-    
-    private let ref: ComplexValue
-    
-    private var expanded: [String: Bool] = [:]
-    
-    private var attributeViewModels: [String: AttributeViewModel] = [:]
-    
-    @Published public var label: String
-    
-    @Published public var fields: [Field]
-    
-    var errors: [String] {
-        ref.errors
-    }
-    
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fields: [Field], notifier: GlobalChangeNotifier? = nil) {
-        self.ref = ComplexValue(root: root, path: path, notifier: notifier)
-        self.label = label
-        self.fields = fields
-    }
-    
-    init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, fields: [Field], delayEdits: Bool = false) {
-        self.ref = ComplexValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
-        self.label = label
-        self.fields = fields
-    }
-    
-    func expandedBinding(_ fieldName: String) -> Binding<Bool> {
-        return Binding(
-            get: { self.expanded[fieldName] ?? false },
-            set: { self.expanded[fieldName] = $0 }
-        )
-    }
-    
-    public func send() {
-        self.attributeViewModels.values.forEach {
-            $0.send()
-        }
-        objectWillChange.send()
-    }
-    
-    func viewModel(forField fieldName: String) -> AttributeViewModel {
-        if let viewModel = attributeViewModels[fieldName] {
-            return viewModel
-        }
-        let viewModel = ref.viewModel(forAttribute: fieldName)
-        attributeViewModels[fieldName] = viewModel
-        return viewModel
-    }
-    
-}
 
 public struct ComplexView: View {
     
@@ -127,6 +53,8 @@ public struct ComplexView: View {
     }
     
 }
+
+import GUUI
 
 struct ComplexView_Previews: PreviewProvider {
     
