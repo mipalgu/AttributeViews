@@ -100,68 +100,84 @@ struct NewRowView: View {
     
 }
 
-//struct TableView_Previews: PreviewProvider {
-//    
-//    struct Root_Preview: View {
-//        
-//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-//            AttributeGroup(
-//                name: "Fields",
-//                fields: [
-//                    Field(
-//                        name: "table",
-//                        type: .table(columns: [("b", .bool), ("i", .integer), ("f", .float)])
-//                    )
-//                ],
-//                attributes: [
-//                    "table": .table([
-//                        [.bool(false), .integer(1), .float(1.1)],
-//                        [.bool(true), .integer(2), .float(2.2)]
-//                    ], columns: [("b", .bool), ("i", .integer), ("f", .float)]
-//                    )
-//                ],
-//                metaData: [:]
-//            )
-//        ])
-//        
-//        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
-//        
-//        var body: some View {
-//            TableView(
-//                root: $modifiable,
-//                path: path,
-//                label: "Root",
-//                columns: [.init(name: "b", type: .bool), .init(name: "i", type: .integer), .init(name: "f", type: .float)]
-//            )
-//        }
-//        
-//    }
-//    
-//    struct Binding_Preview: View {
-//        
-//        @State var value: [[LineAttribute]] = []
-//        
-//        var body: some View {
-//            TableView(
-//                value: $value,
-//                label: "Binding",
-//                columns: [
-//                    .init(name: "Bool", type: .bool),
-//                    .init(name: "Integer", type: .integer),
-//                    .init(name: "Float", type: .float),
-//                    .init(name: "Expression", type: .expression(language: .swift)),
-//                    .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
-//                    .init(name: "Line", type: .line)
-//                ]
-//            )
-//        }
-//        
-//    }
-//    
-//    static var previews: some View {
-//        VStack {
-//            Root_Preview()
-//            Binding_Preview()
-//        }
-//    }
-//}
+struct TableView_Previews: PreviewProvider {
+    
+    struct Root_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields",
+                fields: [
+                    Field(
+                        name: "table",
+                        type: .table(columns: [("b", .bool), ("i", .integer), ("f", .float)])
+                    )
+                ],
+                attributes: [
+                    "table": .table([
+                        [.bool(false), .integer(1), .float(1.1)],
+                        [.bool(true), .integer(2), .float(2.2)]
+                    ], columns: [("b", .bool), ("i", .integer), ("f", .float)]
+                    )
+                ],
+                metaData: [:]
+            )
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
+        
+        var body: some View {
+            TableViewPreviewView(
+                viewModel: TableViewModel(
+                    root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
+                    path: path,
+                    label: "Root",
+                    columns: [.init(name: "b", type: .bool), .init(name: "i", type: .integer), .init(name: "f", type: .float)]
+                )
+            )
+        }
+        
+    }
+    
+    struct Binding_Preview: View {
+        
+        @State var value: [[LineAttribute]] = []
+        
+        var body: some View {
+            TableViewPreviewView(
+                viewModel: TableViewModel(
+                    valueRef: Ref(get: { self.value }, set: { self.value = $0 }),
+                    errorsRef: ConstRef(copying: []),
+                    label: "Binding",
+                    columns: [
+                        .init(name: "Bool", type: .bool),
+                        .init(name: "Integer", type: .integer),
+                        .init(name: "Float", type: .float),
+                        .init(name: "Expression", type: .expression(language: .swift)),
+                        .init(name: "Enumerated", type: .enumerated(validValues: ["Initial", "Suspend"])),
+                        .init(name: "Line", type: .line)
+                    ],
+                    delayEdits: false
+                )
+            )
+        }
+        
+    }
+    
+    struct TableViewPreviewView: View {
+        
+        @StateObject var viewModel: TableViewModel
+        
+        var body: some View {
+            TableView(viewModel: viewModel)
+        }
+        
+    }
+    
+    static var previews: some View {
+        VStack {
+            Root_Preview()
+            Binding_Preview()
+        }
+    }
+}

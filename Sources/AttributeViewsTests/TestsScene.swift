@@ -69,6 +69,48 @@ typealias State = SwiftUI.State
 import AttributeViews
 import Attributes
 import Machines
+import GUUI
+
+final class AppViewModel<Root: Modifiable>: ObservableObject, GlobalChangeNotifier {
+    
+    private let rootRef: Ref<Root>
+    
+    public let path: Attributes.Path<Root, [AttributeGroup]>
+    
+    private var viewModels: [Int: AttributeGroupViewModel] = [:]
+    
+    var root: Root {
+        get {
+            rootRef.value
+        } set {
+            rootRef.value = newValue
+        }
+    }
+    
+    var attributes: Range<Int> {
+        rootRef.value[keyPath: path.keyPath].indices
+    }
+    
+    init(root: Ref<Root>, path: Attributes.Path<Root, [AttributeGroup]>) {
+        self.rootRef = root
+        self.path = path
+    }
+    
+    func viewModel(forIndex index: Int) -> AttributeGroupViewModel {
+        if let viewModel = viewModels[index] {
+            return viewModel
+        }
+        let viewModel = AttributeGroupViewModel(root: rootRef, path: path[index], notifier: self)
+        viewModels[index] = viewModel
+        return viewModel
+    }
+    
+    func send() {
+        objectWillChange.send()
+        viewModels = [:]
+    }
+    
+}
 
 struct TestsScene: App {
     
@@ -90,7 +132,7 @@ struct TestsScene: App {
     
     @State var expanded: [AnyKeyPath: Bool] = [:]
     
-    @State var machine: Machine = try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))
+    @StateObject var viewModel = AppViewModel(root: Ref(copying: try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))), path: Machine.path.attributes)
     
     @State var text: String = ""
     
@@ -118,7 +160,7 @@ struct TestsScene: App {
                             TextField("URL", text: $text)
                             Button("Load") {
                                 do {
-                                    machine = try Machine(filePath: URL(fileURLWithPath: text))
+                                    viewModel.root = try Machine(filePath: URL(fileURLWithPath: text))
                                     loadError = ""
                                 } catch let e {
                                     loadError = "\(e)"
@@ -126,8 +168,8 @@ struct TestsScene: App {
                             }
                             Button("Reload") {
                                 do {
-                                    machine = try Machine(filePath: machine.filePath)
-                                    text = machine.filePath.path
+                                    viewModel.root = try Machine(filePath: viewModel.root.filePath)
+                                    text = viewModel.root.filePath.path
                                 } catch let e {
                                     loadError = "\(e)"
                                 }
@@ -137,16 +179,14 @@ struct TestsScene: App {
                             Text(loadError).foregroundColor(.red)
                         }
                     }.padding(.horizontal, 10)
-//                    ForEach(machine.attributes.indices, id: \.self) { index in
-//                        AttributeGroupView(
-//                            root: $machine,
-//                            path: Machine.path.attributes[index],
-//                            label: machine.attributes[index].name
-//                        )
-//                    }
+                    ForEach(viewModel.attributes.indices, id: \.self) { index in
+                        AttributeGroupView(
+                            viewModel: viewModel.viewModel(forIndex: index)
+                        )
+                    }
                 }
             }.onAppear {
-                text = machine.filePath.path
+                text = viewModel.root.filePath.path
             }
         }
     }
