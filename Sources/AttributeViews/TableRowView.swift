@@ -65,7 +65,7 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class TableRowViewModel: ObservableObject, Identifiable {
+final class TableRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
     
     private let table: Ref<[[LineAttribute]]>
     
@@ -97,6 +97,11 @@ final class TableRowViewModel: ObservableObject, Identifiable {
         let viewModel = self.lineAttributeViewModel(rowIndex, index)
         viewModels[index] = viewModel
         return AnyView(LineAttributeView(viewModel: viewModel))
+    }
+    
+    func send() {
+        objectWillChange.send()
+        viewModels = [:]
     }
     
 }

@@ -65,7 +65,7 @@ import SwiftUI
 import Attributes
 import GUUI
 
-public final class TableViewModel: ObservableObject {
+public final class TableViewModel: ObservableObject, GlobalChangeNotifier {
     
     let newRowViewModel: NewRowViewModel
     
@@ -99,9 +99,15 @@ public final class TableViewModel: ObservableObject {
         self.errorsRef = errorsRef
     }
     
+    public func send() {
+        objectWillChange.send()
+        newRowViewModel.send()
+        tableBodyViewModel.send()
+    }
+    
 }
 
-final class NewRowViewModel: ObservableObject {
+final class NewRowViewModel: ObservableObject, GlobalChangeNotifier {
     
     @Published var newRow: [LineAttributeViewModel]
     
@@ -124,6 +130,13 @@ final class NewRowViewModel: ObservableObject {
         bodyViewModel.addElement(newRow: newRow.map(\.lineAttribute))
         zip(newRow, emptyRow).forEach {
             $0.lineAttribute = $1
+        }
+    }
+    
+    func send() {
+        objectWillChange.send()
+        newRow.forEach {
+            $0.send()
         }
     }
     
@@ -153,7 +166,7 @@ fileprivate final class TableBodyValue: Value<[[LineAttribute]]> {
     
 }
 
-final class TableBodyViewModel: ObservableObject {
+final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
     
     private let ref: TableBodyValue
     let columns: [BlockAttributeType.TableColumn]
@@ -236,6 +249,13 @@ final class TableBodyViewModel: ObservableObject {
                     }
                 )
             })
+        }
+    }
+    
+    func send() {
+        objectWillChange.send()
+        rows.forEach {
+            $0.send()
         }
     }
     

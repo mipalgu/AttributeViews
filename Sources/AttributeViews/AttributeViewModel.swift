@@ -150,20 +150,39 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
 
 fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
     
+    private let _tableViewModel: () -> TableViewModel
+    
     private let _complexViewModel: () -> ComplexViewModel
     
-    private let _subView: (ComplexViewModel) -> AnyView
+    private let _subView: (TableViewModel, ComplexViewModel) -> AnyView
+    
+    var tableViewModel: TableViewModel {
+        _tableViewModel()
+    }
     
     var complexViewModel: ComplexViewModel {
         _complexViewModel()
     }
     
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self._tableViewModel = {
+            if path.isNil(root.value) {
+                return TableViewModel(root: root, path: path.tableValue, label: label, columns: [], notifier: notifier)
+            }
+            let columns: [BlockAttributeType.TableColumn]
+            switch root.value[keyPath: path.keyPath].type {
+            case .table(let cols):
+                columns = cols
+            default:
+                columns = []
+            }
+            return TableViewModel(root: root, path: path.tableValue, label: label, columns: columns, notifier: notifier)
+        }
         self._complexViewModel = {
             let fields = path.isNil(root.value) ? [] : root.value[keyPath: path.keyPath].complexFields
             return ComplexViewModel(root: root, path: path.complexValue, label: label, fields: fields, notifier: notifier)
         }
-        self._subView = { complexViewModel in
+        self._subView = { (tableViewModel, complexViewModel) in
             switch root.value[keyPath: path.keyPath].type {
             case .code(let language):
                 return AnyView(CodeView(root: root.asBinding, path: path.codeValue, label: label, language: language, notifier: notifier))
@@ -173,8 +192,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
                 return AnyView(EmptyView())
                 //return AnyView(CollectionView(root: root.asBinding, path: path.collectionValue, display: root.value[keyPath: path.keyPath].collectionDisplay, label: label, type: type, expanded: .constant([:]), notifier: notifier))
             case .table(let columns):
-                return AnyView(EmptyView())
-                //return AnyView(TableView(root: root.asBinding, path: path.tableValue, label: label, columns: columns, notifier: notifier))
+                return AnyView(TableView(viewModel: tableViewModel))
             case .complex(let fields):
                 return AnyView(ComplexView(viewModel: complexViewModel))
             case .enumerableCollection(let validValues):
@@ -185,10 +203,20 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
     }
     
     init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
+        self._tableViewModel = {
+            let columns: [BlockAttributeType.TableColumn]
+            switch valueRef.value.type {
+            case .table(let cols):
+                columns = cols
+            default:
+                columns = []
+            }
+            return TableViewModel(valueRef: valueRef.tableValue, errorsRef: ConstRef(copying: []), label: label, columns: columns, delayEdits: delayEdits)
+        }
         self._complexViewModel = {
             ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: valueRef.value.complexFields)
         }
-        self._subView = { complexViewModel in
+        self._subView = { (tableViewModel, complexViewModel) in
             switch valueRef.value.type {
             case .code(let language):
                 return AnyView(CodeView(value: valueRef.codeValue.asBinding, label: label, language: language, delayEdits: delayEdits))
@@ -198,8 +226,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
                 return AnyView(EmptyView())
                 //return AnyView(CollectionView(value: valueRef.collectionValue.asBinding, display: valueRef.value.collectionDisplay, label: label, type: type, delayEdits: delayEdits))
             case .table(let columns):
-                return AnyView(EmptyView())
-                //return AnyView(TableView(value: valueRef.tableValue.asBinding, label: label, columns: columns, delayEdits: delayEdits))
+                return AnyView(TableView(viewModel: tableViewModel))
             case .complex(let fields):
                 return AnyView(ComplexView(viewModel: complexViewModel))
             case .enumerableCollection(let validValues):
@@ -209,8 +236,8 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
     
-    func subView(complexViewModel: ComplexViewModel) -> AnyView {
-        _subView(complexViewModel)
+    func subView(tableViewModel: TableViewModel, complexViewModel: ComplexViewModel) -> AnyView {
+        _subView(tableViewModel, complexViewModel)
     }
     
 }
@@ -218,6 +245,10 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
 public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifier {
     
     private let ref: BlockAttributeValue
+    
+    lazy var tableViewModel: TableViewModel = {
+        ref.tableViewModel
+    }()
     
     lazy var complexViewModel: ComplexViewModel = {
         ref.complexViewModel
@@ -233,7 +264,7 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
     }
     
     var subView: AnyView {
-        ref.subView(complexViewModel: complexViewModel)
+        ref.subView(tableViewModel: tableViewModel, complexViewModel: complexViewModel)
     }
     
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
@@ -246,6 +277,7 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
     
     public func send() {
         objectWillChange.send()
+        tableViewModel = ref.tableViewModel
         complexViewModel = ref.complexViewModel
     }
     
