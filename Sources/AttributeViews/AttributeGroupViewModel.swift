@@ -98,6 +98,10 @@ public final class AttributeGroupViewModel: ObservableObject, Identifiable, Glob
         ref.viewModel
     }()
     
+    public var name: String {
+        complexViewModel.label
+    }
+    
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, notifier: GlobalChangeNotifier? = nil) {
         self.ref = AttributeGroupValue(root: root, path: path, notifier: notifier)
     }
