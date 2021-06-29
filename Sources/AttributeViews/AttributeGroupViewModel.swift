@@ -73,12 +73,12 @@ fileprivate final class AttributeGroupValue: Value<AttributeGroup> {
         _viewModel()
     }
     
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, notifier: GlobalChangeNotifier? = nil) {
+    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, defaultValue: AttributeGroup = AttributeGroup(name: ""), notifier: GlobalChangeNotifier? = nil) {
         self._viewModel = {
             let group = path.isNil(root.value) ? nil : root.value[keyPath: path.keyPath]
             return ComplexViewModel(root: root, path: path.attributes, label: group?.name ?? "", fields: group?.fields ?? [], notifier: notifier)
         }
-        super.init(root: root, path: path, notifier: notifier)
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
     
     init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {

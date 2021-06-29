@@ -146,11 +146,11 @@ fileprivate final class TableBodyValue: Value<[[LineAttribute]]> {
     
     private let _lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
     
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, notifier: GlobalChangeNotifier? = nil) {
+    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, defaultValue: [[LineAttribute]] = [], notifier: GlobalChangeNotifier? = nil) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(root: root, path: path[$0][$1], label: "", notifier: notifier)
         }
-        super.init(root: root, path: path, notifier: notifier)
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
     
     override init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>) {

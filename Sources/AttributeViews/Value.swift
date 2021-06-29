@@ -83,10 +83,31 @@ class Value<Value> {
         errorsRef.value
     }
     
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value>, notifier: GlobalChangeNotifier? = nil) {
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value>, defaultValue: Value, notifier: GlobalChangeNotifier? = nil) {
         self.valueRef = Ref(
             get: {
-                root.value[keyPath: path.keyPath]
+                path.isNil(root.value) ? defaultValue : root.value[keyPath: path.keyPath]
+            },
+            set: {
+                let result = root.value.modify(attribute: path, value: $0)
+                switch result {
+                case .success(false):
+                    return
+                default:
+                    notifier?.send()
+                }
+            }
+        )
+        self.errorsRef = ConstRef {
+                root.value.errorBag.errors(forPath: path).map(\.message)
+            }
+        self._isValid = { !path.isNil(root.value) }
+    }
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value?>, defaultValue: Value, notifier: GlobalChangeNotifier? = nil) {
+        self.valueRef = Ref(
+            get: {
+                path.isNil(root.value) ? defaultValue : (root.value[keyPath: path.keyPath] ?? defaultValue)
             },
             set: {
                 let result = root.value.modify(attribute: path, value: $0)

@@ -81,7 +81,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
         _complexViewModel()
     }
     
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, defaultValue: BlockAttribute = .text(""), label: String, notifier: GlobalChangeNotifier? = nil) {
         self._tableViewModel = {
             if path.isNil(root.value) {
                 return TableViewModel(root: root, path: path.tableValue, label: label, columns: [], notifier: notifier)
@@ -125,7 +125,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
                 return AnyView(EnumerableCollectionView(root: root.asBinding, path: path.enumerableCollectionValue, label: label, validValues: validValues, notifier: notifier))
             }
         }
-        super.init(root: root, path: path, notifier: notifier)
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
     
     init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {

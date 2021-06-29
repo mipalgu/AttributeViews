@@ -69,9 +69,9 @@ final class ComplexValue: Value<[String: Attribute]> {
     
     private let _viewModel: (String) -> AttributeViewModel
     
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, notifier: GlobalChangeNotifier? = nil) {
+    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, defaultValue: [String: Attribute] = [:], notifier: GlobalChangeNotifier? = nil) {
         self._viewModel = { AttributeViewModel(root: root, path: path[$0].wrappedValue, label: $0, notifier: notifier) }
-        super.init(root: root, path: path, notifier: notifier)
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
     
     init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {

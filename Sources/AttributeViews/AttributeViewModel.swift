@@ -79,14 +79,14 @@ fileprivate final class AttributeValue: Value<Attribute> {
         _blockAttributeViewModel()
     }
     
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, defaultValue: Attribute = .bool(false), label: String, notifier: GlobalChangeNotifier? = nil) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(root: root, path: path.lineAttribute, label: label, notifier: notifier)
         }
         self._blockAttributeViewModel = {
             BlockAttributeViewModel(root: root, path: path.blockAttribute, label: label, notifier: notifier)
         }
-        super.init(root: root, path: path, notifier: notifier)
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
     
     init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {

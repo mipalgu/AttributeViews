@@ -84,9 +84,38 @@ public final class ValueViewModel<T>: ObservableObject, GlobalChangeNotifier {
         }
     }
     
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) {
-        self.ref = Value(root: root, path: path, notifier: notifier)
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
+    }
+    
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
+        self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
+        self.label = label
+    }
+    
+    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByStringLiteral {
+        self.init(root: root, path: path, defaultValue: "", label: label, notifier: notifier)
+    }
+    
+    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByIntegerLiteral {
+        self.init(root: root, path: path, defaultValue: 0, label: label, notifier: notifier)
+    }
+    
+    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByBooleanLiteral {
+        self.init(root: root, path: path, defaultValue: false, label: label, notifier: notifier)
+    }
+    
+    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByStringLiteral {
+        self.init(root: root, path: path, defaultValue: "", label: label, notifier: notifier)
+    }
+    
+    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByIntegerLiteral {
+        self.init(root: root, path: path, defaultValue: 0, label: label, notifier: notifier)
+    }
+    
+    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByBooleanLiteral {
+        self.init(root: root, path: path, defaultValue: false, label: label, notifier: notifier)
     }
     
     public init(valueRef: Ref<T>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String) {

@@ -110,7 +110,7 @@ fileprivate final class LineAttributeValue: Value<LineAttribute> {
         self._lineViewModel = {
             LineViewModel(root: root, path: path.lineValue, label: label, notifier: notifier)
         }
-        super.init(root: root, path: path, notifier: notifier)
+        super.init(root: root, path: path, defaultValue: .bool(false), notifier: notifier)
     }
     
     init(valueRef: Ref<LineAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
