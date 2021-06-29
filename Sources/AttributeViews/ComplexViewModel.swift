@@ -124,6 +124,9 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
     }
     
     public func send() {
+        attributeViewModels.values.forEach {
+            $0.send()
+        }
         objectWillChange.send()
         sync()
     }
