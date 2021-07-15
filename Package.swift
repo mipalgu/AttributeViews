@@ -21,7 +21,7 @@ let package = Package(
             targets: ["AttributeViews"]),
     ],
     dependencies: ui + [
-        .package(name: "Machines", url: "ssh://git.mipal.net/Users/Shared/git/Machines.git", .branch("schema")),
+        .package(name: "Attributes", url: "ssh://git.mipal.net/Users/Shared/git/Attributes.git", .branch("master")),
         .package(name: "GUUI", url: "ssh://git.mipal.net/Users/Shared/git/GUUI.git", .branch("master"))
     ],
     targets: [
@@ -29,7 +29,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "AttributeViews",
-            dependencies: products + ["Machines", "GUUI"]),
-        .target(name: "AttributeViewsTests", dependencies: products + ["AttributeViews", "Machines", "GUUI"])
+            dependencies: products + ["Attributes", "GUUI"]),
+        .target(name: "AttributeViewsTests", dependencies: products + ["AttributeViews", "Attributes", "GUUI"])
     ]
 )

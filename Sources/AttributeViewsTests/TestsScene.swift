@@ -68,7 +68,6 @@ typealias State = SwiftUI.State
 
 import AttributeViews
 import Attributes
-import Machines
 import GUUI
 
 final class AppViewModel<Root: Modifiable>: ObservableObject, GlobalChangeNotifier {
@@ -134,7 +133,159 @@ struct TestsScene: App {
     
     @State var expanded: [AnyKeyPath: Bool] = [:]
     
-    @StateObject var viewModel = AppViewModel(root: Ref(copying: try! Machine(filePath: URL(fileURLWithPath: "/Users/callum/src/MiPal/GUNao/fsms/nao/SwiftMachines/SoccerPlayer/Player.machine"))), path: Machine.path.attributes)
+    @StateObject var viewModel = AppViewModel(
+        root: Ref(
+            copying: EmptyModifiable(
+                attributes: [
+                    AttributeGroup(
+                        name: "line_attributes",
+                        fields: [
+                            Field(name: "bool", type: .bool),
+                            Field(name: "int", type: .integer),
+                            Field(name: "float", type: .float),
+                            Field(name: "line", type: .line),
+                            Field(name: "expression", type: .expression(language: .swift)),
+                            Field(name: "enumerated", type: .enumerated(validValues: ["a", "b", "c"]))
+                        ],
+                        attributes: [
+                            "bool": .bool(false),
+                            "int": .integer(0),
+                            "float": .float(0.0),
+                            "line": .line(""),
+                            "expression": .expression("", language: .swift),
+                            "enumerated": .enumerated("a", validValues: ["a", "b", "c"])
+                        ]
+                    ),
+                    AttributeGroup(
+                        name: "block_attributes",
+                        fields: [
+                            Field(name: "text", type: .text),
+                            Field(name: "code", type: .code(language: .swift)),
+                            //Field(name: "enumerated_collection", type: .enumerableCollection(validValues: ["a", "b", "c"])),
+                            Field(
+                                name: "table",
+                                type: .table(
+                                    columns: [
+                                        (name: "bool", type: .bool),
+                                        (name: "int", type: .integer),
+                                        (name: "float", type: .float),
+                                        (name: "line", type: .line),
+                                        (name: "enumerated", type: .enumerated(validValues: ["a", "b", "c"]))
+                                    ]
+                                )
+                            )
+                        ],
+                        attributes: [
+                            "text": .text(""),
+                            "code": .code("", language: .swift),
+                            //"enumerable_collection": .enumerableCollection(["a"], validValues: ["a", "b", "c"]),
+                            "table": .table(
+                                [
+                                    [.bool(false), .integer(0), .float(0.0), .line(""), .enumerated("a", validValues: ["a", "b", "c"])],
+                                    [.bool(true), .integer(1), .float(0.1), .line("1"), .enumerated("b", validValues: ["a", "b", "c"])]
+                                ],
+                                columns: [
+                                    (name: "bool", type: .bool),
+                                    (name: "int", type: .integer),
+                                    (name: "float", type: .float),
+                                    (name: "line", type: .line),
+                                    (name: "enumerated", type: .enumerated(validValues: ["a", "b", "c"]))
+                                ]
+                            )
+                        ]
+                    ),
+                    AttributeGroup(
+                        name: "recursive_block_attributes",
+                        fields: [
+                            Field(name: "line_collection", type: .collection(type: .bool)),
+                            Field(name: "code_collection", type: .collection(type: .code(language: .swift))),
+                            Field(
+                                name: "complex_collection",
+                                type: .collection(
+                                    type: .complex(
+                                        layout: [
+                                            Field(name: "bool", type: .bool),
+                                            Field(name: "code", type: .code(language: .swift))
+                                        ]
+                                    )
+                                )
+                            ),
+                            Field(
+                                name: "complex",
+                                type: .complex(
+                                    layout: [
+                                        Field(name: "bool", type: .bool),
+                                        Field(name: "code", type: .code(language: .swift)),
+                                        Field(
+                                            name: "complex",
+                                            type: .complex(
+                                                layout: [
+                                                    Field(name: "bool", type: .bool),
+                                                    Field(name: "code", type: .code(language: .swift))
+                                                ]
+                                            )
+                                        )
+                                    ]
+                                )
+                            )
+                        ],
+                        attributes: [
+                            "line_collection": .collection(bools: [false, true]),
+                            "code_collection": .collection(code: ["let a = 2", "let b = 3"], language: .swift),
+                            "complex_collection": .collection(
+                                complex: [
+                                    [
+                                        "bool": .bool(false),
+                                        "code": .code("let a = 2", language: .swift)
+                                    ],
+                                    [
+                                        "bool": .bool(true),
+                                        "code": .code("let b = 3", language: .swift)
+                                    ]
+                                ],
+                                layout: [
+                                    Field(name: "bool", type: .bool),
+                                    Field(name: "code", type: .code(language: .swift))
+                                ],
+                                display: ReadOnlyPath<Attribute, Attribute>(keyPath: \.self, ancestors: []).complexValue["code"].wrappedValue.lineAttribute
+                            ),
+                            "complex": .complex(
+                                [
+                                    "bool": .bool(false),
+                                    "code": .code("print(\"Hello\")", language: .swift),
+                                    "complex": .complex(
+                                        [
+                                            "bool": .bool(true),
+                                            "code": .code("print(\"World\")", language: .swift)
+                                        ],
+                                        layout: [
+                                            Field(name: "bool", type: .bool),
+                                            Field(name: "code", type: .code(language: .swift))
+                                        ]
+                                    )
+                                ],
+                                layout: [
+                                    Field(name: "bool", type: .bool),
+                                    Field(name: "code", type: .code(language: .swift)),
+                                    Field(
+                                        name: "complex",
+                                        type: .complex(
+                                            layout: [
+                                                Field(name: "bool", type: .bool),
+                                                Field(name: "code", type: .code(language: .swift))
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ],
+                metaData: []
+            )
+        ),
+        path: EmptyModifiable.path.attributes
+    )
     
     @State var text: String = ""
     
@@ -143,53 +294,14 @@ struct TestsScene: App {
     var body: some Scene {
         WindowGroup {
             ScrollView(.vertical, showsIndicators: true) {
-                VStack {
-    //                CodeView<DefaultAttributeViewsConfig, Text>(
-    //                    root: $machine,
-    //                    path: Machine.path.states[0].actions[0].implementation,
-    //                    label: "Root",
-    //                    language: .swift
-    //                )
-    //                CodeView<DefaultAttributeViewsConfig, Text>(value: $text, label: "Binding", language: .swift)
-    //                AttributeGroupView<DefaultAttributeViewsConfig>(
-    //                    root: $machine,
-    //                    path: Machine.path.attributes[0],
-    //                    label: "Variables"
-    //                )
-                    
-                    VStack {
-                        HStack {
-                            TextField("URL", text: $text)
-                            Button("Load") {
-                                do {
-                                    viewModel.root = try Machine(filePath: URL(fileURLWithPath: text))
-                                    loadError = ""
-                                } catch let e {
-                                    loadError = "\(e)"
-                                }
-                            }
-                            Button("Reload") {
-                                do {
-                                    viewModel.root = try Machine(filePath: viewModel.root.filePath)
-                                    text = viewModel.root.filePath.path
-                                } catch let e {
-                                    loadError = "\(e)"
-                                }
-                            }
-                        }
-                        if !loadError.isEmpty {
-                            Text(loadError).foregroundColor(.red)
-                        }
-                    }.padding(.horizontal, 10)
-                    ForEach(viewModel.attributes.indices, id: \.self) { index in
-                        AttributeGroupView(
-                            viewModel: viewModel.viewModel(forIndex: index)
-                        )
+                if viewModel.attributes.isEmpty {
+                    Text("No attributes to display.")
+                } else {
+                    ForEach(viewModel.attributes) { index in
+                        AttributeGroupView(viewModel: viewModel.viewModel(forIndex: index))
                     }
                 }
-            }.onAppear {
-                text = viewModel.root.filePath.path
-            }
+            }.padding(10)
         }
     }
 }
