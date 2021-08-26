@@ -74,6 +74,7 @@ public struct TextView: View {
     }
 }
 
+#if canImport(SwiftUI)
 struct TextView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -113,3 +114,4 @@ struct TextView_Previews: PreviewProvider {
         }
     }
 }
+#endif

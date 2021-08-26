@@ -36,6 +36,7 @@ public struct BoolView: View {
 
 import GUUI
 
+#if canImport(SwiftUI)
 struct BoolView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -98,4 +99,5 @@ struct BoolView_Previews: PreviewProvider {
         }
     }
 }
+#endif
 

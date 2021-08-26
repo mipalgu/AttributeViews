@@ -134,6 +134,7 @@ struct TableRowView: View {
     }
 }
 
+#if canImport(SwiftUI)
 struct TableRowView_Previews: PreviewProvider {
     
 //    struct Root_Preview: View {
@@ -230,3 +231,4 @@ struct TableRowView_Previews: PreviewProvider {
         }
     }
 }
+#endif

@@ -84,6 +84,7 @@ public struct EnumerableCollectionView: View {
     
 }
 
+#if canImport(SwiftUI)
 struct EnumerableCollectionView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -129,3 +130,4 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
         }
     }
 }
+#endif

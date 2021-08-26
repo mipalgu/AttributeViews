@@ -7,6 +7,7 @@
 
 #if canImport(TokamakShim)
 import TokamakShim
+import Foundation
 #else
 import SwiftUI
 #endif
@@ -100,6 +101,7 @@ struct NewRowView: View {
     
 }
 
+#if canImport(SwiftUI)
 struct TableView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -181,3 +183,4 @@ struct TableView_Previews: PreviewProvider {
         }
     }
 }
+#endif

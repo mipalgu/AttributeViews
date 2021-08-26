@@ -54,6 +54,7 @@ public struct ComplexView: View {
 
 import GUUI
 
+#if canImport(SwiftUI)
 struct ComplexView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -126,3 +127,4 @@ struct ComplexView_Previews: PreviewProvider {
         }
     }
 }
+#endif

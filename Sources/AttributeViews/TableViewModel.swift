@@ -58,6 +58,7 @@
 
 #if canImport(TokamakShim)
 import TokamakShim
+import Foundation
 #else
 import SwiftUI
 #endif

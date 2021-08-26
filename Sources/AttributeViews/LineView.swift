@@ -34,6 +34,7 @@ public struct LineView: View {
 
 import GUUI
 
+#if canImport(SwiftUI)
 struct LineView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -84,3 +85,4 @@ struct LineView_Previews: PreviewProvider {
         }
     }
 }
+#endif
