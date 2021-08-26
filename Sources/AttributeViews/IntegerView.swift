@@ -11,8 +11,6 @@ import TokamakShim
 import SwiftUI
 #endif
 
-import Combine
-
 import Attributes
 
 public struct IntegerView: View {

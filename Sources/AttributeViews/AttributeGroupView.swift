@@ -34,7 +34,7 @@ public struct AttributeGroupView: View {
 }
 
 import GUUI
-
+#if canImport(SwiftUI)
 struct AttributeGroupView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -95,3 +95,4 @@ struct AttributeGroupView_Previews: PreviewProvider {
         }
     }
 }
+#endif
