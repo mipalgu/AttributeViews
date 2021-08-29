@@ -18,7 +18,7 @@ public struct BoolView: View {
     @ObservedObject var viewModel: BoolViewModel
     
     public init(viewModel: BoolViewModel) {
-        self.viewModel = viewModel
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
     }
     
     public var body: some View {
