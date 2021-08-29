@@ -8,6 +8,7 @@
 
 #if canImport(TokamakShim)
 import TokamakShim
+typealias Form = VStack
 #else
 import SwiftUI
 #endif
