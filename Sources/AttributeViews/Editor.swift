@@ -157,4 +157,35 @@ struct Editor: NSViewControllerRepresentable {
     
 }
 
+#else
+
+import Foundation
+import Attributes
+
+struct Editor: View {
+
+    @Binding var text: String
+
+    var size: CGSize
+    
+    var onCommit: ((Code) -> Void)?
+
+    init(editingText: Binding<String>, size: CGSize, onCommit: ((Code) -> Void)?) {
+        self._text = editingText
+        self.size = size
+        self.onCommit = onCommit
+    }
+
+    var body: some View {
+        TextField("", text: $text, onCommit: {
+            guard let callback = self.onCommit else {
+                return
+            }
+            callback(text)
+        })
+            .frame(width: size.width, height: size.height)
+    }
+
+}
+
 #endif
