@@ -83,6 +83,7 @@ public struct CodeView<Label: View>: View {
     }
 }
 
+#if canImport(SwiftUI)
 struct CodeView_Previews: PreviewProvider {
     
     struct Root_Preview: View {
@@ -123,3 +124,4 @@ struct CodeView_Previews: PreviewProvider {
         }
     }
 }
+#endif
