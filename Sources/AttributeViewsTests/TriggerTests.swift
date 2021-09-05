@@ -39,17 +39,35 @@ struct TriggerTests: App {
                 AttributeGroup(
                     name: "hidden_view",
                     fields: [
-                        Field(name: "show_view", type: .bool)
+                        Field(name: "show_view", type: .bool),
+                        Field(name: "data", type: .line)
                     ],
                     attributes: [
-                        "show_view": .bool(false)
+                        "show_view": .bool(true),
+                        "data": .line("Hidden Data")
                     ],
                     metaData: [:]
                 )
             ],
             metaData: [],
             modifyTriggsy: {
-                .success(false)
+                guard let showView = $0.attributes[0].attributes["show_view"]?.boolValue else {
+                    fatalError("No show view")
+                }
+                if showView {
+                    guard $0.attributes[0].fields.count == 1 else {
+                        return .success(false)
+                    }
+                    $0.attributes[0].fields.append(
+                        Field(name: "data", type: .line)
+                    )
+                    return .success(true)
+                }
+                guard $0.attributes[0].fields.count == 2 else {
+                    return .success(false)
+                }
+                $0.attributes[0].fields.removeLast()
+                return .success(true)
             }
         )),
         path: EmptyModifiable.path.attributes
