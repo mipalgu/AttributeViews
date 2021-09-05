@@ -111,8 +111,26 @@ struct Editor: NSViewControllerRepresentable {
         let scrollView = NSTextView.scrollableTextView()
         scrollView.setFrameSize(size)
         let textView = scrollView.documentView as! NSTextView
+        if textView.isAutomaticTextReplacementEnabled {
+            textView.toggleAutomaticTextReplacement(nil)
+        }
         if textView.isAutomaticQuoteSubstitutionEnabled {
             textView.toggleAutomaticQuoteSubstitution(nil)
+        }
+        if textView.isAutomaticDataDetectionEnabled {
+            textView.toggleAutomaticDataDetection(nil)
+        }
+        if textView.isAutomaticLinkDetectionEnabled {
+            textView.toggleAutomaticLinkDetection(nil)
+        }
+        if textView.isAutomaticTextCompletionEnabled {
+            textView.toggleAutomaticTextCompletion(nil)
+        }
+        if textView.isAutomaticDashSubstitutionEnabled {
+            textView.toggleAutomaticDashSubstitution(nil)
+        }
+        if textView.isAutomaticSpellingCorrectionEnabled {
+            textView.toggleAutomaticSpellingCorrection(nil)
         }
         textView.string = editingText
         context.coordinator.textView = textView
