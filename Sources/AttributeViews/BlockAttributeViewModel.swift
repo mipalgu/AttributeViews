@@ -97,7 +97,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
         }
         self._complexViewModel = {
             if path.isNil(root.value) {
-                return ComplexViewModel(root: root, path: path.complexValue, label: label, fields: [], notifier: notifier)
+                return ComplexViewModel(root: root, path: path.complexValue, label: label, fieldsPath: path.complexFields, notifier: notifier)
             }
             let fields: [Field]
             switch root.value[keyPath: path.keyPath].type {
@@ -106,7 +106,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
             default:
                 fields = []
             }
-            return ComplexViewModel(root: root, path: path.complexValue, label: label, fields: fields, notifier: notifier)
+            return ComplexViewModel(root: root, path: path.complexValue, label: label, fieldsPath: path.complexFields, notifier: notifier)
         }
         self._subView = { (tableViewModel, complexViewModel) in
             switch root.value[keyPath: path.keyPath].type {

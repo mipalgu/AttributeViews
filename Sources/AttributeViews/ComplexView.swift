@@ -20,7 +20,7 @@ public struct ComplexView: View {
     //@EnvironmentObject var config: Config
     
     public init(viewModel: ComplexViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {
@@ -82,7 +82,7 @@ struct ComplexView_Previews: PreviewProvider {
                     root: modifiable,
                     path: path,
                     label: "Root",
-                    fields: [Field(name: "bool", type: .bool), Field(name: "integer", type: .integer)]
+                    fieldsPath: EmptyModifiable.path.attributes[0].attributes["complex"].wrappedValue.complexFields
                 )
             )
         }

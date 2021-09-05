@@ -18,7 +18,7 @@ public struct LineView: View {
     @ObservedObject var viewModel: LineViewModel
     
     public init(viewModel: LineViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {
