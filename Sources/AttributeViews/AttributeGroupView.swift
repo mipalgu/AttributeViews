@@ -20,7 +20,7 @@ public struct AttributeGroupView: View {
     @ObservedObject var viewModel: AttributeGroupViewModel
     
     public init(viewModel: AttributeGroupViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     @ViewBuilder

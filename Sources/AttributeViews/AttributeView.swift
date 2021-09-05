@@ -69,7 +69,7 @@ public struct AttributeView: View {
     @ObservedObject var viewModel: AttributeViewModel
     
     public init(viewModel: AttributeViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {

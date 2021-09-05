@@ -27,7 +27,7 @@ public struct FloatView: View {
     }
     
     public init(viewModel: FloatViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {

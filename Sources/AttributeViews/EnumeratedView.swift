@@ -19,7 +19,7 @@ public struct EnumeratedView: View {
     let validValues: Set<String>
     
     public init(viewModel: EnumeratedViewModel, validValues: Set<String>) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
         self.validValues = validValues
     }
     

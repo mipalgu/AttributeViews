@@ -19,7 +19,7 @@ public struct ExpressionView: View {
     @ObservedObject var viewModel: ExpressionViewModel
     
     public init(viewModel: ExpressionViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {

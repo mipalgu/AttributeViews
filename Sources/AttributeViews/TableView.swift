@@ -20,7 +20,7 @@ public struct TableView: View {
     @ObservedObject var viewModel: TableViewModel
     
     public init(viewModel: TableViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {

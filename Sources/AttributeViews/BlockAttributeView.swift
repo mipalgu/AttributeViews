@@ -18,7 +18,7 @@ public struct BlockAttributeView: View{
     @ObservedObject var viewModel: BlockAttributeViewModel
     
     public init(viewModel: BlockAttributeViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {

@@ -20,7 +20,7 @@ public struct ComplexView: View {
     //@EnvironmentObject var config: Config
     
     public init(viewModel: ComplexViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {

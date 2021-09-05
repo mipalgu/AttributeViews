@@ -25,7 +25,7 @@ public struct IntegerView: View {
     }
     
     public init(viewModel: IntegerViewModel) {
-        self._viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
     }
     
     public var body: some View {
