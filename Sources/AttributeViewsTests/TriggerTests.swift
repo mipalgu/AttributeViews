@@ -47,6 +47,25 @@ struct TriggerTests: App {
                         "data": .line("Hidden Data")
                     ],
                     metaData: [:]
+                ),
+                AttributeGroup(
+                    name: "complex_hidden_view",
+                    fields: [
+                        Field(name: "hidden_context", type: .complex(layout: [
+                            Field(name: "show_view", type: .bool),
+                            Field(name: "code", type: .code(language: .swift))
+                        ]))
+                    ],
+                    attributes: [
+                        "hidden_context": .complex([
+                            "show_view": .bool(true),
+                            "code": .code("", language: .swift)
+                        ], layout: [
+                            Field(name: "show_view", type: .bool),
+                            Field(name: "code", type: .code(language: .swift))
+                        ])
+                    ],
+                    metaData: [:]
                 )
             ],
             metaData: [],
@@ -54,20 +73,40 @@ struct TriggerTests: App {
                 guard let showView = $0.attributes[0].attributes["show_view"]?.boolValue else {
                     fatalError("No show view")
                 }
+                var redraw = false
                 if showView {
-                    guard $0.attributes[0].fields.count == 1 else {
-                        return .success(false)
+                    if $0.attributes[0].fields.count == 1{
+                        $0.attributes[0].fields.append(
+                            Field(name: "data", type: .line)
+                        )
+                        redraw = true
                     }
-                    $0.attributes[0].fields.append(
-                        Field(name: "data", type: .line)
-                    )
-                    return .success(true)
+                } else {
+                    if $0.attributes[0].fields.count == 2 {
+                        $0.attributes[0].fields.removeLast()
+                        redraw = true
+                    }
                 }
-                guard $0.attributes[0].fields.count == 2 else {
-                    return .success(false)
+                guard
+                    let complexFields = $0.attributes[1].attributes["hidden_context"]?.complexFields,
+                    let showComplex = $0.attributes[1].attributes["hidden_context"]?.complexValue["show_view"]?.boolValue
+                else {
+                    fatalError("no show view of complex hidden view")
                 }
-                $0.attributes[0].fields.removeLast()
-                return .success(true)
+                if showComplex {
+                    if complexFields.count == 1 {
+                        $0.attributes[1].attributes["hidden_context"]?.complexFields.append (
+                            Field(name: "code", type: .code(language: .swift))
+                        )
+                        redraw = true
+                    }
+                } else {
+                    if complexFields.count == 2 {
+                        $0.attributes[1].attributes["hidden_context"]?.complexFields.removeLast()
+                        redraw = true
+                    }
+                }
+                return .success(redraw)
             }
         )),
         path: EmptyModifiable.path.attributes
