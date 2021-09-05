@@ -82,7 +82,7 @@ struct ComplexView_Previews: PreviewProvider {
                     root: modifiable,
                     path: path,
                     label: "Root",
-                    fields: [Field(name: "bool", type: .bool), Field(name: "integer", type: .integer)]
+                    fieldsPath: EmptyModifiable.path.attributes[0].attributes["complex"].wrappedValue.complexFields
                 )
             )
         }
