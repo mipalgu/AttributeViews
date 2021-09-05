@@ -107,7 +107,7 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
     
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fieldsPath: Attributes.Path<Root, [Field]>, notifier: GlobalChangeNotifier? = nil) {
         self._fields = {
-            guard fieldsPath.isNil(root.value) else {
+            guard !fieldsPath.isNil(root.value) else {
                 return []
             }
             return root.value[keyPath: fieldsPath.keyPath]
@@ -118,7 +118,7 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
     
     init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, fields: [Field], delayEdits: Bool = false) {
         self._fields = {
-            []
+            fields
         }
         self.ref = ComplexValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
         self.label = label
