@@ -56,4 +56,5 @@
  *
  */
 
-TestsScene.main()
+//TestsScene.main()
+TriggerTests.main()
