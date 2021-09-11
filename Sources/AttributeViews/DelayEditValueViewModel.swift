@@ -106,6 +106,26 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
         }
     }
     
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil, delegateFunction: @escaping () -> ()) {
+        self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
+        self.label = label
+        if path.isNil(root.value) {
+            self.editValue = defaultValue
+        } else {
+            self.editValue = root.value[keyPath: path.keyPath]
+        }
+        self.onCommit = {
+            let result = root.value.modify(attribute: path, value: $0)
+            switch result {
+            case .success(false):
+                return
+            default:
+                notifier?.send()
+                delegateFunction()
+            }
+        }
+    }
+    
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
