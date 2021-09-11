@@ -125,11 +125,15 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             let oldValue = root.value[keyPath: path.keyPath]
             let result = root.value.modify(attribute: path, value: newValue)
             switch result {
+            case .success(true):
+                delegateFunction(oldValue, newValue)
+                notifier?.send()
+                return
             case .success(false):
+                delegateFunction(oldValue, newValue)
                 return
             default:
                 notifier?.send()
-                delegateFunction(oldValue, newValue)
             }
         }
     }
