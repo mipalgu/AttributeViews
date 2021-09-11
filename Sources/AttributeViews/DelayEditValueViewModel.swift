@@ -106,7 +106,14 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
         }
     }
     
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil, delegateFunction: @escaping () -> ()) {
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T>,
+        defaultValue: T,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil,
+        delegateFunction: @escaping (T, T) -> ()
+    ) {
         self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
         if path.isNil(root.value) {
@@ -114,14 +121,15 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
         } else {
             self.editValue = root.value[keyPath: path.keyPath]
         }
-        self.onCommit = {
-            let result = root.value.modify(attribute: path, value: $0)
+        self.onCommit = { newValue in
+            let oldValue = root.value[keyPath: path.keyPath]
+            let result = root.value.modify(attribute: path, value: newValue)
             switch result {
             case .success(false):
                 return
             default:
                 notifier?.send()
-                delegateFunction()
+                delegateFunction(oldValue, newValue)
             }
         }
     }
