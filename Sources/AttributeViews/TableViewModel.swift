@@ -172,36 +172,38 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
     private let ref: TableBodyValue
     let columns: [BlockAttributeType.TableColumn]
     
-    @Published var rows: [TableRowViewModel] = []
+    private var rowsData: [Int: TableRowViewModel] = [:]
+    
+    var rows: [TableRowViewModel] {
+        let values = ref.isValid ? ref.value : []
+        return values.indices.map { row(for: $0) }
+    }
+    
     @Published var selection: Set<ObjectIdentifier> = []
     
     private let dataSource: TableViewDataSource
-    
-    var value: [[LineAttribute]] {
-        get {
-            if ref.isValid {
-                return ref.value
-            } else {
-                return []
-            }
-        } set {
-            ref.value = newValue
-            objectWillChange.send()
-        }
-    }
     
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         self.ref = TableBodyValue(root: root, path: path, notifier: notifier)
         self.columns = columns
         self.dataSource = KeyPathTableViewDataSource<Root>(root: root, path: path, notifier: notifier)
-        syncRows()
     }
     
     init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         self.ref = TableBodyValue(valueRef: valueRef, errorsRef: errorsRef)
         self.columns = columns
         self.dataSource = BindingTableViewDataSource(ref: valueRef, delayEdits: delayEdits)
-        syncRows()
+    }
+    
+    private func row(for index: Int) -> TableRowViewModel {
+        guard let viewModel = rowsData[index] else {
+            let viewModel = TableRowViewModel(table: ref.valueRef, rowIndex: index, lineAttributeViewModel: {
+                self.dataSource.viewModel(forElementAtRow: $0, column: $1)
+            })
+            rowsData[index] = viewModel
+            return viewModel
+        }
+        return viewModel
     }
     
     func errors(forRow _: Int) -> [[String]] {
@@ -210,58 +212,57 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
     
     func addElement(newRow: [LineAttribute]) {
         dataSource.addElement(newRow)
-        syncRows()
         objectWillChange.send()
     }
     
     func deleteRow(row: Int) {
-        guard row < value.count else {
+        guard row < rows.count else {
             return
         }
         let offsets: IndexSet = selection.contains(rows[row].id)
             ? IndexSet(selection.compactMap { id in rows.firstIndex { $0.id == id } })
             : [row]
-        dataSource.deleteElements(atOffsets: offsets)
-        syncRows()
-        objectWillChange.send()
+        deleteElements(atOffsets: offsets)
     }
     
     func deleteElements(atOffsets offsets: IndexSet) {
+        selection.removeAll()
         dataSource.deleteElements(atOffsets: offsets)
-        syncRows()
+        let sorted = offsets.sorted()
+        guard let minimum = sorted.first else {
+            return
+        }
+        var decrement = 0
+        for index in minimum..<rowsData.count {
+            if offsets.contains(index) {
+                rowsData[index] = nil
+                decrement += 1
+            } else {
+                if decrement == 0 {
+                    continue
+                }
+                rowsData[index]?.rowIndex = index - decrement
+                rowsData[index - decrement] = rowsData[index]
+            }
+        }
         objectWillChange.send()
     }
     
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
-        syncRows()
+        var newRowsData: [(key: Int, value: TableRowViewModel)] = rowsData.sorted { $0.key < $1.key }
+        newRowsData.move(fromOffsets: source, toOffset: destination)
+        rowsData = Dictionary(uniqueKeysWithValues: newRowsData.enumerated().map {
+            $1.value.rowIndex = $0
+            return ($0, $1.value)
+        })
         objectWillChange.send()
-    }
-    
-    private func syncRows() {
-        if rows.count > value.count {
-            rows.removeLast(rows.count - value.count)
-            return
-        }
-        if rows.count < value.count {
-            rows.append(contentsOf: (rows.count..<value.count).map { row in
-                TableRowViewModel(
-                    table: ref.valueRef,
-                    rowIndex: row,
-                    lineAttributeViewModel: {
-                        self.dataSource.viewModel(forElementAtRow: $0, column: $1)
-                    }
-                )
-            })
-        }
     }
     
     func send() {
         objectWillChange.send()
-        rows.forEach {
-            $0.send()
-        }
+        rowsData = [:]
     }
     
 }
