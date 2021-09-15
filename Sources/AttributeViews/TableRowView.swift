@@ -69,9 +69,7 @@ final class TableRowViewModel: ObservableObject, Identifiable, GlobalChangeNotif
     
     private let table: Ref<[[LineAttribute]]>
     
-    @Published var rowIndex: Int
-    
-    @Published var redraw: Int = 0
+    var rowIndex: Int
     
     private var viewModels: [Int: LineAttributeViewModel] = [:]
     
