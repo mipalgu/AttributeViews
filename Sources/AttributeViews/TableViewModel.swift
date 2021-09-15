@@ -244,8 +244,10 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
                 let newIndex = index - decrement
                 rowsData[index]?.rowIndex = newIndex
                 rowsData[newIndex] = rowsData[index]
-                rowsData[newIndex]?.objectWillChange.send()
             }
+        }
+        for index in (rowsData.count - minimum - 1)..<(rowsData.count) {
+            rowsData[index] = nil
         }
         objectWillChange.send()
     }
