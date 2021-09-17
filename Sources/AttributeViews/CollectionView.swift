@@ -78,9 +78,7 @@ public struct CollectionView: View {
             }
             ZStack(alignment: .bottom) {
                 CollectionBodyView(viewModel: viewModel.collectionBodyViewModel)
-                //Text("new row")
-                //TableBodyView(viewModel: viewModel.collectionBodyViewModel)
-                //NewRowView(viewModel: viewModel.newRowViewModel)
+                NewAttributeView(viewModel: viewModel.newRowViewModel)
             }
         }
     }
@@ -111,31 +109,29 @@ struct CollectionBodyView: View {
     
 }
 
-//struct NewRowView: View {
-//
-//    @ObservedObject var viewModel: NewRowViewModel
-//
-//    //@EnvironmentObject var config: Config
-//
-//    var body: some View {
-//        VStack {
-//            HStack {
-//                ForEach(0..<viewModel.newRow.count) { index in
-//                    VStack {
-//                        LineAttributeView(viewModel: viewModel.newRow[index])
-//                    }.frame(minWidth: 0, maxWidth: .infinity)
-//                }
-//                VStack {
-//                    Button(action: viewModel.addElement, label: {
-//                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-//                    }).buttonStyle(PlainButtonStyle())
-//                      .foregroundColor(.blue)
-//                }.frame(width: 20)
-//            }
-//        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
-//    }
-//
-//}
+struct NewAttributeView: View {
+
+    @ObservedObject var viewModel: NewAttributeViewModel
+
+    //@EnvironmentObject var config: Config
+
+    var body: some View {
+        VStack {
+            HStack {
+                if viewModel.newRow.attribute.isLine {
+                    AttributeView(viewModel: viewModel.newRow)
+                }
+                VStack {
+                    Button(action: viewModel.addElement, label: {
+                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                    }).buttonStyle(PlainButtonStyle())
+                      .foregroundColor(.blue)
+                }.frame(width: 20)
+            }
+        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+    }
+
+}
 
 #if canImport(SwiftUI)
 struct CollectionView_Previews: PreviewProvider {
@@ -147,18 +143,18 @@ struct CollectionView_Previews: PreviewProvider {
                 name: "Fields",
                 fields: [
                     Field(
-                        name: "bools",
-                        type: .collection(type: .bool)
+                        name: "lines",
+                        type: .collection(type: .line)
                     )
                 ],
                 attributes: [
-                    "bools": .collection(bools: [false, false, true, true, false, true])
+                    "lines": .collection(lines: ["Hello", "World"])
                 ],
                 metaData: [:]
             )
         ])
         
-        let path = EmptyModifiable.path.attributes[0].attributes["bools"].wrappedValue.collectionValue
+        let path = EmptyModifiable.path.attributes[0].attributes["lines"].wrappedValue.collectionValue
         
         var body: some View {
             CollectionViewPreviewView(
@@ -166,7 +162,7 @@ struct CollectionView_Previews: PreviewProvider {
                     root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
                     path: path,
                     label: "Root",
-                    type: .bool
+                    type: .line
                 )
             )
         }
