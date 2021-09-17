@@ -78,7 +78,15 @@ struct CollectionRowView: View {
     
     var body: some View {
         HStack {
-            viewModel.view
+            if viewModel.row.type.isBlock {
+                Button(viewModel.row.strValue ?? "Item \(viewModel.rowIndex)") {
+                    viewModel.showSheet.toggle()
+                }.sheet(isPresented: $viewModel.showSheet) {
+                    viewModel.view
+                }
+            } else {
+                viewModel.view
+            }
             VStack {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16, weight: .regular))

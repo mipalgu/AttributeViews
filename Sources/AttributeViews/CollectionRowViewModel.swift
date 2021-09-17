@@ -73,6 +73,8 @@ final class CollectionRowViewModel: ObservableObject, Identifiable, GlobalChange
     
     var rowIndex: Int
     
+    @Published var showSheet: Bool = false
+    
     private var viewModel: AttributeViewModel? = nil
     
     private let attributeViewModel: (Int) -> AttributeViewModel

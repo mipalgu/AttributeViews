@@ -136,7 +136,58 @@ struct NewAttributeView: View {
 #if canImport(SwiftUI)
 struct CollectionView_Previews: PreviewProvider {
     
-    struct Root_Preview: View {
+    struct BlockRoot_Preview: View {
+        
+        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+            AttributeGroup(
+                name: "Fields",
+                fields: [
+                    Field(
+                        name: "text",
+                        type: .collection(type: .text)
+                    )
+                ],
+                attributes: [
+                    "text": .collection(text: ["Hello", "World"])
+                ],
+                metaData: [:]
+            )
+        ])
+        
+        let path = EmptyModifiable.path.attributes[0].attributes["text"].wrappedValue.collectionValue
+        
+        var body: some View {
+            CollectionViewPreviewView(
+                viewModel: CollectionViewModel(
+                    root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
+                    path: path,
+                    label: "Block Root",
+                    type: .line
+                )
+            )
+        }
+        
+    }
+    
+    struct BlockBinding_Preview: View {
+        
+        @State var value: [Attribute] = []
+        
+        var body: some View {
+            CollectionViewPreviewView(
+                viewModel: CollectionViewModel(
+                    valueRef: Ref(get: { self.value }, set: { self.value = $0 }),
+                    errorsRef: ConstRef(copying: []),
+                    label: "Block Binding",
+                    type: .text,
+                    delayEdits: false
+                )
+            )
+        }
+        
+    }
+    
+    struct LineRoot_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
@@ -161,7 +212,7 @@ struct CollectionView_Previews: PreviewProvider {
                 viewModel: CollectionViewModel(
                     root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
                     path: path,
-                    label: "Root",
+                    label: "Line Root",
                     type: .line
                 )
             )
@@ -169,7 +220,7 @@ struct CollectionView_Previews: PreviewProvider {
         
     }
     
-    struct Binding_Preview: View {
+    struct LineBinding_Preview: View {
         
         @State var value: [Attribute] = []
         
@@ -178,7 +229,7 @@ struct CollectionView_Previews: PreviewProvider {
                 viewModel: CollectionViewModel(
                     valueRef: Ref(get: { self.value }, set: { self.value = $0 }),
                     errorsRef: ConstRef(copying: []),
-                    label: "Binding",
+                    label: "Line Binding",
                     type: .bool,
                     delayEdits: false
                 )
@@ -199,8 +250,10 @@ struct CollectionView_Previews: PreviewProvider {
     
     static var previews: some View {
         VStack {
-            Root_Preview()
-            Binding_Preview()
+            LineRoot_Preview()
+            LineBinding_Preview()
+            BlockRoot_Preview()
+            BlockBinding_Preview()
         }
     }
 }
