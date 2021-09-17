@@ -114,7 +114,12 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
     }()
     
     var attribute: Attribute {
-        ref.value
+        get {
+            ref.value
+        } set {
+            ref.value = newValue
+            objectWillChange.send()
+        }
     }
     
     var subView: AnyView {

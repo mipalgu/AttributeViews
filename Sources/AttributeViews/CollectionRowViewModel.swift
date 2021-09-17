@@ -57,63 +57,51 @@
  *
  */
 
-import GUUI
+#if canImport(TokamakShim)
+import TokamakShim
 import Foundation
+#else
+import SwiftUI
+#endif
+
 import Attributes
+import GUUI
 
-protocol CollectionViewDataSource {
+final class CollectionRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
     
-    func addElement(_ row: Attribute)
-    func deleteElements(atOffsets offsets: IndexSet)
-    func moveElements(atOffsets source: IndexSet, to destination: Int)
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel
+    private let collection: Ref<[Attribute]>
     
-}
-
-struct KeyPathCollectionViewDataSource<Root: Modifiable>: CollectionViewDataSource {
+    var rowIndex: Int
     
-    let root: Ref<Root>
-    let path: Attributes.Path<Root, [Attribute]>
-    weak var notifier: GlobalChangeNotifier?
+    private var viewModel: AttributeViewModel? = nil
     
-    func addElement(_ row: Attribute) {
-        _ = root.value.addItem(row, to: path)
+    private let attributeViewModel: (Int) -> AttributeViewModel
+    
+    var row: Attribute {
+        rowIndex >= collection.value.count ? Attribute.line("") : collection.value[rowIndex]
     }
     
-    func deleteElements(atOffsets offsets: IndexSet) {
-        _ = root.value.deleteItems(table: path, items: offsets)
+    var view: AnyView {
+        guard rowIndex < collection.value.count else {
+            return AnyView(EmptyView())
+        }
+        if let viewModel = viewModel {
+            return AnyView(AttributeView(viewModel: viewModel))
+        }
+        let viewModel = self.attributeViewModel(rowIndex)
+        self.viewModel = viewModel
+        return AnyView(AttributeView(viewModel: viewModel))
     }
     
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        _ = root.value.moveItems(table: path, from: source, to: destination)
+    init(collection: Ref<[Attribute]>, rowIndex: Int, attributeViewModel: @escaping (Int) -> AttributeViewModel) {
+        self.collection = collection
+        self.rowIndex = rowIndex
+        self.attributeViewModel = attributeViewModel
     }
     
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
-        AttributeViewModel(root: root, path: path[row], label: "", notifier: notifier)
-    }
-    
-}
-
-struct BindingCollectionViewDataSource: CollectionViewDataSource {
-    
-    let ref: Ref<[Attribute]>
-    
-    let delayEdits: Bool
-    
-    func addElement(_ row: Attribute) {
-        ref.value.append(row)
-    }
-    
-    func deleteElements(atOffsets offsets: IndexSet) {
-        ref.value.remove(atOffsets: offsets)
-    }
-    
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        ref.value.move(fromOffsets: source, toOffset: destination)
-    }
-    
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
-        AttributeViewModel(valueRef: ref[row], errorsRef: ConstRef(copying: []), label: "")
+    func send() {
+        objectWillChange.send()
+        viewModel = nil
     }
     
 }

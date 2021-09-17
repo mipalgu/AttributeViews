@@ -65,6 +65,16 @@ import SwiftUI
 import Attributes
 import GUUI
 
+public struct CollectionView: View {
+    
+    @ObservedObject var viewModel: CollectionViewModel
+    
+    public var body: some View {
+        EmptyView()
+    }
+    
+}
+
 //public struct CollectionView: View {
 //    
 //    @Binding var value: [Row<Attribute>]
@@ -291,62 +301,3 @@ import GUUI
 //    }
 //}
 //
-//fileprivate typealias CollectionViewViewModel = AnyListViewModel<CollectionView, Attribute, AttributeView, String>
-//
-//fileprivate struct CollectionViewKeyPathViewModel<Root: Modifiable>: ListViewModelProtocol, RootPathContainer {
-//    
-//    let root: Binding<Root>
-//    let path: Attributes.Path<Root, [Attribute]>
-//    let type: AttributeType
-//    let expanded: Binding<[AnyKeyPath: Bool]>?
-//    
-//    var newRow: Attribute {
-//        type.defaultValue
-//    }
-//    
-//    init(root: Binding<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, expanded: Binding<[AnyKeyPath: Bool]>? = nil) {
-//        self.root = root
-//        self.path = path
-//        self.type = type
-//        self.expanded = expanded
-//    }
-//    
-//    func errors(_ view: CollectionView, forRow row: Int) -> [String] {
-//        return root.wrappedValue.errorBag.errors(includingDescendantsForPath: path[row]).map(\.message)
-//    }
-//    
-//    func rowView(_ view: CollectionView, forRow row: Int) -> AttributeView {
-//        return AttributeView(root: root, path: path[row], label: "", expanded: expanded)
-//    }
-//    
-//    
-//    
-//}
-//
-//fileprivate struct CollectionViewBindingViewModel: ListViewModelProtocol, ValueErrorsContainer {
-//    
-//    let value: Binding<[Attribute]>
-//    let errors: Binding<[String]>
-//    let type: AttributeType
-//    let delayEdits: Bool
-//    
-//    var newRow: Attribute {
-//        type.defaultValue
-//    }
-//    
-//    init(value: Binding<[Attribute]>, errors: Binding<[String]>, type: AttributeType, delayEdits: Bool = false) {
-//        self.value = value
-//        self.errors = errors
-//        self.type = type
-//        self.delayEdits = delayEdits
-//    }
-//    
-//    func errors(_ view: CollectionView, forRow _: Int) -> [String] {
-//        return []
-//    }
-//    
-//    func rowView(_ view: CollectionView, forRow row: Int) -> AttributeView {
-//        return AttributeView(attribute: value[row], label: "", delayEdits: delayEdits)
-//    }
-//    
-//}

@@ -57,63 +57,54 @@
  *
  */
 
-import GUUI
+#if canImport(TokamakShim)
+import TokamakShim
 import Foundation
+#else
+import SwiftUI
+#endif
+
 import Attributes
+import GUUI
 
-protocol CollectionViewDataSource {
+public final class CollectionViewModel: ObservableObject, GlobalChangeNotifier {
     
-    func addElement(_ row: Attribute)
-    func deleteElements(atOffsets offsets: IndexSet)
-    func moveElements(atOffsets source: IndexSet, to destination: Int)
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel
+    let newRowViewModel: NewAttributeViewModel
     
-}
-
-struct KeyPathCollectionViewDataSource<Root: Modifiable>: CollectionViewDataSource {
+    let collectionBodyViewModel: CollectionBodyViewModel
     
-    let root: Ref<Root>
-    let path: Attributes.Path<Root, [Attribute]>
-    weak var notifier: GlobalChangeNotifier?
+    let label: String
     
-    func addElement(_ row: Attribute) {
-        _ = root.value.addItem(row, to: path)
+    private let errorsRef: ConstRef<[String]>
+    
+    var listErrors: [String] {
+        errorsRef.value
     }
     
-    func deleteElements(atOffsets offsets: IndexSet) {
-        _ = root.value.deleteItems(table: path, items: offsets)
+    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType, notifier: GlobalChangeNotifier? = nil) {
+        let emptyRow = type.defaultValue
+        let bodyViewModel = CollectionBodyViewModel(root: root, path: path, type: type, notifier: notifier)
+        self.newRowViewModel = NewAttributeViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: ConstRef(copying: []), bodyViewModel: bodyViewModel)
+        self.collectionBodyViewModel = bodyViewModel
+        self.label = label
+        self.errorsRef = ConstRef(
+            get: { root.value.errorBag.errors(forPath: path).map(\.message) }
+        )
     }
     
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        _ = root.value.moveItems(table: path, from: source, to: destination)
+    public init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]>, label: String, type: AttributeType, delayEdits: Bool = false) {
+        let emptyRow = type.defaultValue
+        let bodyViewModel = CollectionBodyViewModel(valueRef: valueRef, errorsRef: ConstRef(copying: []), type: type, delayEdits: delayEdits)
+        self.newRowViewModel = NewAttributeViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: ConstRef(copying: []), bodyViewModel: bodyViewModel)
+        self.collectionBodyViewModel = bodyViewModel
+        self.label = label
+        self.errorsRef = errorsRef
     }
     
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
-        AttributeViewModel(root: root, path: path[row], label: "", notifier: notifier)
-    }
-    
-}
-
-struct BindingCollectionViewDataSource: CollectionViewDataSource {
-    
-    let ref: Ref<[Attribute]>
-    
-    let delayEdits: Bool
-    
-    func addElement(_ row: Attribute) {
-        ref.value.append(row)
-    }
-    
-    func deleteElements(atOffsets offsets: IndexSet) {
-        ref.value.remove(atOffsets: offsets)
-    }
-    
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        ref.value.move(fromOffsets: source, toOffset: destination)
-    }
-    
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
-        AttributeViewModel(valueRef: ref[row], errorsRef: ConstRef(copying: []), label: "")
+    public func send() {
+        objectWillChange.send()
+        newRowViewModel.send()
+        collectionBodyViewModel.send()
     }
     
 }
