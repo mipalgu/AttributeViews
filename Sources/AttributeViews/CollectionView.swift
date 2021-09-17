@@ -94,11 +94,10 @@ struct CollectionBodyView: View {
     var body: some View {
         List(selection: $viewModel.selection) {
             ForEach(viewModel.rows, id: \.id) { row in
-                Text("row")
-//                CollectionRowView(
-//                    viewModel: row,
-//                    onDelete: { viewModel.deleteRow(row: row.rowIndex) }
-//                )
+                CollectionRowView(
+                    viewModel: row,
+                    onDelete: { viewModel.deleteRow(row: row.rowIndex) }
+                )
             }.onMove {
                 viewModel.moveElements(atOffsets: $0, to: $1)
             }.onDelete {
