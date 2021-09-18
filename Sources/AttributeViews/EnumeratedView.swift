@@ -28,6 +28,7 @@ public struct EnumeratedView: View {
             Picker(viewModel.label, selection: $viewModel.value) {
                 ForEach(validValues.sorted(), id: \.self) {
                     Text($0).tag($0)
+                        .focusable()
                 }
             }
             ForEach(viewModel.errors, id: \.self) { error in

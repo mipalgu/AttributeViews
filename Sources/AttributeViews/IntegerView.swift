@@ -32,6 +32,7 @@ public struct IntegerView: View {
         VStack(alignment: .leading) {
             TextField(viewModel.label, value: $viewModel.editingValue, formatter: formatter, onEditingChanged: viewModel.onEditingChanged)
                 .font(.body)
+                .focusable()
             ForEach(viewModel.errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }

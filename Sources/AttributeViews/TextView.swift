@@ -65,6 +65,7 @@ public struct TextView: View {
             Group {
                 GeometryReader { geometry in
                     Editor(editingText: $value, size: geometry.size, onCommit: onCommit)
+                        .focusable()
                 }.clipShape(RoundedRectangle(cornerRadius: 5))
             }.overlay(
                 RoundedRectangle(cornerRadius: 5)

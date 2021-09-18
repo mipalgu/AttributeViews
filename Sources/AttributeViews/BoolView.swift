@@ -26,6 +26,7 @@ public struct BoolView: View {
             Toggle(viewModel.label, isOn: $viewModel.value)
                 .animation(.easeOut)
                 .font(.body)
+                .focusable()
 //                .foregroundColor(config.textColor)
             ForEach(viewModel.errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)

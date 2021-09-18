@@ -25,6 +25,7 @@ public struct LineView: View {
         VStack(alignment: .leading) {
             TextField(viewModel.label, text: $viewModel.editingValue, onEditingChanged: viewModel.onEditingChanged)
                 .font(.body)
+                .focusable()
             ForEach(viewModel.errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)
             }

@@ -75,7 +75,7 @@ public struct EnumerableCollectionView: View {
                                     value.remove(element)
                                 }
                             }
-                        ))
+                        )).focusable()
                     }
                 }
             }
