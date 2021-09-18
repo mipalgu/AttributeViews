@@ -89,6 +89,7 @@ final class NewAttributeViewModel: ObservableObject, GlobalChangeNotifier {
     func addElement() {
         bodyViewModel.addElement(newRow: newRow.attribute)
         newRow.attribute = emptyRow
+        showSheet = false
     }
     
     func send() {

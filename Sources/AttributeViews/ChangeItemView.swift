@@ -98,7 +98,7 @@ public struct ChangeItemView<SubView: View>: View {
                 }
             }
             subView()
-        }.padding(10)
+        }.frame(minWidth: 200, minHeight: 200).padding(10)
     }
     
 }

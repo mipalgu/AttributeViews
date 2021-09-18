@@ -137,7 +137,22 @@ struct NewAttributeView: View {
                     }
                 }.frame(width: 20)
             }
-        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+        }.padding(.leading, 15)
+            .padding(.trailing, 18)
+            .padding(.bottom, 15)
+            .sheet(isPresented: $viewModel.showSheet) {
+                ChangeItemView(
+                    label: "Add Item",
+                    onSave: {
+                        viewModel.addElement()
+                    },
+                    onDelete: {
+                        viewModel.showSheet = false
+                    }
+                ) {
+                    AttributeView(viewModel: viewModel.newRow)
+                }
+            }
     }
 
 }
