@@ -120,12 +120,21 @@ struct NewAttributeView: View {
             HStack {
                 if viewModel.newRow.attribute.isLine {
                     AttributeView(viewModel: viewModel.newRow)
+                } else {
+                    Text("Add Item")
                 }
                 VStack {
-                    Button(action: viewModel.addElement, label: {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    }).buttonStyle(PlainButtonStyle())
-                      .foregroundColor(.blue)
+                    if viewModel.newRow.attribute.isLine {
+                        Button(action: viewModel.addElement, label: {
+                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                        }).buttonStyle(PlainButtonStyle())
+                          .foregroundColor(.blue)
+                    } else {
+                        Button(action: { viewModel.showSheet.toggle() }) {
+                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                        }.buttonStyle(PlainButtonStyle())
+                          .foregroundColor(.blue)
+                    }
                 }.frame(width: 20)
             }
         }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)

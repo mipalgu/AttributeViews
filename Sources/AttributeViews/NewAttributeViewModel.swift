@@ -71,6 +71,8 @@ final class NewAttributeViewModel: ObservableObject, GlobalChangeNotifier {
     
     @Published var newRow: AttributeViewModel
     
+    @Published var showSheet: Bool = false
+    
     let emptyRow: Attribute
     
     let errors: ConstRef<[String]>
