@@ -94,7 +94,7 @@ struct CollectionRowView: View {
                     .rotationEffect(.degrees(90))
                 if viewModel.row.type.isRecursive {
                     Button(action: { viewModel.showSheet.toggle() }) {
-                        Image(systemName: "arrowtriangle.forward").font(.system(size: 16, weight: .regular))
+                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .regular))
                     }.buttonStyle(.plain)
                 }
             }.frame(width: viewModel.row.type.isRecursive ? 40 : 20)
