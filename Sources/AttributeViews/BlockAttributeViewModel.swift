@@ -151,7 +151,14 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
             return TableViewModel(valueRef: valueRef.tableValue, errorsRef: ConstRef(copying: []), label: label, columns: columns, delayEdits: delayEdits)
         }
         self._complexViewModel = {
-            ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: valueRef.value.complexFields)
+            let fields: [Field]
+            switch valueRef.value.type {
+            case .complex(let flds):
+                fields = flds
+            default:
+                fields = []
+            }
+            return ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: fields)
         }
         self._collectionViewModel = {
             let type: AttributeType
