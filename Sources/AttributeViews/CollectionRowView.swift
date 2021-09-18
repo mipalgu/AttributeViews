@@ -78,20 +78,24 @@ struct CollectionRowView: View {
     
     var body: some View {
         HStack {
-            if viewModel.row.type.isBlock {
-                Button(viewModel.row.strValue ?? "Item \(viewModel.rowIndex)") {
-                    viewModel.showSheet.toggle()
-                }.sheet(isPresented: $viewModel.showSheet) {
-                    viewModel.view
-                }
+            if viewModel.row.type.isRecursive {
+                Text(viewModel.row.strValue ?? "Item \(viewModel.rowIndex)")
+                    .sheet(isPresented: $viewModel.showSheet) {
+                        viewModel.view
+                    }
             } else {
                 viewModel.view
             }
-            VStack {
+            HStack {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16, weight: .regular))
                     .rotationEffect(.degrees(90))
-            }.frame(width: 20)
+                if viewModel.row.type.isRecursive {
+                    Button(action: { viewModel.showSheet.toggle() }) {
+                        Image(systemName: "arrowtriangle.forward").font(.system(size: 16, weight: .regular))
+                    }.buttonStyle(.plain)
+                }
+            }.frame(width: viewModel.row.type.isRecursive ? 40 : 20)
         }.contextMenu {
             Button("Delete", action: onDelete).keyboardShortcut(.delete)
         }
