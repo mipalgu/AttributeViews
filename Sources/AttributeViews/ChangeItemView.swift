@@ -70,16 +70,27 @@ public struct ChangeItemView<SubView: View>: View {
     
     let label: String
     
-    let onSave: () -> Void
+    let onSave: (() -> Void)?
     
-    let onDelete: () -> Void
+    let onDelete: (() -> Void)?
+    
+    let onDismiss: (() -> Void)?
     
     let subView: () -> SubView
     
-    public init(label: String, onSave: @escaping () -> Void = {}, onDelete: @escaping () -> Void = {}, subView: @escaping () -> SubView) {
+    public init(label: String, onSave: (() -> Void)? = nil, onDelete: (() -> Void)? = nil, subView: @escaping () -> SubView) {
+        self.init(label: label, onSave: onSave, onDelete: onDelete, onDismiss: nil, subView: subView)
+    }
+    
+    public init(label: String, onDismiss: (() -> Void)?, subView: @escaping () -> SubView) {
+        self.init(label: label, onSave: nil, onDelete: nil, onDismiss: onDismiss, subView: subView)
+    }
+    
+    private init(label: String, onSave: (() -> Void)?, onDelete: (() -> Void)?, onDismiss: (() -> Void)?, subView: @escaping () -> SubView) {
         self.label = label
         self.onSave = onSave
         self.onDelete = onDelete
+        self.onDismiss = onDismiss
         self.subView = subView
     }
     
@@ -88,13 +99,22 @@ public struct ChangeItemView<SubView: View>: View {
             ZStack(alignment: .top) {
                 Text(label).font(.headline)
                 HStack {
+                    if let onDismiss = onDismiss {
+                        Button(action: onDismiss) {
+                            Image(systemName: "arrowshape.turn.up.backward").font(.system(size: 16, weight: .regular))
+                        }.buttonStyle(.plain)
+                    }
                     Spacer()
-                    Button(action: onDelete) {
-                        Image(systemName: "trash.fill").font(.system(size: 16, weight: .regular)).foregroundColor(.red)
-                    }.buttonStyle(.plain)
-                    Button(action: onSave) {
-                        Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular)).foregroundColor(.blue)
-                    }.buttonStyle(.plain)
+                    if let onDelete = onDelete {
+                        Button(action: onDelete) {
+                            Image(systemName: "trash.fill").font(.system(size: 16, weight: .regular)).foregroundColor(.red)
+                        }.buttonStyle(.plain)
+                    }
+                    if let onSave = onSave {
+                        Button(action: onSave) {
+                            Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular)).foregroundColor(.blue)
+                        }.buttonStyle(.plain)
+                    }
                 }
             }
             subView()

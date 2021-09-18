@@ -81,7 +81,9 @@ struct CollectionRowView: View {
             if viewModel.row.type.isRecursive {
                 Text(viewModel.row.strValue ?? "Item \(viewModel.rowIndex)")
                     .sheet(isPresented: $viewModel.showSheet) {
-                        viewModel.view
+                        ChangeItemView(label: viewModel.row.strValue ?? "Item \(viewModel.rowIndex)", onDismiss: { viewModel.showSheet = false }) {
+                            viewModel.view
+                        }
                     }
             } else {
                 viewModel.view
