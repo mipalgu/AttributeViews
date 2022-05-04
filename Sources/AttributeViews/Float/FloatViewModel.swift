@@ -1,10 +1,9 @@
-//
 /*
- * File.swift
+ * FloatViewModel.swift
  * 
  *
- * Created by Callum McColl on 24/5/21.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,16 +56,4 @@
  *
  */
 
-import Attributes
-
-public typealias BoolViewModel = ValueViewModel<Bool>
-
-public typealias IntegerViewModel = DelayEditValueViewModel<Int>
-
 public typealias FloatViewModel = DelayEditValueViewModel<Double>
-
-public typealias ExpressionViewModel = DelayEditValueViewModel<Expression>
-
-public typealias EnumeratedViewModel = ValueViewModel<String>
-
-public typealias LineViewModel = DelayEditValueViewModel<String>

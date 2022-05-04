@@ -39,68 +39,6 @@ public struct TableView: View {
 
 }
 
-struct TableBodyView: View {
-    
-    @ObservedObject var viewModel: TableBodyViewModel
-    
-    var body: some View {
-        List(selection: $viewModel.selection) {
-            VStack {
-                HStack {
-                    ForEach(viewModel.columns, id: \.name) { column in
-                        Text(column.name.pretty)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.leading)
-                            .frame(minWidth: 0, maxWidth: .infinity)
-                    }
-                    Spacer().frame(width: 20)
-                }
-            }
-            ForEach(viewModel.rows, id: \.id) { row in
-                TableRowView(
-                    viewModel: row,
-                    onDelete: { viewModel.deleteRow(row: row.rowIndex) }
-                )
-            }.onMove {
-                viewModel.moveElements(atOffsets: $0, to: $1)
-            }.onDelete {
-                viewModel.deleteElements(atOffsets: $0)
-            }
-        }.frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + ($1.row.first?.underestimatedHeight ?? 5) }) + 75)
-        .onExitCommand {
-            viewModel.selection.removeAll(keepingCapacity: true)
-        }
-    }
-    
-}
-
-struct NewRowView: View {
-    
-    @ObservedObject var viewModel: NewRowViewModel
-    
-    //@EnvironmentObject var config: Config
-    
-    var body: some View {
-        VStack {
-            HStack {
-                ForEach(0..<viewModel.newRow.count) { index in
-                    VStack {
-                        LineAttributeView(viewModel: viewModel.newRow[index])
-                    }.frame(minWidth: 0, maxWidth: .infinity)
-                }
-                VStack {
-                    Button(action: viewModel.addElement, label: {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    }).buttonStyle(PlainButtonStyle())
-                      .foregroundColor(.blue)
-                }.frame(width: 20)
-            }
-        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
-    }
-    
-}
-
 #if canImport(SwiftUI)
 struct TableView_Previews: PreviewProvider {
     

@@ -1,10 +1,9 @@
-//
 /*
- * File.swift
+ * TableBodyViewModel.swift
  * 
  *
- * Created by Callum McColl on 18/9/21.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,63 +66,38 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class CollectionBodyValue: Value<[Attribute]> {
+final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
     
-    private let _attributeViewModel: (Int) -> AttributeViewModel
+    private let ref: TableBodyValue
+    let columns: [BlockAttributeType.TableColumn]
     
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, defaultValue: [Attribute] = [], notifier: GlobalChangeNotifier? = nil) {
-        self._attributeViewModel = {
-            AttributeViewModel(root: root, path: path[$0], label: "", notifier: notifier)
-        }
-        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
-    }
+    private var rowsData: [Int: TableRowViewModel] = [:]
     
-    override init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]>) {
-        self._attributeViewModel = {
-            AttributeViewModel(valueRef: valueRef[$0], errorsRef: ConstRef(copying: []), label: "")
-        }
-        super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-    
-    func viewModel(forRow row: Int) -> CollectionRowViewModel {
-        CollectionRowViewModel(collection: valueRef, rowIndex: row, attributeViewModel: _attributeViewModel)
-    }
-    
-}
-
-final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
-    
-    private let ref: CollectionBodyValue
-    
-    let type: AttributeType
-    
-    private var rowsData: [Int: CollectionRowViewModel] = [:]
-    
-    var rows: [CollectionRowViewModel] {
+    var rows: [TableRowViewModel] {
         let values = ref.isValid ? ref.value : []
         return values.indices.map { row(for: $0) }
     }
     
     @Published var selection: Set<ObjectIdentifier> = []
     
-    private let dataSource: CollectionViewDataSource
+    private let dataSource: TableViewDataSource
     
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, notifier: GlobalChangeNotifier? = nil) {
-        self.ref = CollectionBodyValue(root: root, path: path, notifier: notifier)
-        self.type = type
-        self.dataSource = KeyPathCollectionViewDataSource<Root>(root: root, path: path, notifier: notifier)
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
+        self.ref = TableBodyValue(root: root, path: path, notifier: notifier)
+        self.columns = columns
+        self.dataSource = KeyPathTableViewDataSource<Root>(root: root, path: path, notifier: notifier)
     }
     
-    init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), type: AttributeType, delayEdits: Bool = false) {
-        self.ref = CollectionBodyValue(valueRef: valueRef, errorsRef: errorsRef)
-        self.type = type
-        self.dataSource = BindingCollectionViewDataSource(ref: valueRef, delayEdits: delayEdits)
+    init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
+        self.ref = TableBodyValue(valueRef: valueRef, errorsRef: errorsRef)
+        self.columns = columns
+        self.dataSource = BindingTableViewDataSource(ref: valueRef, delayEdits: delayEdits)
     }
     
-    private func row(for index: Int) -> CollectionRowViewModel {
+    private func row(for index: Int) -> TableRowViewModel {
         guard let viewModel = rowsData[index] else {
-            let viewModel = CollectionRowViewModel(collection: ref.valueRef, rowIndex: index, attributeViewModel: {
-                self.dataSource.viewModel(forElementAtRow: $0)
+            let viewModel = TableRowViewModel(table: ref.valueRef, rowIndex: index, lineAttributeViewModel: {
+                self.dataSource.viewModel(forElementAtRow: $0, column: $1)
             })
             rowsData[index] = viewModel
             return viewModel
@@ -131,11 +105,11 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         return viewModel
     }
     
-    func errors(forRow _: Int) -> [String] {
-        []
+    func errors(forRow _: Int) -> [[String]] {
+        columns.map { _ in [] }
     }
     
-    func addElement(newRow: Attribute) {
+    func addElement(newRow: [LineAttribute]) {
         dataSource.addElement(newRow)
         objectWillChange.send()
     }
@@ -180,7 +154,7 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
-        var newRowsData: [(key: Int, value: CollectionRowViewModel)] = rowsData.sorted { $0.key < $1.key }
+        var newRowsData: [(key: Int, value: TableRowViewModel)] = rowsData.sorted { $0.key < $1.key }
         newRowsData.move(fromOffsets: source, toOffset: destination)
         rowsData = Dictionary(uniqueKeysWithValues: newRowsData.enumerated().map {
             $1.value.rowIndex = $0

@@ -1,6 +1,5 @@
-//
 /*
- * File.swift
+ * NewAttributeViewModel.swift
  * 
  *
  * Created by Callum McColl on 18/9/21.
@@ -57,63 +56,44 @@
  *
  */
 
-import GUUI
+#if canImport(TokamakShim)
+import TokamakShim
 import Foundation
+#else
+import SwiftUI
+#endif
+
 import Attributes
+import GUUI
 
-protocol CollectionViewDataSource {
+final class NewAttributeViewModel: ObservableObject, GlobalChangeNotifier {
     
-    func addElement(_ row: Attribute)
-    func deleteElements(atOffsets offsets: IndexSet)
-    func moveElements(atOffsets source: IndexSet, to destination: Int)
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel
+    @Published var newRow: AttributeViewModel
     
-}
-
-struct KeyPathCollectionViewDataSource<Root: Modifiable>: CollectionViewDataSource {
+    @Published var showSheet: Bool = false
     
-    let root: Ref<Root>
-    let path: Attributes.Path<Root, [Attribute]>
-    weak var notifier: GlobalChangeNotifier?
+    let emptyRow: Attribute
     
-    func addElement(_ row: Attribute) {
-        _ = root.value.addItem(row, to: path)
+    let errors: ConstRef<[String]>
+    
+    let bodyViewModel: CollectionBodyViewModel
+    
+    init(newRow: Attribute, emptyRow: Attribute, errors: ConstRef<[String]>, bodyViewModel: CollectionBodyViewModel) {
+        self.newRow = AttributeViewModel(valueRef: Ref(copying: newRow), errorsRef: ConstRef(copying: []), label: "")
+        self.emptyRow = emptyRow
+        self.errors = errors
+        self.bodyViewModel = bodyViewModel
     }
     
-    func deleteElements(atOffsets offsets: IndexSet) {
-        _ = root.value.deleteItems(table: path, items: offsets)
+    func addElement() {
+        bodyViewModel.addElement(newRow: newRow.attribute)
+        newRow.attribute = emptyRow
+        showSheet = false
     }
     
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        _ = root.value.moveItems(table: path, from: source, to: destination)
-    }
-    
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
-        AttributeViewModel(root: root, path: path[row], label: "", notifier: notifier)
-    }
-    
-}
-
-struct BindingCollectionViewDataSource: CollectionViewDataSource {
-    
-    let ref: Ref<[Attribute]>
-    
-    let delayEdits: Bool
-    
-    func addElement(_ row: Attribute) {
-        ref.value.append(row)
-    }
-    
-    func deleteElements(atOffsets offsets: IndexSet) {
-        ref.value.remove(atOffsets: offsets)
-    }
-    
-    func moveElements(atOffsets source: IndexSet, to destination: Int) {
-        ref.value.move(fromOffsets: source, toOffset: destination)
-    }
-    
-    func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
-        AttributeViewModel(valueRef: ref[row], errorsRef: ConstRef(copying: []), label: "")
+    func send() {
+        objectWillChange.send()
+        newRow.send()
     }
     
 }

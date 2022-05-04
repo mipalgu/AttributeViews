@@ -1,10 +1,9 @@
-//
 /*
- * File.swift
+ * CollectionBodyValue.swift
  * 
  *
- * Created by Callum McColl on 18/9/21.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,44 +56,29 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-import Foundation
-#else
-import SwiftUI
-#endif
-
 import Attributes
 import GUUI
 
-final class NewAttributeViewModel: ObservableObject, GlobalChangeNotifier {
+final class CollectionBodyValue: Value<[Attribute]> {
     
-    @Published var newRow: AttributeViewModel
+    private let _attributeViewModel: (Int) -> AttributeViewModel
     
-    @Published var showSheet: Bool = false
-    
-    let emptyRow: Attribute
-    
-    let errors: ConstRef<[String]>
-    
-    let bodyViewModel: CollectionBodyViewModel
-    
-    init(newRow: Attribute, emptyRow: Attribute, errors: ConstRef<[String]>, bodyViewModel: CollectionBodyViewModel) {
-        self.newRow = AttributeViewModel(valueRef: Ref(copying: newRow), errorsRef: ConstRef(copying: []), label: "")
-        self.emptyRow = emptyRow
-        self.errors = errors
-        self.bodyViewModel = bodyViewModel
+    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, defaultValue: [Attribute] = [], notifier: GlobalChangeNotifier? = nil) {
+        self._attributeViewModel = {
+            AttributeViewModel(root: root, path: path[$0], label: "", notifier: notifier)
+        }
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
     
-    func addElement() {
-        bodyViewModel.addElement(newRow: newRow.attribute)
-        newRow.attribute = emptyRow
-        showSheet = false
+    override init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]>) {
+        self._attributeViewModel = {
+            AttributeViewModel(valueRef: valueRef[$0], errorsRef: ConstRef(copying: []), label: "")
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
     
-    func send() {
-        objectWillChange.send()
-        newRow.send()
+    func viewModel(forRow row: Int) -> CollectionRowViewModel {
+        CollectionRowViewModel(collection: valueRef, rowIndex: row, attributeViewModel: _attributeViewModel)
     }
     
 }
