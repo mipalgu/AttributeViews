@@ -24,6 +24,10 @@ jobs:
             eval "$(ssh-agent -s)"
             ssh-add ~/.ssh/id_ed25519
 
+      - name: Install GTK
+        run: sudo apt-get install libgtk+-3.0 gtk+-3.0
+
+
       - name: Clone SourceKitten
         uses: actions/checkout@v2
         with:
