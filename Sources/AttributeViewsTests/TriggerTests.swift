@@ -16,15 +16,15 @@ import GUUI
 struct TriggerTests: App {
 
     class AppDelegate: NSObject, NSApplicationDelegate {
-        
+
         func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool {
             return true
         }
-        
+
         func applicationWillFinishLaunching(_ notification: Notification) {
             NSApp.setActivationPolicy(.regular)
         }
-        
+
     }
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate

@@ -39,14 +39,14 @@ import GUUI
 struct LineView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields", fields: [Field(name: "line", type: .line)], attributes: ["line": .line("hello")], metaData: [:])
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["line"].wrappedValue.lineValue
-        
+
         var body: some View {
             LineViewPreviewView(
                 viewModel: LineViewModel(
@@ -56,27 +56,27 @@ struct LineView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
 
         @StateObject var viewModel: LineViewModel = LineViewModel(valueRef: Ref(copying: "world"), errorsRef: ConstRef { ["An error", "A second error"] }, label: "Binding")
-        
+
         var body: some View {
             LineView(viewModel: viewModel)
         }
-        
+
     }
 
     struct LineViewPreviewView: View {
-        
+
         @StateObject var viewModel: LineViewModel
-        
+
         var body: some View {
             LineView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {

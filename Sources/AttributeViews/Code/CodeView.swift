@@ -88,14 +88,14 @@ public struct CodeView<Label: View>: View {
 struct CodeView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields", fields: [Field(name: "code", type: .code(language: .swift))], attributes: ["code": .code("let i = 2\nletb = true", language: .swift)], metaData: [:])
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["code"].wrappedValue.codeValue
-        
+
         var body: some View {
             CodeView(
                 root: $modifiable,
@@ -104,18 +104,18 @@ struct CodeView_Previews: PreviewProvider {
                 language: .swift
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
-        
+
         @State var value: String = "let f = 2.3\nlet s = \"hello\""
         @State var errors: [String] = ["An error", "A second error"]
-        
+
         var body: some View {
             CodeView(value: $value, errors: $errors, label: "Binding", language: .swift)
         }
-        
+
     }
 
     static var previews: some View {

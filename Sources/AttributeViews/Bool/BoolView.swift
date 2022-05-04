@@ -41,7 +41,7 @@ import GUUI
 struct BoolView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
@@ -50,9 +50,9 @@ struct BoolView_Previews: PreviewProvider {
                 metaData: [:]
             )
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["bool"].wrappedValue.boolValue
-        
+
         var body: some View {
             BoolPreviewView(
                 viewModel: BoolViewModel(
@@ -62,15 +62,15 @@ struct BoolView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
-        
+
         @State var value: Bool = false
-        
+
         @State var errors: [String] = ["An Error."]
-        
+
         var body: some View {
             BoolPreviewView(
                 viewModel: BoolViewModel(
@@ -80,17 +80,17 @@ struct BoolView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct BoolPreviewView: View {
-        
+
         @StateObject var viewModel: BoolViewModel
-        
+
         var body: some View {
             BoolView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {

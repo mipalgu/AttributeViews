@@ -79,14 +79,14 @@ public struct TextView: View {
 struct TextView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields", fields: [Field(name: "text", type: .text)], attributes: ["text": .text("some text\non different lines")], metaData: [:])
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["text"].wrappedValue.textValue
-        
+
         var body: some View {
             TextView(
                 root: $modifiable,
@@ -94,18 +94,18 @@ struct TextView_Previews: PreviewProvider {
                 label: "Root"
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
-        
+
         @State var value: String = "More text\non separate lines"
         @State var errors: [String] = ["An error", "A second error"]
-        
+
         var body: some View {
             TextView(value: $value, errors: $errors, label: "Binding")
         }
-        
+
     }
 
     static var previews: some View {

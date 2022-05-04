@@ -127,13 +127,13 @@ public struct ChangeItemView<SubView: View>: View {
 struct ChangeItemView_Previews: PreviewProvider {
 
     struct Preview: View {
-        
+
         var body: some View {
             ChangeItemView(label: "Add Item") {
                 Text("Some Text Here")
             }
         }
-        
+
     }
 
     static var previews: some View {

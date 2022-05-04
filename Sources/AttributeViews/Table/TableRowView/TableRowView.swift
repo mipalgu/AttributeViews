@@ -180,9 +180,9 @@ struct TableRowView_Previews: PreviewProvider {
 //    }
 
     struct Binding_Preview: View {
-        
+
         @State var value: [[LineAttribute]] = [[.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]]
-        
+
         @State var errors: [[String]] = [
             ["bool error1", "bool error2"],
             ["int error"],
@@ -190,7 +190,7 @@ struct TableRowView_Previews: PreviewProvider {
             [],
             ["Really long line error that is very long in length"]
         ]
-        
+
         var body: some View {
             TableRowPreviewView(
                 viewModel: TableRowViewModel(
@@ -206,17 +206,17 @@ struct TableRowView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct TableRowPreviewView: View {
-        
+
         @StateObject var viewModel: TableRowViewModel
-        
+
         var body: some View {
             TableRowView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {

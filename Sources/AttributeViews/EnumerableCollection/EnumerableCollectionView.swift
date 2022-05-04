@@ -88,14 +88,14 @@ public struct EnumerableCollectionView: View {
 struct EnumerableCollectionView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields", fields: [Field(name: "enumerableCollection", type: .enumerableCollection(validValues: ["a", "b", "c", "d", "e", "f"]))], attributes: ["enumerableCollection": .enumerableCollection(["a", "b", "e", "f"], validValues: ["a", "b", "c", "d", "e", "f"])], metaData: [:])
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["enumerableCollection"].wrappedValue.enumerableCollectionValue
-        
+
         var body: some View {
             EnumerableCollectionView(
                 root: $modifiable,
@@ -104,14 +104,14 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
                 validValues: ["a", "b", "c", "d", "e", "f"]
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
-        
+
         @State var value: Set<String> = ["A", "D", "F"]
         @State var errors: [String] = ["An error", "A second error"]
-        
+
         var body: some View {
             EnumerableCollectionView(
                 value: $value,
@@ -120,7 +120,7 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
                 validValues: ["A", "B", "C", "D", "E", "F"]
             )
         }
-        
+
     }
 
     static var previews: some View {

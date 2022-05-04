@@ -39,7 +39,7 @@ import GUUI
 struct AttributeGroupView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
@@ -48,9 +48,9 @@ struct AttributeGroupView_Previews: PreviewProvider {
                 metaData: [:]
             )
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0]
-        
+
         var body: some View {
             AttributeGroupPreviewView(
                 viewModel: AttributeGroupViewModel(
@@ -59,17 +59,17 @@ struct AttributeGroupView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct AttributeGroupPreviewView: View {
-        
+
         @StateObject var viewModel: AttributeGroupViewModel
-        
+
         var body: some View {
             AttributeGroupView(viewModel: viewModel)
         }
-        
+
     }
 
 //    struct Binding_Preview: View {

@@ -89,7 +89,7 @@ public struct CollectionView: View {
 struct CollectionView_Previews: PreviewProvider {
 
     struct BlockRoot_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
@@ -105,9 +105,9 @@ struct CollectionView_Previews: PreviewProvider {
                 metaData: [:]
             )
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["text"].wrappedValue.collectionValue
-        
+
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -118,13 +118,13 @@ struct CollectionView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct BlockBinding_Preview: View {
-        
+
         @State var value: [Attribute] = []
-        
+
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -136,11 +136,11 @@ struct CollectionView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct LineRoot_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
@@ -156,9 +156,9 @@ struct CollectionView_Previews: PreviewProvider {
                 metaData: [:]
             )
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["lines"].wrappedValue.collectionValue
-        
+
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -169,13 +169,13 @@ struct CollectionView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct LineBinding_Preview: View {
-        
+
         @State var value: [Attribute] = []
-        
+
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -187,17 +187,17 @@ struct CollectionView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct CollectionViewPreviewView: View {
-        
+
         @StateObject var viewModel: CollectionViewModel
-        
+
         var body: some View {
             CollectionView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {

@@ -58,9 +58,9 @@ import GUUI
 struct ComplexView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var expanded: [AnyKeyPath: Bool] = [:]
-        
+
         @State var modifiable: Ref<EmptyModifiable> = Ref(copying: EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
@@ -73,9 +73,9 @@ struct ComplexView_Previews: PreviewProvider {
                 metaData: [:]
             )
         ]))
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["complex"].wrappedValue.complexValue
-        
+
         var body: some View {
             ComplexViewPreview(
                 viewModel: ComplexViewModel(
@@ -86,17 +86,17 @@ struct ComplexView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
-        
+
         @State var value: [String: Attribute] = [
             "s": .line("Hello"),
             "f": .float(3.12)
         ]
         @State var errors: [String] = ["An error", "A second error"]
-        
+
         var body: some View {
             ComplexViewPreview(
                 viewModel: ComplexViewModel(
@@ -107,17 +107,17 @@ struct ComplexView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct ComplexViewPreview: View {
-        
+
         @StateObject var viewModel: ComplexViewModel
-        
+
         var body: some View {
             ComplexView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {

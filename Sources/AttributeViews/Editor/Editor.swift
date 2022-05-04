@@ -123,37 +123,37 @@ struct Editor: NSViewControllerRepresentable {
     func updateNSViewController(_ nsViewController: EditorViewController, context: Context) {}
 
     final class Coordinator: NSObject, NSTextViewDelegate {
-        
+
         var editing: Bool = false
-        
+
         var textView: NSTextView!
-        
+
         let changeValue: (String) -> Void
-        
+
         let onCommit: (String) -> Void
-        
+
         init(changeValue: @escaping (String) -> Void, onCommit: @escaping (String) -> Void) {
             self.changeValue = changeValue
             self.onCommit = onCommit
         }
-        
+
         func viewWillDisappear() {
             if editing {
                 onCommit(textView.string)
                 editing = false
             }
         }
-        
+
         func textDidEndEditing(_ notification: Notification) {
             onCommit(textView.string)
             editing = false
         }
-        
+
         func textDidChange(_ notification: Notification) {
             changeValue(textView.string)
             editing = true
         }
-        
+
     }
 
 }

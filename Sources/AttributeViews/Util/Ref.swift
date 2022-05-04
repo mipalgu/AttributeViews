@@ -82,5 +82,5 @@ public extension Ref {
     subscript<Path: PathProtocol>(bindingTo path: Path) -> Binding<Path.Value> where Path.Root == T {
         self[path: path].asBinding
     }
-        
+
 }

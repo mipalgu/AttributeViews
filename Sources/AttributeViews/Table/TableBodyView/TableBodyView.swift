@@ -106,7 +106,7 @@ struct TableBodyView: View {
 struct TableBodyView_Previews: PreviewProvider {
 
     struct Root_Preview: View {
-        
+
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
@@ -126,9 +126,9 @@ struct TableBodyView_Previews: PreviewProvider {
                 metaData: [:]
             )
         ])
-        
+
         let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
-        
+
         var body: some View {
             TableBodyViewPreviewView(
                 viewModel: TableBodyViewModel(
@@ -138,13 +138,13 @@ struct TableBodyView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct Binding_Preview: View {
-        
+
         @State var value: [[LineAttribute]] = []
-        
+
         var body: some View {
             TableBodyViewPreviewView(
                 viewModel: TableBodyViewModel(
@@ -162,17 +162,17 @@ struct TableBodyView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct TableBodyViewPreviewView: View {
-        
+
         @StateObject var viewModel: TableBodyViewModel
-        
+
         var body: some View {
             TableBodyView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {

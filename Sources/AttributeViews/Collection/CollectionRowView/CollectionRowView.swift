@@ -152,14 +152,14 @@ struct CollectionRowView_Previews: PreviewProvider {
 //    }
 
     struct Binding_Preview: View {
-        
+
         @State var value: [Attribute] = [.line("Hello"), .line("World")]
-        
+
         @State var errors: [[String]] = [
             ["line error1", "line error2"],
             ["line2 error1", "line2 error2"]
         ]
-        
+
         var body: some View {
             CollectionRowPreviewView(
                 viewModel: CollectionRowViewModel(
@@ -175,17 +175,17 @@ struct CollectionRowView_Previews: PreviewProvider {
                 )
             )
         }
-        
+
     }
 
     struct CollectionRowPreviewView: View {
-        
+
         @StateObject var viewModel: CollectionRowViewModel
-        
+
         var body: some View {
             CollectionRowView(viewModel: viewModel)
         }
-        
+
     }
 
     static var previews: some View {
