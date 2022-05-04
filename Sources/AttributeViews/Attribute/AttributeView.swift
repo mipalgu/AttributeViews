@@ -75,5 +75,5 @@ public struct AttributeView: View {
     public var body: some View {
         viewModel.subView
     }
-    
+
 }
