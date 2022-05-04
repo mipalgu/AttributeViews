@@ -71,7 +71,7 @@ import Attributes
 import GUUI
 
 struct TestsScene: App {
-    
+
     class AppDelegate: NSObject, NSApplicationDelegate {
         
         func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool {
@@ -83,13 +83,13 @@ struct TestsScene: App {
         }
         
     }
-    
+
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     @Environment(\.scenePhase) private var scenePhase: ScenePhase
-    
+
     @State var expanded: [AnyKeyPath: Bool] = [:]
-    
+
     @StateObject var viewModel = AppViewModel(
         root: Ref(
             copying: EmptyModifiable(
@@ -243,11 +243,11 @@ struct TestsScene: App {
         ),
         path: EmptyModifiable.path.attributes
     )
-    
+
     @State var text: String = ""
-    
+
     @State var loadError: String = ""
-    
+
     var body: some Scene {
         WindowGroup {
             ScrollView(.vertical, showsIndicators: true) {

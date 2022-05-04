@@ -14,7 +14,7 @@ import GUUI
 
 
 struct TriggerTests: App {
-    
+
     class AppDelegate: NSObject, NSApplicationDelegate {
         
         func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool {
@@ -26,13 +26,13 @@ struct TriggerTests: App {
         }
         
     }
-    
+
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     @Environment(\.scenePhase) private var scenePhase: ScenePhase
-    
+
     @State var expanded: [AnyKeyPath: Bool] = [:]
-    
+
     @StateObject var viewModel = AppViewModel(
         root: Ref(copying: EmptyModifiable(
             attributes: [
@@ -111,7 +111,7 @@ struct TriggerTests: App {
         )),
         path: EmptyModifiable.path.attributes
     )
-    
+
     var body: some Scene {
         WindowGroup {
             ScrollView(.vertical, showsIndicators: true) {
