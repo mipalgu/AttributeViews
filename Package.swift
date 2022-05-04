@@ -4,7 +4,7 @@
 import PackageDescription
 
 #if arch(wasm32)
-let ui: [Package.Dependency] = [.package(name: "Tokamak", url: "https://github.com/TokamakUI/Tokamak", from: "0.5.1")]
+let ui: [Package.Dependency] = [.package(name: "Tokamak", url: "https://github.com/TokamakUI/Tokamak", from: "0.10.0")]
 let products: [Target.Dependency] = [.product(name: "TokamakShim", package: "Tokamak")]
 #else
 let ui: [Package.Dependency] = []
