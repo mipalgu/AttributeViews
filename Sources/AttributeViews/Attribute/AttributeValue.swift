@@ -1,9 +1,9 @@
 /*
- * AttributeViewModel.swift
+ * AttributeValue.swift
  * 
  *
- * Created by Callum McColl on 1/5/21.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,51 +65,38 @@ import SwiftUI
 import Attributes
 import GUUI
 
-public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
-    
-    private let ref: AttributeValue
-    
-    lazy var lineAttributeViewModel: LineAttributeViewModel = {
-        ref.lineAttributeViewModel
-    }()
-    
-    lazy var blockAttributeViewModel: BlockAttributeViewModel = {
-        ref.blockAttributeViewModel
-    }()
-    
-    var attribute: Attribute {
-        get {
-            ref.value
-        } set {
-            ref.value = newValue
-            objectWillChange.send()
+final class AttributeValue: Value<Attribute> {
+
+    private let _lineAttributeViewModel: () -> LineAttributeViewModel
+
+    private let _blockAttributeViewModel: () -> BlockAttributeViewModel
+
+    var lineAttributeViewModel: LineAttributeViewModel {
+        _lineAttributeViewModel()
+    }
+
+    var blockAttributeViewModel: BlockAttributeViewModel {
+        _blockAttributeViewModel()
+    }
+
+    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, defaultValue: Attribute = .bool(false), label: String, notifier: GlobalChangeNotifier? = nil) {
+        self._lineAttributeViewModel = {
+            LineAttributeViewModel(root: root, path: path.lineAttribute, label: label, notifier: notifier)
         }
-    }
-    
-    var subView: AnyView {
-        switch ref.value.type {
-        case .block:
-            return AnyView(BlockAttributeView(viewModel: ref.blockAttributeViewModel))
-        case .line:
-            return AnyView(LineAttributeView(viewModel: ref.lineAttributeViewModel))
+        self._blockAttributeViewModel = {
+            BlockAttributeViewModel(root: root, path: path.blockAttribute, label: label, notifier: notifier)
         }
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
-    
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
-        self.ref = AttributeValue(root: root, path: path, label: label, notifier: notifier)
-    }
-    
-    public init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, delayEdits: Bool = false) {
-        self.ref = AttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
-    }
-    
-    public func send() {
-        objectWillChange.send()
-        if ref.value.isBlock {
-            blockAttributeViewModel.send()
-        } else {
-            lineAttributeViewModel.send()
+
+    init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
+        self._lineAttributeViewModel = {
+            LineAttributeViewModel(valueRef: valueRef.lineAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
         }
+        self._blockAttributeViewModel = {
+            BlockAttributeViewModel(valueRef: valueRef.blockAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
-    
+
 }
