@@ -60,17 +60,17 @@ import Attributes
 import GUUI
 
 class Value<Value> {
-    
+
     private let _isValid: () -> Bool
-    
+
     let valueRef: Ref<Value>
-    
+
     let errorsRef: ConstRef<[String]>
-    
+
     var isValid: Bool {
         _isValid()
     }
-    
+
     var value: Value {
         get {
             valueRef.value
@@ -78,11 +78,11 @@ class Value<Value> {
             valueRef.value = newValue
         }
     }
-    
+
     var errors: [String] {
         errorsRef.value
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value>, defaultValue: Value, notifier: GlobalChangeNotifier? = nil) {
         self.valueRef = Ref(
             get: {
@@ -103,7 +103,7 @@ class Value<Value> {
             }
         self._isValid = { !path.isNil(root.value) }
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value?>, defaultValue: Value, notifier: GlobalChangeNotifier? = nil) {
         self.valueRef = Ref(
             get: {
@@ -124,11 +124,11 @@ class Value<Value> {
             }
         self._isValid = { !path.isNil(root.value) }
     }
-    
+
     public init(valueRef: Ref<Value>, errorsRef: ConstRef<[String]>) {
         self.valueRef = valueRef
         self.errorsRef = errorsRef
         self._isValid = { true }
     }
-    
+
 }

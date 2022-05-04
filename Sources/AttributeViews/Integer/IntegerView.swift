@@ -15,19 +15,19 @@ import SwiftUI
 import Attributes
 
 public struct IntegerView: View {
-    
+
     @ObservedObject var viewModel: IntegerViewModel
-    
+
     var formatter: NumberFormatter {
         let formatter = NumberFormatter()
         formatter.allowsFloats = false
         return formatter
     }
-    
+
     public init(viewModel: IntegerViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             TextField(viewModel.label, value: $viewModel.editingValue, formatter: formatter, onEditingChanged: viewModel.onEditingChanged)

@@ -16,13 +16,13 @@ import Attributes
 import GUUI
 
 public struct TableView: View {
-    
+
     @ObservedObject var viewModel: TableViewModel
-    
+
     public init(viewModel: TableViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             Text(viewModel.label.pretty.capitalized)
@@ -41,7 +41,7 @@ public struct TableView: View {
 
 #if canImport(SwiftUI)
 struct TableView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -78,7 +78,7 @@ struct TableView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: [[LineAttribute]] = []
@@ -103,7 +103,7 @@ struct TableView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct TableViewPreviewView: View {
         
         @StateObject var viewModel: TableViewModel
@@ -113,7 +113,7 @@ struct TableView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

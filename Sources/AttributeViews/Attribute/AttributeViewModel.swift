@@ -66,17 +66,17 @@ import Attributes
 import GUUI
 
 public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     private let ref: AttributeValue
-    
+
     lazy var lineAttributeViewModel: LineAttributeViewModel = {
         ref.lineAttributeViewModel
     }()
-    
+
     lazy var blockAttributeViewModel: BlockAttributeViewModel = {
         ref.blockAttributeViewModel
     }()
-    
+
     var attribute: Attribute {
         get {
             ref.value
@@ -85,7 +85,7 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
             objectWillChange.send()
         }
     }
-    
+
     var subView: AnyView {
         switch ref.value.type {
         case .block:
@@ -94,15 +94,15 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
             return AnyView(LineAttributeView(viewModel: ref.lineAttributeViewModel))
         }
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.ref = AttributeValue(root: root, path: path, label: label, notifier: notifier)
     }
-    
+
     public init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, delayEdits: Bool = false) {
         self.ref = AttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
     }
-    
+
     public func send() {
         objectWillChange.send()
         if ref.value.isBlock {
@@ -111,5 +111,5 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
             lineAttributeViewModel.send()
         }
     }
-    
+
 }

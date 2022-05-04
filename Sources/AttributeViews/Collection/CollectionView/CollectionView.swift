@@ -66,9 +66,9 @@ import Attributes
 import GUUI
 
 public struct CollectionView: View {
-    
+
     @ObservedObject var viewModel: CollectionViewModel
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             Text(viewModel.label.pretty.capitalized)
@@ -82,12 +82,12 @@ public struct CollectionView: View {
             }
         }
     }
-    
+
 }
 
 #if canImport(SwiftUI)
 struct CollectionView_Previews: PreviewProvider {
-    
+
     struct BlockRoot_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -120,7 +120,7 @@ struct CollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct BlockBinding_Preview: View {
         
         @State var value: [Attribute] = []
@@ -138,7 +138,7 @@ struct CollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct LineRoot_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -171,7 +171,7 @@ struct CollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct LineBinding_Preview: View {
         
         @State var value: [Attribute] = []
@@ -189,7 +189,7 @@ struct CollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct CollectionViewPreviewView: View {
         
         @StateObject var viewModel: CollectionViewModel
@@ -199,7 +199,7 @@ struct CollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             LineRoot_Preview()

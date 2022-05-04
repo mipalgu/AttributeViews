@@ -68,21 +68,21 @@ import Attributes
 import GUUI
 
 final class CollectionRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
-    
+
     private let collection: Ref<[Attribute]>
-    
+
     var rowIndex: Int
-    
+
     @Published var showSheet: Bool = false
-    
+
     private var viewModel: AttributeViewModel? = nil
-    
+
     private let attributeViewModel: (Int) -> AttributeViewModel
-    
+
     var row: Attribute {
         rowIndex >= collection.value.count ? Attribute.line("") : collection.value[rowIndex]
     }
-    
+
     var view: AnyView {
         guard rowIndex < collection.value.count else {
             return AnyView(EmptyView())
@@ -94,16 +94,16 @@ final class CollectionRowViewModel: ObservableObject, Identifiable, GlobalChange
         self.viewModel = viewModel
         return AnyView(AttributeView(viewModel: viewModel))
     }
-    
+
     init(collection: Ref<[Attribute]>, rowIndex: Int, attributeViewModel: @escaping (Int) -> AttributeViewModel) {
         self.collection = collection
         self.rowIndex = rowIndex
         self.attributeViewModel = attributeViewModel
     }
-    
+
     func send() {
         objectWillChange.send()
         viewModel = nil
     }
-    
+
 }

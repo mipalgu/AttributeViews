@@ -66,15 +66,15 @@ import Attributes
 import GUUI
 
 public extension ConstRef {
-    
+
     subscript<Path: ReadOnlyPathProtocol>(readOnly path: Path) -> ConstRef<Path.Value> where Path.Root == T {
         return self[dynamicMember: path.keyPath]
     }
-    
+
 }
 
 public extension Ref {
-    
+
     subscript<Path: PathProtocol>(path path: Path) -> Ref<Path.Value> where Path.Root == T {
         return self[dynamicMember: path.path]
     }

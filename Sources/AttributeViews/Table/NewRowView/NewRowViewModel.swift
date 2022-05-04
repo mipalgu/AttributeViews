@@ -67,15 +67,15 @@ import Attributes
 import GUUI
 
 final class NewRowViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     @Published var newRow: [LineAttributeViewModel]
-    
+
     let emptyRow: [LineAttribute]
-    
+
     let errors: ConstRef<[[String]]>
-    
+
     let bodyViewModel: TableBodyViewModel
-    
+
     init(newRow: [LineAttribute], emptyRow: [LineAttribute], errors: ConstRef<[[String]]>, bodyViewModel: TableBodyViewModel) {
         self.newRow = newRow.map {
             LineAttributeViewModel(valueRef: Ref(copying: $0), errorsRef: ConstRef(copying: []), label: "")
@@ -84,19 +84,19 @@ final class NewRowViewModel: ObservableObject, GlobalChangeNotifier {
         self.errors = errors
         self.bodyViewModel = bodyViewModel
     }
-    
+
     func addElement() {
         bodyViewModel.addElement(newRow: newRow.map(\.lineAttribute))
         zip(newRow, emptyRow).forEach {
             $0.lineAttribute = $1
         }
     }
-    
+
     func send() {
         objectWillChange.send()
         newRow.forEach {
             $0.send()
         }
     }
-    
+
 }

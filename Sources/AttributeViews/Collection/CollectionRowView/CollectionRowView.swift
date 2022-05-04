@@ -67,15 +67,15 @@ import Attributes
 import GUUI
 
 struct CollectionRowView: View {
-    
+
     @ObservedObject var viewModel: CollectionRowViewModel
     let onDelete: () -> Void
-    
+
     init(viewModel: CollectionRowViewModel, onDelete: @escaping () -> Void = {}) {
         self._viewModel = ObservedObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
-    
+
     var body: some View {
         HStack {
             if viewModel.row.type.isRecursive {
@@ -106,7 +106,7 @@ struct CollectionRowView: View {
 
 #if canImport(SwiftUI)
 struct CollectionRowView_Previews: PreviewProvider {
-    
+
 //    struct Root_Preview: View {
 //
 //        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -150,7 +150,7 @@ struct CollectionRowView_Previews: PreviewProvider {
 //        }
 //
 //    }
-    
+
     struct Binding_Preview: View {
         
         @State var value: [Attribute] = [.line("Hello"), .line("World")]
@@ -177,7 +177,7 @@ struct CollectionRowView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct CollectionRowPreviewView: View {
         
         @StateObject var viewModel: CollectionRowViewModel
@@ -187,7 +187,7 @@ struct CollectionRowView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
 //            Root_Preview()

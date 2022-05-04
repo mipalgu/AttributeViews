@@ -14,22 +14,22 @@ import SwiftUI
 import Attributes
 
 public struct CodeView<Label: View>: View {
-    
+
     @Binding var value: Code
     @Binding var errors: [String]
-    
+
     let label: () -> Label
     let language: Language
     let onCommit: ((Code) -> Void)?
-    
+
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, label: String, language: Language, notifier: GlobalChangeNotifier? = nil) where Label == Text {
         self.init(root: root, path: path, language: language, notifier: notifier, label: { Text(label.capitalized) })
     }
-    
+
     public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), label: String, language: Language, delayEdits: Bool = false) where Label == Text {
         self.init(value: value, errors: errors, language: language, delayEdits: delayEdits, label: { Text(label.capitalized) })
     }
-    
+
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Code>, language: Language, notifier: GlobalChangeNotifier? = nil, label: @escaping () -> Label) {
         self.init(
             value: Binding(
@@ -51,11 +51,11 @@ public struct CodeView<Label: View>: View {
             }
         }
     }
-    
+
     public init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, delayEdits: Bool = false, label: @escaping () -> Label) {
         self.init(value: value, errors: errors, language: language, label: label, onCommit: delayEdits ? { value.wrappedValue = $0 } : nil)
     }
-    
+
     private init(value: Binding<Code>, errors: Binding<[String]> = .constant([]), language: Language, label: @escaping () -> Label, onCommit: ((Code) -> Void)?) {
         self._value = value
         self._errors = errors
@@ -63,7 +63,7 @@ public struct CodeView<Label: View>: View {
         self.language = language
         self.onCommit = onCommit
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             label()
@@ -86,7 +86,7 @@ public struct CodeView<Label: View>: View {
 
 #if canImport(SwiftUI)
 struct CodeView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -106,7 +106,7 @@ struct CodeView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: String = "let f = 2.3\nlet s = \"hello\""
@@ -117,7 +117,7 @@ struct CodeView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

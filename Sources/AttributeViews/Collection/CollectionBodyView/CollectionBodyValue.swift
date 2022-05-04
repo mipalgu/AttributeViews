@@ -60,25 +60,25 @@ import Attributes
 import GUUI
 
 final class CollectionBodyValue: Value<[Attribute]> {
-    
+
     private let _attributeViewModel: (Int) -> AttributeViewModel
-    
+
     override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, defaultValue: [Attribute] = [], notifier: GlobalChangeNotifier? = nil) {
         self._attributeViewModel = {
             AttributeViewModel(root: root, path: path[$0], label: "", notifier: notifier)
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
-    
+
     override init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]>) {
         self._attributeViewModel = {
             AttributeViewModel(valueRef: valueRef[$0], errorsRef: ConstRef(copying: []), label: "")
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
-    
+
     func viewModel(forRow row: Int) -> CollectionRowViewModel {
         CollectionRowViewModel(collection: valueRef, rowIndex: row, attributeViewModel: _attributeViewModel)
     }
-    
+
 }

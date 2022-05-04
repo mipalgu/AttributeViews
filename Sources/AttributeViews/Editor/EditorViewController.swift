@@ -68,22 +68,22 @@ import Foundation
 import Cocoa
 
 final class EditorViewController: NSViewController {
-    
+
     let coordinator: Editor.Coordinator
-    
+
     init(coordinator: Editor.Coordinator) {
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         return nil
     }
-    
+
     override func viewWillDisappear() {
         coordinator.viewWillDisappear()
     }
-    
+
 }
 
 #endif

@@ -59,7 +59,7 @@
 import Attributes
 
 extension Attribute {
-    
+
     var underestimatedHeight: Int {
         switch self {
         case .line(let lineAttribute):
@@ -68,19 +68,19 @@ extension Attribute {
             return blockAttribute.underestimatedHeight
         }
     }
-    
+
 }
 
 extension LineAttribute {
-    
+
     var underestimatedHeight: Int {
         return 28
     }
-    
+
 }
 
 extension BlockAttribute {
-    
+
     var underestimatedHeight: Int {
         switch self {
         case .code, .text:
@@ -95,5 +95,5 @@ extension BlockAttribute {
             return rows.count * LineAttribute.line("").underestimatedHeight + 75
         }
     }
-    
+
 }

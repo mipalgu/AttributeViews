@@ -57,7 +57,7 @@
  */
 
 public protocol GlobalChangeNotifier: AnyObject {
-    
+
     func send()
-    
+
 }

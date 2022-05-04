@@ -66,9 +66,9 @@ import Attributes
 import GUUI
 
 struct CollectionBodyView: View {
-    
+
     @ObservedObject var viewModel: CollectionBodyViewModel
-    
+
     var body: some View {
         List(selection: $viewModel.selection) {
             ForEach(viewModel.rows, id: \.id) { row in
@@ -86,5 +86,5 @@ struct CollectionBodyView: View {
             viewModel.selection.removeAll(keepingCapacity: true)
         }
     }
-    
+
 }

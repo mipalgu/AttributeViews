@@ -67,33 +67,33 @@ import Attributes
 import GUUI
 
 final class NewAttributeViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     @Published var newRow: AttributeViewModel
-    
+
     @Published var showSheet: Bool = false
-    
+
     let emptyRow: Attribute
-    
+
     let errors: ConstRef<[String]>
-    
+
     let bodyViewModel: CollectionBodyViewModel
-    
+
     init(newRow: Attribute, emptyRow: Attribute, errors: ConstRef<[String]>, bodyViewModel: CollectionBodyViewModel) {
         self.newRow = AttributeViewModel(valueRef: Ref(copying: newRow), errorsRef: ConstRef(copying: []), label: "")
         self.emptyRow = emptyRow
         self.errors = errors
         self.bodyViewModel = bodyViewModel
     }
-    
+
     func addElement() {
         bodyViewModel.addElement(newRow: newRow.attribute)
         newRow.attribute = emptyRow
         showSheet = false
     }
-    
+
     func send() {
         objectWillChange.send()
         newRow.send()
     }
-    
+
 }

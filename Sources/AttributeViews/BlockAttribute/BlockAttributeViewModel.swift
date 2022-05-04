@@ -66,27 +66,27 @@ import Attributes
 import GUUI
 
 fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
-    
+
     private let _tableViewModel: () -> TableViewModel
-    
+
     private let _complexViewModel: () -> ComplexViewModel
-    
+
     private let _collectionViewModel: () -> CollectionViewModel
-    
+
     private let _subView: (TableViewModel, ComplexViewModel, CollectionViewModel) -> AnyView
-    
+
     var tableViewModel: TableViewModel {
         _tableViewModel()
     }
-    
+
     var complexViewModel: ComplexViewModel {
         _complexViewModel()
     }
-    
+
     var collectionViewModel: CollectionViewModel {
         _collectionViewModel()
     }
-    
+
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, defaultValue: BlockAttribute = .text(""), label: String, notifier: GlobalChangeNotifier? = nil) {
         self._tableViewModel = {
             if path.isNil(root.value) {
@@ -138,7 +138,7 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
-    
+
     init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
         self._tableViewModel = {
             let columns: [BlockAttributeType.TableColumn]
@@ -189,29 +189,29 @@ fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
-    
+
     func subView(tableViewModel: TableViewModel, complexViewModel: ComplexViewModel, collectionViewModel: CollectionViewModel) -> AnyView {
         _subView(tableViewModel, complexViewModel, collectionViewModel)
     }
-    
+
 }
 
 public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     private let ref: BlockAttributeValue
-    
+
     lazy var tableViewModel: TableViewModel = {
         ref.tableViewModel
     }()
-    
+
     lazy var complexViewModel: ComplexViewModel = {
         ref.complexViewModel
     }()
-    
+
     lazy var collectionViewModel: CollectionViewModel = {
         ref.collectionViewModel
     }()
-    
+
     var blockAttribute: BlockAttribute {
         get {
             ref.value
@@ -220,24 +220,24 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
             ref.value = newValue
         }
     }
-    
+
     var subView: AnyView {
         ref.subView(tableViewModel: tableViewModel, complexViewModel: complexViewModel, collectionViewModel: collectionViewModel)
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.ref = BlockAttributeValue(root: root, path: path, label: label, notifier: notifier)
     }
-    
+
     public init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool = false) {
         self.ref = BlockAttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
     }
-    
+
     public func send() {
         objectWillChange.send()
         tableViewModel.send()
         complexViewModel.send()
         collectionViewModel.send()
     }
-    
+
 }

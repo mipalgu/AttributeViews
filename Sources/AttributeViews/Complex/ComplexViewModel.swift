@@ -66,45 +66,45 @@ import Attributes
 import GUUI
 
 final class ComplexValue: Value<[String: Attribute]> {
-    
+
     private let _viewModel: (String) -> AttributeViewModel
-    
+
     override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, defaultValue: [String: Attribute] = [:], notifier: GlobalChangeNotifier? = nil) {
         self._viewModel = { AttributeViewModel(root: root, path: path[$0].wrappedValue, label: $0, notifier: notifier) }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
-    
+
     init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
         self._viewModel = { AttributeViewModel(valueRef: valueRef[$0].wrappedValue, errorsRef: ConstRef(copying: []), label: $0, delayEdits: delayEdits) }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
-    
+
     func viewModel(forAttribute attribute: String) -> AttributeViewModel {
         self._viewModel(attribute)
     }
-    
+
 }
 
 public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     private let ref: ComplexValue
-    
+
     private var expanded: [String: Bool] = [:]
-    
+
     private var attributeViewModels: [String: AttributeViewModel] = [:]
-    
+
     @Published public var label: String
-    
+
     let _fields: () -> [Field]
-    
+
     public var fields: [Field] {
         _fields()
     }
-    
+
     var errors: [String] {
         ref.errors
     }
-    
+
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fieldsPath: Attributes.Path<Root, [Field]>, notifier: GlobalChangeNotifier? = nil) {
         self._fields = {
             guard !fieldsPath.isNil(root.value) else {
@@ -115,7 +115,7 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         self.ref = ComplexValue(root: root, path: path, notifier: notifier)
         self.label = label
     }
-    
+
     init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, fields: [Field], delayEdits: Bool = false) {
         self._fields = {
             fields
@@ -123,7 +123,7 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         self.ref = ComplexValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
         self.label = label
     }
-    
+
     func expandedBinding(_ fieldName: String) -> Binding<Bool> {
         return Binding(
             get: { self.expanded[fieldName] ?? false },
@@ -133,7 +133,7 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
             }
         )
     }
-    
+
     public func send() {
         attributeViewModels.values.forEach {
             $0.send()
@@ -141,13 +141,13 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         objectWillChange.send()
         sync()
     }
-    
+
     func sync() {
         attributeViewModels.values.forEach {
             $0.send()
         }
     }
-    
+
     func viewModel(forField fieldName: String) -> AttributeViewModel {
         if let viewModel = attributeViewModels[fieldName] {
             return viewModel
@@ -156,5 +156,5 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         attributeViewModels[fieldName] = viewModel
         return viewModel
     }
-    
+
 }

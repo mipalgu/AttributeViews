@@ -14,15 +14,15 @@ import SwiftUI
 import Attributes
 
 public struct EnumerableCollectionView: View {
-    
+
     @Binding var value: Set<String>
     @Binding var errors: [String]
-    
+
     let label: String
     let validValues: Set<String>
-    
+
     //@EnvironmentObject var config: Config
-    
+
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, Set<String>>, label: String, validValues: Set<String>, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
@@ -44,14 +44,14 @@ public struct EnumerableCollectionView: View {
             validValues: validValues
         )
     }
-    
+
     public init(value: Binding<Set<String>>, errors: Binding<[String]> = .constant([]), label: String, validValues: Set<String>) {
         self._value = value
         self._errors = errors
         self.label = label
         self.validValues = validValues
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             Text(label + ":")
@@ -81,12 +81,12 @@ public struct EnumerableCollectionView: View {
             }
         }
     }
-    
+
 }
 
 #if canImport(SwiftUI)
 struct EnumerableCollectionView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -106,7 +106,7 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: Set<String> = ["A", "D", "F"]
@@ -122,7 +122,7 @@ struct EnumerableCollectionView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

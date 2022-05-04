@@ -67,11 +67,11 @@ import Attributes
 import GUUI
 
 struct NewRowView: View {
-    
+
     @ObservedObject var viewModel: NewRowViewModel
-    
+
     //@EnvironmentObject var config: Config
-    
+
     var body: some View {
         VStack {
             HStack {
@@ -89,5 +89,5 @@ struct NewRowView: View {
             }
         }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
     }
-    
+
 }

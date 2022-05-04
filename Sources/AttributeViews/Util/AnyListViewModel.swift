@@ -59,7 +59,7 @@
 import Foundation
 
 struct AnyListViewModel<View, RowData, RowView, ErrorData>: ListViewModelProtocol {
-    
+
     private let _listErrors: () -> [String]
     private let _latestValue: () -> [RowData]
     private let _newRow: () -> RowData
@@ -69,20 +69,20 @@ struct AnyListViewModel<View, RowData, RowView, ErrorData>: ListViewModelProtoco
     private let _moveElements: (View, IndexSet, Int) -> Void
     private let _errors: (View, Int) -> [ErrorData]
     private let _rowView: (View, Int) -> RowView
-    
-    
+
+
     var listErrors: [String] {
         self._listErrors()
     }
-    
+
     var latestValue: [RowData] {
         self._latestValue()
     }
-    
+
     var newRow: RowData {
         self._newRow()
     }
-    
+
     init<ViewModel: ListViewModelProtocol>(_ viewModel: ViewModel) where ViewModel.View == View, ViewModel.RowData == RowData, ViewModel.RowView == RowView, ViewModel.ErrorData == ErrorData {
         self._listErrors = { viewModel.listErrors }
         self._latestValue = { viewModel.latestValue }
@@ -94,29 +94,29 @@ struct AnyListViewModel<View, RowData, RowView, ErrorData>: ListViewModelProtoco
         self._errors = viewModel.errors
         self._rowView = viewModel.rowView
     }
-    
+
     func addElement(_ view: View) {
         self._addElement(view)
     }
-    
+
     func deleteRow(_ view: View, row: Int) {
         self._deleteRow(view, row)
     }
-    
+
     func deleteElements(_ view: View, atOffsets offsets: IndexSet) {
         self._deleteElements(view, offsets)
     }
-    
+
     func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int) {
         self._moveElements(view, source, destination)
     }
-    
+
     func errors(_ view: View, forRow row: Int) -> [ErrorData] {
         self._errors(view, row)
     }
-    
+
     func rowView(_ view: View, forRow row: Int) -> RowView {
         self._rowView(view, row)
     }
-    
+
 }

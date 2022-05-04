@@ -59,29 +59,29 @@
 import Foundation
 
 protocol ListViewModelProtocol {
-    
+
     associatedtype View
     associatedtype RowData
     associatedtype RowView
     associatedtype ErrorData
-    
+
     var listErrors: [String] { get }
-    
+
     var latestValue: [RowData] { get }
-    
+
     var newRow: RowData { get }
-    
+
     func addElement(_ view: View)
     func deleteRow(_ view: View, row: Int)
     func deleteElements(_ view: View, atOffsets offsets: IndexSet)
     func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int)
     func errors(_ view: View, forRow row: Int) -> [ErrorData]
     func rowView(_ view: View, forRow row: Int) -> RowView
-    
+
 }
 
 extension ListViewModelProtocol where View: ListViewProtocol, View.RowData == RowData {
-    
+
     func deleteRow(_ view: View, row: Int) {
         guard row < view.value.count else {
             return
@@ -91,27 +91,27 @@ extension ListViewModelProtocol where View: ListViewProtocol, View.RowData == Ro
             : [row]
         self.deleteElements(view, atOffsets: offsets)
     }
-    
+
 }
 
 extension ListViewModelProtocol where View: ListViewProtocol, Self: RootPathContainer, Self.PathData == [RowData], View.RowData == RowData {
-    
+
     var listErrors: [String] {
         root.wrappedValue.errorBag.errors(includingDescendantsForPath: path).map(\.message)
     }
-    
+
     var latestValue: [RowData] {
         root.wrappedValue[keyPath: path.keyPath]
     }
-    
+
     func addElement(_ view: View) {
         try? root.wrappedValue.addItem(view.newRow, to: path)
     }
-    
+
     func deleteElements(_ view: View, atOffsets offsets: IndexSet) {
         _ = try? root.wrappedValue.deleteItems(table: path, items: offsets)
     }
-    
+
     func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int) {
         view.selection.removeAll()
         guard let sourceMin = source.min() else {
@@ -122,29 +122,29 @@ extension ListViewModelProtocol where View: ListViewProtocol, Self: RootPathCont
             view.value[$0].index = $0
         }
     }
-    
-    
+
+
 }
 
 extension ListViewModelProtocol where View: ListViewProtocol, Self: ValueErrorsContainer, View.RowData == RowData, Value == [RowData] {
-    
+
     var listErrors: [String] {
         errors.wrappedValue
     }
-    
+
     var latestValue: [RowData] {
         value.wrappedValue
     }
-    
+
     func addElement(_ view: View) {
         value.wrappedValue.append(view.newRow)
         view.newRow = self.newRow
     }
-    
+
     func deleteElements(_ view: View, atOffsets offsets: IndexSet) {
         value.wrappedValue.remove(atOffsets: offsets)
     }
-    
+
     func moveElements(_ view: View, atOffsets source: IndexSet, to destination: Int) {
         view.selection.removeAll()
         guard let sourceMin = source.min() else {
@@ -155,5 +155,5 @@ extension ListViewModelProtocol where View: ListViewProtocol, Self: ValueErrorsC
             view.value[$0].index = $0
         }
     }
-    
+
 }

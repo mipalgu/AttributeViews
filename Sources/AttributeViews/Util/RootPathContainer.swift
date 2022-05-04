@@ -65,12 +65,12 @@ import SwiftUI
 import Attributes
 
 protocol RootPathContainer {
-    
+
     associatedtype Root: Modifiable
     associatedtype PathData
-    
+
     var root: Binding<Root> { get }
-    
+
     var path: Attributes.Path<Root, PathData> { get }
-    
+
 }

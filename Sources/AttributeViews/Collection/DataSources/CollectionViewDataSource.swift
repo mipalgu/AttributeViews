@@ -1,6 +1,5 @@
-//
 /*
- * File.swift
+ * CollectionViewDataSource.swift
  * 
  *
  * Created by Callum McColl on 18/9/21.
@@ -62,10 +61,10 @@ import Foundation
 import Attributes
 
 protocol CollectionViewDataSource {
-    
+
     func addElement(_ row: Attribute)
     func deleteElements(atOffsets offsets: IndexSet)
     func moveElements(atOffsets source: IndexSet, to destination: Int)
     func viewModel(forElementAtRow row: Int) -> AttributeViewModel
-    
+
 }

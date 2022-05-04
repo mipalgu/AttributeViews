@@ -61,25 +61,25 @@ import Foundation
 import Attributes
 
 struct BindingCollectionViewDataSource: CollectionViewDataSource {
-    
+
     let ref: Ref<[Attribute]>
-    
+
     let delayEdits: Bool
-    
+
     func addElement(_ row: Attribute) {
         ref.value.append(row)
     }
-    
+
     func deleteElements(atOffsets offsets: IndexSet) {
         ref.value.remove(atOffsets: offsets)
     }
-    
+
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         ref.value.move(fromOffsets: source, toOffset: destination)
     }
-    
+
     func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
         AttributeViewModel(valueRef: ref[row], errorsRef: ConstRef(copying: []), label: "")
     }
-    
+
 }

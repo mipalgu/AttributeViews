@@ -68,25 +68,25 @@ import Foundation
 import Cocoa
 
 struct Editor: NSViewControllerRepresentable {
-    
+
     @Binding var editingText: String
     let size: CGSize
-    
+
     let onCommit: ((String) -> Void)?
-    
+
     init(editingText: Binding<String>, size: CGSize, onCommit: ((String) -> Void)? = nil) {
         self._editingText = editingText
         self.size = size
         self.onCommit = onCommit
     }
-    
+
     func makeCoordinator() -> Coordinator {
         return Coordinator(
             changeValue: onCommit == nil ? { editingText = $0 } : { _ in },
             onCommit: onCommit ?? { _ in }
         )
     }
-    
+
     func makeNSViewController(context: Context) -> EditorViewController {
         let scrollView = NSTextView.scrollableTextView()
         scrollView.setFrameSize(size)
@@ -119,9 +119,9 @@ struct Editor: NSViewControllerRepresentable {
         controller.view = scrollView
         return controller
     }
-    
+
     func updateNSViewController(_ nsViewController: EditorViewController, context: Context) {}
-    
+
     final class Coordinator: NSObject, NSTextViewDelegate {
         
         var editing: Bool = false
@@ -155,7 +155,7 @@ struct Editor: NSViewControllerRepresentable {
         }
         
     }
-    
+
 }
 
 #else
@@ -168,7 +168,7 @@ struct Editor: View {
     @Binding var text: String
 
     var size: CGSize
-    
+
     var onCommit: ((Code) -> Void)?
 
     init(editingText: Binding<String>, size: CGSize, onCommit: ((Code) -> Void)?) {

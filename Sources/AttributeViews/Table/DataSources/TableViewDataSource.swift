@@ -60,10 +60,10 @@ import Attributes
 import Foundation
 
 protocol TableViewDataSource {
-    
+
     func addElement(_ row: [LineAttribute])
     func deleteElements(atOffsets offsets: IndexSet)
     func moveElements(atOffsets source: IndexSet, to destination: Int)
     func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel
-    
+
 }

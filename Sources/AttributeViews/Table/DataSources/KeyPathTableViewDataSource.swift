@@ -67,25 +67,25 @@ import Attributes
 import GUUI
 
 struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
-    
+
     let root: Ref<Root>
     let path: Attributes.Path<Root, [[LineAttribute]]>
     weak var notifier: GlobalChangeNotifier?
-    
+
     func addElement(_ row: [LineAttribute]) {
         _ = root.value.addItem(row, to: path)
     }
-    
+
     func deleteElements(atOffsets offsets: IndexSet) {
         _ = root.value.deleteItems(table: path, items: offsets)
     }
-    
+
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         _ = root.value.moveItems(table: path, from: source, to: destination)
     }
-    
+
     func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
         LineAttributeViewModel(root: root, path: path[row][column], label: "", notifier: notifier)
     }
-    
+
 }

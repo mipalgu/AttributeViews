@@ -66,21 +66,21 @@ import Attributes
 import GUUI
 
 public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNotifier {
-    
+
     private let ref: Value<T>
-    
+
     public let label: String
-    
+
     @Published var editing: Bool = false
-    
+
     @Published var editValue: T
-    
+
     let onCommit: ((T) -> Void)?
-    
+
     var errors: [String] {
         ref.errors
     }
-    
+
     var value: T {
         get {
             ref.value
@@ -89,7 +89,7 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             objectWillChange.send()
         }
     }
-    
+
     var editingValue: T {
         get {
             if nil == onCommit {
@@ -105,7 +105,7 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             }
         }
     }
-    
+
     public init<Root: Modifiable>(
         root: Ref<Root>,
         path: Attributes.Path<Root, T>,
@@ -137,7 +137,7 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             }
         }
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
@@ -156,7 +156,7 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             }
         }
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
@@ -175,31 +175,31 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             }
         }
     }
-    
+
     public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByStringLiteral {
         self.init(root: root, path: path, defaultValue: "", label: label, notifier: notifier)
     }
-    
+
     public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByIntegerLiteral {
         self.init(root: root, path: path, defaultValue: 0, label: label, notifier: notifier)
     }
-    
+
     public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByBooleanLiteral {
         self.init(root: root, path: path, defaultValue: false, label: label, notifier: notifier)
     }
-    
+
     public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByStringLiteral {
         self.init(root: root, path: path, defaultValue: "", label: label, notifier: notifier)
     }
-    
+
     public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByIntegerLiteral {
         self.init(root: root, path: path, defaultValue: 0, label: label, notifier: notifier)
     }
-    
+
     public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByBooleanLiteral {
         self.init(root: root, path: path, defaultValue: false, label: label, notifier: notifier)
     }
-    
+
     public init(valueRef: Ref<T>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, delayEdits: Bool = false) {
         self.ref = Value(valueRef: valueRef, errorsRef: errorsRef)
         self.label = label
@@ -212,11 +212,11 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
             self.onCommit = nil
         }
     }
-    
+
     public func send() {
         objectWillChange.send()
     }
-    
+
     func onEditingChanged(_ editing: Bool) {
         if nil == onCommit {
             return
@@ -227,5 +227,5 @@ public final class DelayEditValueViewModel<T>: ObservableObject, GlobalChangeNot
         }
         editValue = value
     }
-    
+
 }

@@ -68,19 +68,19 @@ import Attributes
 import GUUI
 
 public final class CollectionViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     let newRowViewModel: NewAttributeViewModel
-    
+
     let collectionBodyViewModel: CollectionBodyViewModel
-    
+
     let label: String
-    
+
     private let errorsRef: ConstRef<[String]>
-    
+
     var listErrors: [String] {
         errorsRef.value
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, label: String, type: AttributeType, notifier: GlobalChangeNotifier? = nil) {
         let emptyRow = type.defaultValue
         let bodyViewModel = CollectionBodyViewModel(root: root, path: path, type: type, notifier: notifier)
@@ -91,7 +91,7 @@ public final class CollectionViewModel: ObservableObject, GlobalChangeNotifier {
             get: { root.value.errorBag.errors(forPath: path).map(\.message) }
         )
     }
-    
+
     public init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]>, label: String, type: AttributeType, delayEdits: Bool = false) {
         let emptyRow = type.defaultValue
         let bodyViewModel = CollectionBodyViewModel(valueRef: valueRef, errorsRef: ConstRef(copying: []), type: type, delayEdits: delayEdits)
@@ -100,11 +100,11 @@ public final class CollectionViewModel: ObservableObject, GlobalChangeNotifier {
         self.label = label
         self.errorsRef = errorsRef
     }
-    
+
     public func send() {
         objectWillChange.send()
         newRowViewModel.send()
         collectionBodyViewModel.send()
     }
-    
+
 }

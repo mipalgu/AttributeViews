@@ -66,17 +66,17 @@ import SwiftUI
 import Attributes
 
 struct IconButton<Label: View>: View {
-    
+
     let action: () -> Void
-    
+
     let label: () -> Label
-    
+
     let foregroundColor: Color
-    
+
     let highlightColor: Color
-    
+
     @State var highlighted: Bool = false
-    
+
     var body: some View {
         ZStack {
             Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 0.01).frame(width: 28, height: 28)
@@ -95,5 +95,5 @@ struct IconButton<Label: View>: View {
         }
         .clipShape(RoundedRectangle(cornerSize: CGSize(width: 5, height: 5)))
     }
-    
+
 }

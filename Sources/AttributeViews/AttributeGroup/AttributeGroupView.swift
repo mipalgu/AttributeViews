@@ -16,13 +16,13 @@ import SwiftUI
 import Attributes
 
 public struct AttributeGroupView: View {
-    
+
     @ObservedObject var viewModel: AttributeGroupViewModel
-    
+
     public init(viewModel: AttributeGroupViewModel) {
         self.viewModel = viewModel
     }
-    
+
     @ViewBuilder
     public var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
@@ -31,13 +31,13 @@ public struct AttributeGroupView: View {
             }
         }
     }
-    
+
 }
 
 import GUUI
 #if canImport(SwiftUI)
 struct AttributeGroupView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -61,7 +61,7 @@ struct AttributeGroupView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct AttributeGroupPreviewView: View {
         
         @StateObject var viewModel: AttributeGroupViewModel
@@ -71,7 +71,7 @@ struct AttributeGroupView_Previews: PreviewProvider {
         }
         
     }
-    
+
 //    struct Binding_Preview: View {
 //
 //        @State var value: AttributeGroup = AttributeGroup(
@@ -88,7 +88,7 @@ struct AttributeGroupView_Previews: PreviewProvider {
 //        }
 //
 //    }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

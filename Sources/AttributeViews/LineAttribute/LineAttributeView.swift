@@ -14,13 +14,13 @@ import SwiftUI
 import Attributes
 
 public struct LineAttributeView: View {
-    
+
     @ObservedObject var viewModel: LineAttributeViewModel
-    
+
     public init(viewModel: LineAttributeViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         switch viewModel.lineAttribute.type {
         case .bool:

@@ -63,10 +63,10 @@ import SwiftUI
 #endif
 
 protocol ValueErrorsContainer {
-    
+
     associatedtype Value
-    
+
     var value: Binding<Value> { get }
     var errors: Binding<[String]> { get }
-    
+
 }

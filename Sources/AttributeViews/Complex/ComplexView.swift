@@ -14,15 +14,15 @@ import SwiftUI
 import Attributes
 
 public struct ComplexView: View {
-    
+
     @ObservedObject var viewModel: ComplexViewModel
-    
+
     //@EnvironmentObject var config: Config
-    
+
     public init(viewModel: ComplexViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack {
             if !viewModel.fields.isEmpty {
@@ -49,14 +49,14 @@ public struct ComplexView: View {
             }
         }
     }
-    
+
 }
 
 import GUUI
 
 #if canImport(SwiftUI)
 struct ComplexView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var expanded: [AnyKeyPath: Bool] = [:]
@@ -88,7 +88,7 @@ struct ComplexView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: [String: Attribute] = [
@@ -109,7 +109,7 @@ struct ComplexView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct ComplexViewPreview: View {
         
         @StateObject var viewModel: ComplexViewModel
@@ -119,7 +119,7 @@ struct ComplexView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

@@ -16,11 +16,11 @@ import Attributes
 public struct BlockAttributeView: View{
 
     @ObservedObject var viewModel: BlockAttributeViewModel
-    
+
     public init(viewModel: BlockAttributeViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         viewModel.subView
     }

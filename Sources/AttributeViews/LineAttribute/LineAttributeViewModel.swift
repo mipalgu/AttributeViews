@@ -66,31 +66,31 @@ import Attributes
 import GUUI
 
 fileprivate final class LineAttributeValue: Value<LineAttribute> {
-    
+
     private let _boolViewModel: () -> BoolViewModel
-    
+
     private let _integerViewModel: () -> IntegerViewModel
-    
+
     private let _floatViewModel: () -> FloatViewModel
-    
+
     private let _expressionViewModel: () -> ExpressionViewModel
-    
+
     private let _enumeratedViewModel: () -> EnumeratedViewModel
-    
+
     private let _lineViewModel: () -> LineViewModel
-    
+
     var boolViewModel: BoolViewModel { _boolViewModel() }
-    
+
     var integerViewModel: IntegerViewModel { _integerViewModel() }
-    
+
     var floatViewModel: FloatViewModel { _floatViewModel() }
-    
+
     var expressionViewModel: ExpressionViewModel { _expressionViewModel() }
-    
+
     var enumeratedViewModel: EnumeratedViewModel { _enumeratedViewModel() }
-    
+
     var lineViewModel: LineViewModel { _lineViewModel() }
-    
+
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, LineAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self._boolViewModel = {
             BoolViewModel(root: root, path: path.boolValue, label: label, notifier: notifier)
@@ -112,7 +112,7 @@ fileprivate final class LineAttributeValue: Value<LineAttribute> {
         }
         super.init(root: root, path: path, defaultValue: .bool(false), notifier: notifier)
     }
-    
+
     init(valueRef: Ref<LineAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
         self._boolViewModel = {
             BoolViewModel(valueRef: valueRef.boolValue, errorsRef: errorsRef, label: label)
@@ -134,37 +134,37 @@ fileprivate final class LineAttributeValue: Value<LineAttribute> {
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
-    
+
 }
 
 public final class LineAttributeViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
-    
+
     private let ref: LineAttributeValue
-    
+
     lazy var boolViewModel: BoolViewModel = {
         ref.boolViewModel
     }()
-    
+
     lazy var integerViewModel: IntegerViewModel = {
         ref.integerViewModel
     }()
-    
+
     lazy var floatViewModel: FloatViewModel = {
         ref.floatViewModel
     }()
-    
+
     lazy var expressionViewModel: ExpressionViewModel = {
         ref.expressionViewModel
     }()
-    
+
     lazy var enumeratedViewModel: EnumeratedViewModel = {
         ref.enumeratedViewModel
     }()
-    
+
     lazy var lineViewModel: LineViewModel = {
         ref.lineViewModel
     }()
-    
+
     var lineAttribute: LineAttribute {
         get {
             ref.value
@@ -187,15 +187,15 @@ public final class LineAttributeViewModel: ObservableObject, Identifiable, Globa
             }
         }
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, LineAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.ref = LineAttributeValue(root: root, path: path, label: label, notifier: notifier)
     }
-    
+
     public init(valueRef: Ref<LineAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool = false) {
         self.ref = LineAttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
     }
-    
+
     public func send() {
         objectWillChange.send()
         if ref.isValid {
@@ -215,17 +215,17 @@ public final class LineAttributeViewModel: ObservableObject, Identifiable, Globa
             }
         }
     }
-    
+
 }
 
 extension LineAttributeViewModel: Hashable {
-    
+
     public static func ==(lhs: LineAttributeViewModel, rhs: LineAttributeViewModel) -> Bool {
         lhs.lineAttribute == rhs.lineAttribute
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(lineAttribute)
     }
-    
+
 }

@@ -14,13 +14,13 @@ import SwiftUI
 import Attributes
 
 public struct BoolView: View {
-    
+
     @ObservedObject var viewModel: BoolViewModel
-    
+
     public init(viewModel: BoolViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             Toggle(viewModel.label, isOn: $viewModel.value)
@@ -39,7 +39,7 @@ import GUUI
 
 #if canImport(SwiftUI)
 struct BoolView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable = EmptyModifiable(attributes: [
@@ -64,7 +64,7 @@ struct BoolView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: Bool = false
@@ -82,7 +82,7 @@ struct BoolView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct BoolPreviewView: View {
         
         @StateObject var viewModel: BoolViewModel
@@ -92,7 +92,7 @@ struct BoolView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

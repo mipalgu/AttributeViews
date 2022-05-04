@@ -61,25 +61,25 @@ import Foundation
 import Attributes
 
 struct KeyPathCollectionViewDataSource<Root: Modifiable>: CollectionViewDataSource {
-    
+
     let root: Ref<Root>
     let path: Attributes.Path<Root, [Attribute]>
     weak var notifier: GlobalChangeNotifier?
-    
+
     func addElement(_ row: Attribute) {
         _ = root.value.addItem(row, to: path)
     }
-    
+
     func deleteElements(atOffsets offsets: IndexSet) {
         _ = root.value.deleteItems(table: path, items: offsets)
     }
-    
+
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         _ = root.value.moveItems(table: path, from: source, to: destination)
     }
-    
+
     func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
         AttributeViewModel(root: root, path: path[row], label: "", notifier: notifier)
     }
-    
+
 }

@@ -68,34 +68,34 @@ import Attributes
 import GUUI
 
 final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     private let ref: CollectionBodyValue
-    
+
     let type: AttributeType
-    
+
     private var rowsData: [Int: CollectionRowViewModel] = [:]
-    
+
     var rows: [CollectionRowViewModel] {
         let values = ref.isValid ? ref.value : []
         return values.indices.map { row(for: $0) }
     }
-    
+
     @Published var selection: Set<ObjectIdentifier> = []
-    
+
     private let dataSource: CollectionViewDataSource
-    
+
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, notifier: GlobalChangeNotifier? = nil) {
         self.ref = CollectionBodyValue(root: root, path: path, notifier: notifier)
         self.type = type
         self.dataSource = KeyPathCollectionViewDataSource<Root>(root: root, path: path, notifier: notifier)
     }
-    
+
     init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), type: AttributeType, delayEdits: Bool = false) {
         self.ref = CollectionBodyValue(valueRef: valueRef, errorsRef: errorsRef)
         self.type = type
         self.dataSource = BindingCollectionViewDataSource(ref: valueRef, delayEdits: delayEdits)
     }
-    
+
     private func row(for index: Int) -> CollectionRowViewModel {
         guard let viewModel = rowsData[index] else {
             let viewModel = CollectionRowViewModel(collection: ref.valueRef, rowIndex: index, attributeViewModel: {
@@ -106,16 +106,16 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         }
         return viewModel
     }
-    
+
     func errors(forRow _: Int) -> [String] {
         []
     }
-    
+
     func addElement(newRow: Attribute) {
         dataSource.addElement(newRow)
         objectWillChange.send()
     }
-    
+
     func deleteRow(row: Int) {
         guard row < rows.count else {
             return
@@ -125,7 +125,7 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
             : [row]
         deleteElements(atOffsets: offsets)
     }
-    
+
     func deleteElements(atOffsets offsets: IndexSet) {
         selection.removeAll()
         dataSource.deleteElements(atOffsets: offsets)
@@ -152,7 +152,7 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         }
         objectWillChange.send()
     }
-    
+
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
@@ -164,10 +164,10 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         })
         objectWillChange.send()
     }
-    
+
     func send() {
         objectWillChange.send()
         rowsData = [:]
     }
-    
+
 }

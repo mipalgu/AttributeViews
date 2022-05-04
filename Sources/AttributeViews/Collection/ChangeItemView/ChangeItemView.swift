@@ -67,25 +67,25 @@ import Attributes
 import GUUI
 
 public struct ChangeItemView<SubView: View>: View {
-    
+
     let label: String
-    
+
     let onSave: (() -> Void)?
-    
+
     let onDelete: (() -> Void)?
-    
+
     let onDismiss: (() -> Void)?
-    
+
     let subView: () -> SubView
-    
+
     public init(label: String, onSave: (() -> Void)? = nil, onDelete: (() -> Void)? = nil, subView: @escaping () -> SubView) {
         self.init(label: label, onSave: onSave, onDelete: onDelete, onDismiss: nil, subView: subView)
     }
-    
+
     public init(label: String, onDismiss: (() -> Void)?, subView: @escaping () -> SubView) {
         self.init(label: label, onSave: nil, onDelete: nil, onDismiss: onDismiss, subView: subView)
     }
-    
+
     private init(label: String, onSave: (() -> Void)?, onDelete: (() -> Void)?, onDismiss: (() -> Void)?, subView: @escaping () -> SubView) {
         self.label = label
         self.onSave = onSave
@@ -93,7 +93,7 @@ public struct ChangeItemView<SubView: View>: View {
         self.onDismiss = onDismiss
         self.subView = subView
     }
-    
+
     public var body: some View {
         VStack {
             ZStack(alignment: .top) {
@@ -120,12 +120,12 @@ public struct ChangeItemView<SubView: View>: View {
             subView()
         }.frame(minWidth: 200, minHeight: 200).padding(10)
     }
-    
+
 }
 
 #if canImport(SwiftUI)
 struct ChangeItemView_Previews: PreviewProvider {
-    
+
     struct Preview: View {
         
         var body: some View {
@@ -135,7 +135,7 @@ struct ChangeItemView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Preview()

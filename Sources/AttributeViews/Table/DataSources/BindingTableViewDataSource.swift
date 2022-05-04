@@ -67,25 +67,25 @@ import Attributes
 import GUUI
 
 struct BindingTableViewDataSource: TableViewDataSource {
-    
+
     let ref: Ref<[[LineAttribute]]>
-    
+
     let delayEdits: Bool
-    
+
     func addElement(_ row: [LineAttribute]) {
         ref.value.append(row)
     }
-    
+
     func deleteElements(atOffsets offsets: IndexSet) {
         ref.value.remove(atOffsets: offsets)
     }
-    
+
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         ref.value.move(fromOffsets: source, toOffset: destination)
     }
-    
+
     func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
         LineAttributeViewModel(valueRef: ref[row][column], errorsRef: ConstRef(copying: []), label: "")
     }
-    
+
 }

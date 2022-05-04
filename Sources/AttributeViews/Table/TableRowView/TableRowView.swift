@@ -66,25 +66,25 @@ import Attributes
 import GUUI
 
 final class TableRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
-    
+
     private let table: Ref<[[LineAttribute]]>
-    
+
     var rowIndex: Int
-    
+
     private var viewModels: [Int: LineAttributeViewModel] = [:]
-    
+
     private let lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
-    
+
     var row: [LineAttribute] {
         rowIndex >= table.value.count ? [] : table.value[rowIndex]
     }
-    
+
     init(table: Ref<[[LineAttribute]]>, rowIndex: Int, lineAttributeViewModel: @escaping (Int, Int) -> LineAttributeViewModel) {
         self.table = table
         self.rowIndex = rowIndex
         self.lineAttributeViewModel = lineAttributeViewModel
     }
-    
+
     func view(atIndex index: Int) -> AnyView {
         guard rowIndex < table.value.count && index < table.value[rowIndex].count else {
             return AnyView(EmptyView())
@@ -96,24 +96,24 @@ final class TableRowViewModel: ObservableObject, Identifiable, GlobalChangeNotif
         viewModels[index] = viewModel
         return AnyView(LineAttributeView(viewModel: viewModel))
     }
-    
+
     func send() {
         objectWillChange.send()
         viewModels = [:]
     }
-    
+
 }
 
 struct TableRowView: View {
-    
+
     @ObservedObject var viewModel: TableRowViewModel
     let onDelete: () -> Void
-    
+
     init(viewModel: TableRowViewModel, onDelete: @escaping () -> Void = {}) {
         self._viewModel = ObservedObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
-    
+
     var body: some View {
         HStack {
             ForEach(viewModel.row.indices, id: \.self) { index in
@@ -134,7 +134,7 @@ struct TableRowView: View {
 
 #if canImport(SwiftUI)
 struct TableRowView_Previews: PreviewProvider {
-    
+
 //    struct Root_Preview: View {
 //
 //        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -178,7 +178,7 @@ struct TableRowView_Previews: PreviewProvider {
 //        }
 //
 //    }
-    
+
     struct Binding_Preview: View {
         
         @State var value: [[LineAttribute]] = [[.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]]
@@ -208,7 +208,7 @@ struct TableRowView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct TableRowPreviewView: View {
         
         @StateObject var viewModel: TableRowViewModel
@@ -218,7 +218,7 @@ struct TableRowView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
 //            Root_Preview()

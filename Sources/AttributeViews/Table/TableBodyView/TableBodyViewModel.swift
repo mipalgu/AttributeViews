@@ -67,33 +67,33 @@ import Attributes
 import GUUI
 
 final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     private let ref: TableBodyValue
     let columns: [BlockAttributeType.TableColumn]
-    
+
     private var rowsData: [Int: TableRowViewModel] = [:]
-    
+
     var rows: [TableRowViewModel] {
         let values = ref.isValid ? ref.value : []
         return values.indices.map { row(for: $0) }
     }
-    
+
     @Published var selection: Set<ObjectIdentifier> = []
-    
+
     private let dataSource: TableViewDataSource
-    
+
     init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         self.ref = TableBodyValue(root: root, path: path, notifier: notifier)
         self.columns = columns
         self.dataSource = KeyPathTableViewDataSource<Root>(root: root, path: path, notifier: notifier)
     }
-    
+
     init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         self.ref = TableBodyValue(valueRef: valueRef, errorsRef: errorsRef)
         self.columns = columns
         self.dataSource = BindingTableViewDataSource(ref: valueRef, delayEdits: delayEdits)
     }
-    
+
     private func row(for index: Int) -> TableRowViewModel {
         guard let viewModel = rowsData[index] else {
             let viewModel = TableRowViewModel(table: ref.valueRef, rowIndex: index, lineAttributeViewModel: {
@@ -104,16 +104,16 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
         }
         return viewModel
     }
-    
+
     func errors(forRow _: Int) -> [[String]] {
         columns.map { _ in [] }
     }
-    
+
     func addElement(newRow: [LineAttribute]) {
         dataSource.addElement(newRow)
         objectWillChange.send()
     }
-    
+
     func deleteRow(row: Int) {
         guard row < rows.count else {
             return
@@ -123,7 +123,7 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
             : [row]
         deleteElements(atOffsets: offsets)
     }
-    
+
     func deleteElements(atOffsets offsets: IndexSet) {
         selection.removeAll()
         dataSource.deleteElements(atOffsets: offsets)
@@ -150,7 +150,7 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
         }
         objectWillChange.send()
     }
-    
+
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
@@ -162,10 +162,10 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
         })
         objectWillChange.send()
     }
-    
+
     func send() {
         objectWillChange.send()
         rowsData = [:]
     }
-    
+
 }

@@ -67,19 +67,19 @@ import Attributes
 import GUUI
 
 public final class TableViewModel: ObservableObject, GlobalChangeNotifier {
-    
+
     let newRowViewModel: NewRowViewModel
-    
+
     let tableBodyViewModel: TableBodyViewModel
-    
+
     let label: String
-    
+
     private let errorsRef: ConstRef<[String]>
-    
+
     var listErrors: [String] {
         errorsRef.value
     }
-    
+
     public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
         let emptyRow = columns.map(\.type.defaultValue)
         let bodyViewModel = TableBodyViewModel(root: root, path: path, columns: columns, notifier: notifier)
@@ -90,7 +90,7 @@ public final class TableViewModel: ObservableObject, GlobalChangeNotifier {
             get: { root.value.errorBag.errors(forPath: path).map(\.message) }
         )
     }
-    
+
     public init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>, label: String, columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
         let emptyRow = columns.map(\.type.defaultValue)
         let bodyViewModel = TableBodyViewModel(valueRef: valueRef, errorsRef: ConstRef(copying: []), columns: columns, delayEdits: delayEdits)
@@ -99,11 +99,11 @@ public final class TableViewModel: ObservableObject, GlobalChangeNotifier {
         self.label = label
         self.errorsRef = errorsRef
     }
-    
+
     public func send() {
         objectWillChange.send()
         newRowViewModel.send()
         tableBodyViewModel.send()
     }
-    
+
 }

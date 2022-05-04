@@ -14,13 +14,13 @@ import SwiftUI
 import Attributes
 
 public struct LineView: View {
-    
+
     @ObservedObject var viewModel: LineViewModel
-    
+
     public init(viewModel: LineViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             TextField(viewModel.label, text: $viewModel.editingValue, onEditingChanged: viewModel.onEditingChanged)
@@ -37,7 +37,7 @@ import GUUI
 
 #if canImport(SwiftUI)
 struct LineView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -58,9 +58,9 @@ struct LineView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
-    
+
         @StateObject var viewModel: LineViewModel = LineViewModel(valueRef: Ref(copying: "world"), errorsRef: ConstRef { ["An error", "A second error"] }, label: "Binding")
         
         var body: some View {
@@ -68,7 +68,7 @@ struct LineView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct LineViewPreviewView: View {
         
         @StateObject var viewModel: LineViewModel
@@ -78,7 +78,7 @@ struct LineView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

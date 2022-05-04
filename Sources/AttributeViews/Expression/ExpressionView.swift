@@ -15,13 +15,13 @@ import Combine
 import Attributes
 
 public struct ExpressionView: View {
-    
+
     @ObservedObject var viewModel: ExpressionViewModel
-    
+
     public init(viewModel: ExpressionViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             TextField(viewModel.label, text: $viewModel.editingValue, onEditingChanged: viewModel.onEditingChanged)

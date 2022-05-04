@@ -67,9 +67,9 @@ import Attributes
 import GUUI
 
 struct TableBodyView: View {
-    
+
     @ObservedObject var viewModel: TableBodyViewModel
-    
+
     var body: some View {
         List(selection: $viewModel.selection) {
             VStack {
@@ -99,12 +99,12 @@ struct TableBodyView: View {
             viewModel.selection.removeAll(keepingCapacity: true)
         }
     }
-    
+
 }
 
 #if canImport(SwiftUI)
 struct TableBodyView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -140,7 +140,7 @@ struct TableBodyView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: [[LineAttribute]] = []
@@ -164,7 +164,7 @@ struct TableBodyView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct TableBodyViewPreviewView: View {
         
         @StateObject var viewModel: TableBodyViewModel
@@ -174,7 +174,7 @@ struct TableBodyView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

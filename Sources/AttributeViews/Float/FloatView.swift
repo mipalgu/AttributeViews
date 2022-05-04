@@ -15,9 +15,9 @@ import SwiftUI
 import Attributes
 
 public struct FloatView: View {
-    
+
     @ObservedObject var viewModel: FloatViewModel
-    
+
     var formatter: NumberFormatter {
         let formatter = NumberFormatter()
         formatter.allowsFloats = true
@@ -25,11 +25,11 @@ public struct FloatView: View {
         formatter.numberStyle = .decimal
         return formatter
     }
-    
+
     public init(viewModel: FloatViewModel) {
         self.viewModel = viewModel
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             TextField(viewModel.label, value: $viewModel.editingValue, formatter: formatter, onEditingChanged: viewModel.onEditingChanged)

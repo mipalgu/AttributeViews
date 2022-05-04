@@ -14,15 +14,15 @@ import SwiftUI
 import Attributes
 
 public struct EnumeratedView: View {
-    
+
     @ObservedObject var viewModel: EnumeratedViewModel
     let validValues: Set<String>
-    
+
     public init(viewModel: EnumeratedViewModel, validValues: Set<String>) {
         self.viewModel = viewModel
         self.validValues = validValues
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             Picker(viewModel.label, selection: $viewModel.value) {

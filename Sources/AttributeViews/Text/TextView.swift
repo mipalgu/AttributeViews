@@ -14,14 +14,14 @@ import SwiftUI
 import Attributes
 
 public struct TextView: View {
-    
+
     @Binding var value: String
     @Binding var errors: [String]
     let label: String
     let onCommit: ((String) -> Void)?
-    
+
 //    @EnvironmentObject var config: Config
-    
+
     public init<Root: Modifiable>(root: Binding<Root>, path: Attributes.Path<Root, String>, label: String, notifier: GlobalChangeNotifier? = nil) {
         self.init(
             value: Binding(
@@ -42,18 +42,18 @@ public struct TextView: View {
             }
         }
     }
-    
+
     public init(value: Binding<String>, errors: Binding<[String]> = .constant([]), label: String, delayEdits: Bool = false) {
         self.init(value: value, errors: errors, label: label, onCommit: delayEdits ? { value.wrappedValue = $0 } : nil)
     }
-    
+
     private init(value: Binding<String>, errors: Binding<[String]>, label: String, onCommit: ((String) -> Void)?) {
         self._value = value
         self._errors = errors
         self.label = label
         self.onCommit = onCommit
     }
-    
+
     public var body: some View {
         VStack(alignment: .leading) {
             Text(label.capitalized)
@@ -77,7 +77,7 @@ public struct TextView: View {
 
 #if canImport(SwiftUI)
 struct TextView_Previews: PreviewProvider {
-    
+
     struct Root_Preview: View {
         
         @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
@@ -96,7 +96,7 @@ struct TextView_Previews: PreviewProvider {
         }
         
     }
-    
+
     struct Binding_Preview: View {
         
         @State var value: String = "More text\non separate lines"
@@ -107,7 +107,7 @@ struct TextView_Previews: PreviewProvider {
         }
         
     }
-    
+
     static var previews: some View {
         VStack {
             Root_Preview()

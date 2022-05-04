@@ -63,13 +63,13 @@ import SwiftUI
 #endif
 
 public protocol AttributeViewConfig: ObservableObject {
-    
+
     var fieldColor: Color { get }
-    
+
     var fontBody: Font { get }
-    
+
     var fontHeading: Font { get }
-    
+
     var textColor: Color { get }
-    
+
 }

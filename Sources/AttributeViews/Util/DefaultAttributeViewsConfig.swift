@@ -63,15 +63,15 @@ import SwiftUI
 #endif
 
 public final class DefaultAttributeViewsConfig: AttributeViewConfig {
-    
+
     @Published public var fieldColor: Color = Color.black.opacity(0.2)
-    
+
     @Published public var fontBody: Font = Font.system(size: 12.0)
-    
+
     @Published public var fontHeading: Font = Font.system(size: 16.0)
-    
+
     @Published public var textColor: Color = Color.black
-    
+
     public init() {}
-    
+
 }
