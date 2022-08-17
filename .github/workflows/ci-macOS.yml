@@ -27,7 +27,7 @@ jobs:
             ssh-add ~/.ssh/id_ed25519
 
       - name: Install GTK
-        run: brew install gtk+-3.0
+        run: brew install gtk+3
 
       - name: Checkout repo
         uses: actions/checkout@v2
