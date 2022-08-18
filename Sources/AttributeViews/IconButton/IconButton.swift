@@ -80,8 +80,12 @@ struct IconButton<Label: View>: View {
     var body: some View {
         ZStack {
             Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 0.01).frame(width: 28, height: 28)
+            #if canImport(SwiftUI)
             Button(action: action, label: { label().foregroundColor(highlighted ? highlightColor : foregroundColor) })
                 .buttonStyle(PlainButtonStyle())
+            #else
+            Button(action: action, label: { label().foregroundColor(highlighted ? highlightColor : foregroundColor) })
+            #endif
         }
         .onHover {
             highlighted = $0

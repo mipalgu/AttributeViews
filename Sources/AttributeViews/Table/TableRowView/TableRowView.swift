@@ -127,7 +127,11 @@ struct TableRowView: View {
                     .rotationEffect(.degrees(90))
             }.frame(width: 20)
         }.contextMenu {
+            #if canImport(SwiftUI)
             Button("Delete", action: onDelete).keyboardShortcut(.delete)
+            #else
+            Button("Delete", action: onDelete)
+            #endif
         }
     }
 }

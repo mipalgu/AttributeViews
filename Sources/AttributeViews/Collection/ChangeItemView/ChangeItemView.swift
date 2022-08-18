@@ -100,20 +100,38 @@ public struct ChangeItemView<SubView: View>: View {
                 Text(label).font(.headline)
                 HStack {
                     if let onDismiss = onDismiss {
+                        #if canImport(SwiftUI)
                         Button(action: onDismiss) {
                             Image(systemName: "arrowshape.turn.up.backward").font(.system(size: 16, weight: .regular))
                         }.buttonStyle(.plain)
+                        #else
+                        Button(action: onDismiss) {
+                            Image(systemName: "arrowshape.turn.up.backward").font(.system(size: 16, weight: .regular))
+                        }
+                        #endif
                     }
                     Spacer()
                     if let onDelete = onDelete {
+                        #if canImport(SwiftUI)
                         Button(action: onDelete) {
                             Image(systemName: "trash.fill").font(.system(size: 16, weight: .regular)).foregroundColor(.red)
                         }.buttonStyle(.plain)
+                        #else
+                        Button(action: onDelete) {
+                            Image(systemName: "trash.fill").font(.system(size: 16, weight: .regular)).foregroundColor(.red)
+                        }
+                        #endif
                     }
                     if let onSave = onSave {
+                        #if canImport(SwiftUI)
                         Button(action: onSave) {
                             Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular)).foregroundColor(.blue)
                         }.buttonStyle(.plain)
+                        #else
+                        Button(action: onSave) {
+                            Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular)).foregroundColor(.blue)
+                        }
+                        #endif
                     }
                 }
             }

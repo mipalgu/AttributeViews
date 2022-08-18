@@ -93,13 +93,23 @@ struct CollectionRowView: View {
                     .font(.system(size: 16, weight: .regular))
                     .rotationEffect(.degrees(90))
                 if viewModel.row.type.isRecursive {
+                    #if canImport(SwiftUI)
                     Button(action: { viewModel.showSheet.toggle() }) {
                         Image(systemName: "chevron.right").font(.system(size: 10, weight: .regular))
                     }.buttonStyle(.plain)
+                    #else
+                    Button(action: { viewModel.showSheet.toggle() }) {
+                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .regular))
+                    }
+                    #endif
                 }
             }.frame(width: viewModel.row.type.isRecursive ? 40 : 20)
         }.contextMenu {
+            #if canImport(SwiftUI)
             Button("Delete", action: onDelete).keyboardShortcut(.delete)
+            #else
+            Button("Delete", action: onDelete)
+            #endif
         }
     }
 }

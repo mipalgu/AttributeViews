@@ -81,15 +81,29 @@ struct NewAttributeView: View {
                 }
                 VStack {
                     if viewModel.newRow.attribute.isLine {
+                        #if canImport(SwiftUI)
                         Button(action: viewModel.addElement, label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                         }).buttonStyle(PlainButtonStyle())
                           .foregroundColor(.blue)
+                        #else
+                        Button(action: viewModel.addElement, label: {
+                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                        })
+                          .foregroundColor(.blue)
+                        #endif
                     } else {
+                        #if canImport(SwiftUI)
                         Button(action: { viewModel.showSheet.toggle() }) {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                         }.buttonStyle(PlainButtonStyle())
                           .foregroundColor(.blue)
+                        #else
+                        Button(action: { viewModel.showSheet.toggle() }) {
+                            Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                        }
+                          .foregroundColor(.blue)
+                        #endif
                     }
                 }.frame(width: 20)
             }

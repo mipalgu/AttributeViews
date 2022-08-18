@@ -56,14 +56,12 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
 import Attributes
+#if !canImport(SwiftUI)
+import Foundation
+#endif
 import GUUI
+import TokamakShim
 
 struct CollectionBodyView: View {
 
