@@ -18,10 +18,16 @@ public struct BoolView: View {
     /// The view heirarchy.
     public var body: some View {
         VStack(alignment: .leading) {
+            #if canImport(SwiftUI)
             Toggle(viewModel.label, isOn: $viewModel.value)
                 .animation(.easeOut)
                 .font(.body)
                 .focusable()
+            #else
+            Toggle(viewModel.label, isOn: $viewModel.value)
+                .font(.body)
+                .focusable()
+            #endif
 //                .foregroundColor(config.textColor)
             ForEach(viewModel.errors, id: \.self) { error in
                 Text(error).foregroundColor(.red)

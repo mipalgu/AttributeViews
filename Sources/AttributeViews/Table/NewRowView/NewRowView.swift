@@ -81,10 +81,16 @@ struct NewRowView: View {
                     }.frame(minWidth: 0, maxWidth: .infinity)
                 }
                 VStack {
+                    #if !canImport(SwiftUI)
+                    Button(action: viewModel.addElement, label: {
+                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                    })
+                    #else
                     Button(action: viewModel.addElement, label: {
                         Image(systemName: "plus").font(.system(size: 16, weight: .regular))
                     }).buttonStyle(PlainButtonStyle())
                       .foregroundColor(.blue)
+                    #endif
                 }.frame(width: 20)
             }
         }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
