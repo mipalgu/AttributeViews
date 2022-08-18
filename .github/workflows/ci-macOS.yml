@@ -2,7 +2,7 @@ name: MacOS Monterey Swift CI
 
 on:
   push:
-    branches: [develop, main]
+    branches: [develop, main, workflows]
   pull_request:
     branches: [develop, main]
 
