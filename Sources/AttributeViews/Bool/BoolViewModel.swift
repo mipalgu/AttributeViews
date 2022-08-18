@@ -57,4 +57,5 @@
  *
  */
 
+/// View Model for Bool Attributes.
 public typealias BoolViewModel = ValueViewModel<Bool>

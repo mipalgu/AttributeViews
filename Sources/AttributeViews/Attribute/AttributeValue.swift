@@ -79,7 +79,12 @@ final class AttributeValue: Value<Attribute> {
         _blockAttributeViewModel()
     }
 
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, defaultValue: Attribute = .bool(false), label: String, notifier: GlobalChangeNotifier? = nil) {
+    init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, Attribute>,
+        defaultValue: Attribute = .bool(false),
+        label: String, notifier: GlobalChangeNotifier? = nil
+    ) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(root: root, path: path.lineAttribute, label: label, notifier: notifier)
         }
@@ -91,10 +96,20 @@ final class AttributeValue: Value<Attribute> {
 
     init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
         self._lineAttributeViewModel = {
-            LineAttributeViewModel(valueRef: valueRef.lineAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
+            LineAttributeViewModel(
+                valueRef: valueRef.lineAttribute,
+                errorsRef: ConstRef(copying: []),
+                label: label,
+                delayEdits: delayEdits
+            )
         }
         self._blockAttributeViewModel = {
-            BlockAttributeViewModel(valueRef: valueRef.blockAttribute, errorsRef: ConstRef(copying: []), label: label, delayEdits: delayEdits)
+            BlockAttributeViewModel(
+                valueRef: valueRef.blockAttribute,
+                errorsRef: ConstRef(copying: []),
+                label: label,
+                delayEdits: delayEdits
+            )
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }

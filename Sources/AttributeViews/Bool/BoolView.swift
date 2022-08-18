@@ -5,22 +5,17 @@
 //  Created by Morgan McColl on 12/11/20.
 //
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
 import Attributes
+import GUUI
+import TokamakShim
 
+/// View for Bool Attribute types.
 public struct BoolView: View {
 
+    /// View Model.
     @ObservedObject var viewModel: BoolViewModel
 
-    public init(viewModel: BoolViewModel) {
-        self.viewModel = viewModel
-    }
-
+    /// The view heirarchy.
     public var body: some View {
         VStack(alignment: .leading) {
             Toggle(viewModel.label, isOn: $viewModel.value)
@@ -33,13 +28,20 @@ public struct BoolView: View {
             }
         }
     }
+
+    /// Initialise this view with a view model.
+    /// - Parameter viewModel: The view model used in this view.
+    public init(viewModel: BoolViewModel) {
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
+    }
+
 }
 
-import GUUI
-
 #if canImport(SwiftUI)
+/// Preview for BoolView
 struct BoolView_Previews: PreviewProvider {
 
+    /// Helper struct containing the BoolView.
     struct Root_Preview: View {
 
         @State var modifiable = EmptyModifiable(attributes: [
@@ -101,4 +103,3 @@ struct BoolView_Previews: PreviewProvider {
     }
 }
 #endif
-

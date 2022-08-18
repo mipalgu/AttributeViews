@@ -56,4 +56,5 @@
  *
  */
 
+/// A view model for a Float attribute type.
 public typealias FloatViewModel = DelayEditValueViewModel<Double>

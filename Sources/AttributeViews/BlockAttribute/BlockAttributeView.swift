@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-public struct BlockAttributeView: View{
+public struct BlockAttributeView: View {
 
     @ObservedObject var viewModel: BlockAttributeViewModel
 
