@@ -1,8 +1,8 @@
 /*
- * AttributeGroupViewModel.swift
- * 
+ * AttributeGroupValue.swift
+ * AttributeGroups
  *
- * Created by Callum McColl on 13/5/21.
+ * Created by Callum McColl on 19/8/22.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,68 +56,70 @@
  *
  */
 
-#if canImport(TokamakShim)
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
 import Attributes
 import GUUI
 
-/// The view model associated with the `AttributeGroupView`.
-/// 
-/// This view model is responsible for managing the state of the
-/// `AttributeGroupView`. Therefore, this view model provides any necessary
-/// data or functionality to the `AttributeGroupView`.
-public final class AttributeGroupViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
+/// A convenience class for working with an `AttributeGroup`.
+final class AttributeGroupValue: Value<AttributeGroup> {
 
-    /// A reference to the `AttributeGroup` associated with this view.
-    private let ref: AttributeGroupValue
+    /// A getter for retrieving the `ComplexViewModel` associated with the
+    /// group.
+    private let _viewModel: () -> ComplexViewModel
 
-    /// The `ComplexViewModel` used to create the `ComplexView` that displays
-    /// the attributes within the group associated with this view model.
-    lazy var complexViewModel: ComplexViewModel = {
-        ref.viewModel
-    }()
-
-    /// The label that should be utilised describing the `AttributeGroup`
-    /// associated with this view.
-    public var name: String {
-        complexViewModel.label
+    /// A getter for retrieving the `ComplexViewModel` associated with the
+    /// group.
+    /// 
+    /// - SeeAlso: `ComplexViewModel`.
+    var viewModel: ComplexViewModel {
+        _viewModel()
     }
 
-    /// Create a new `AttributeGroupViewModel`.
+    /// Create a new `AttributeGroupValue`.
     /// 
-    /// This initialiser create a new `AttributeGroupViewModel` utilising a key
-    /// path from a `Modifiable` object that contains the attribute group that
-    /// this view model is associated with.
+    /// This initialiser create a new `AttributeGroupValue` utilising a key path
+    /// from a `Modifiable` object that contains the attribute group that this
+    /// class is associated with.
     /// 
     /// - Parameter root: A reference to the base `Modifiable` object that
-    /// contains the attribute group that this view model is associated with.
+    /// contains the attribute group that this class is associated with.
     /// 
     /// - Parameter path: A `Attributes.Path` that points to the attribute group
     /// from the base `Modifiable` object.
     /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// `AttributeGroupe` if the group sieces to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the group is deleted.
+    /// 
     /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
     /// notify any listeners when a trigger is fired.
-    public init<Root: Modifiable>(
+    override init<Root: Modifiable>(
         root: Ref<Root>,
         path: Attributes.Path<Root, AttributeGroup>,
+        defaultValue: AttributeGroup = AttributeGroup(name: ""),
         notifier: GlobalChangeNotifier? = nil
     ) {
-        self.ref = AttributeGroupValue(root: root, path: path, notifier: notifier)
+        self._viewModel = {
+            let group = path.isNil(root.value) ? nil : root.value[keyPath: path.keyPath]
+            return ComplexViewModel(
+                root: root,
+                path: path.attributes,
+                label: group?.name ?? "",
+                fieldsPath: path.fields,
+                notifier: notifier
+            )
+        }
+        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
 
-    /// Create a new `AttributeGroupViewModel`.
+    /// Create a new `AttributeGroupValue`.
     /// 
-    /// This initialiser create a new `AttributeGroupViewModel` utilising a
+    /// This initialiser create a new `AttributeGroupValue` utilising a
     /// reference to the attribute group directly. It is useful to call this
     /// initialiser when utilising attribute groups that do not exist within a
     /// `Modifiable` object.
     /// 
-    /// - Parameter valueRef: A reference to the attribute group that this
-    /// view model is associated with.
+    /// - Parameter valueRef: A reference to the attribute group that this class
+    /// is associated with.
     /// 
     /// - Parameter errorsRef: A const-reference to the errors that will be
     /// utilised to display errors for this attribute group.
@@ -126,21 +128,16 @@ public final class AttributeGroupViewModel: ObservableObject, Identifiable, Glob
     /// where it is applicable to do so (for example, delaying edits for a
     /// `LineAttribute` so that a notification is not sent for every
     /// character change).
-    public init(
-        valueRef: Ref<AttributeGroup>,
-        errorsRef: ConstRef<[String]> = ConstRef(copying: []),
-        delayEdits: Bool = false
-    ) {
-        self.ref = AttributeGroupValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
-    }
-
-    /// Manually trigger an `objectWillChange` notification.
-    /// 
-    /// This function recursively triggers an `objectWillChange` notification
-    /// to the `complexViewModel` and all of its children.
-    public func send() {
-        objectWillChange.send()
-        complexViewModel.send()
+    init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
+        self._viewModel = {
+            ComplexViewModel(
+                valueRef: valueRef.attributes,
+                label: valueRef.value.name,
+                fields: valueRef.value.fields,
+                delayEdits: delayEdits
+            )
+        }
+        super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
 
 }

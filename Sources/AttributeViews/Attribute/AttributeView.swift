@@ -64,6 +64,8 @@ import SwiftUI
 
 import Attributes
 
+// swiftlint:disable type_contents_order
+
 /// A view that displays a single Attribute from the `Attributes` package.
 /// 
 /// This view draws a number of subviews, depending on the type of Attribute
