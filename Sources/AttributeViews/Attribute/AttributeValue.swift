@@ -65,25 +65,66 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// A convenience class that provides a generic way of working with
+/// attributes.
 final class AttributeValue: Value<Attribute> {
 
+    /// A getter that returns the view model associated with this attribute
+    /// when this attribute is a `LineAttribute`.
     private let _lineAttributeViewModel: () -> LineAttributeViewModel
 
+    /// A getter that returns the view model associated with this attribute
+    /// when this attribute is a `BlockAttribute`.
     private let _blockAttributeViewModel: () -> BlockAttributeViewModel
 
+    /// A getter that returns the view model associated with this attribute
+    /// when this attribute is a `LineAttribute`.
+    /// 
+    /// - Warning: If this attribute is not a `LineAttribute` then this getter
+    /// will cause a runtime error.
     var lineAttributeViewModel: LineAttributeViewModel {
         _lineAttributeViewModel()
     }
 
+    /// A getter that returns the view model associated with this attribute
+    /// when this attribute is a `BlockAttribute`.
+    /// 
+    /// - Warning: If this attribute is not a `BlockAttribute` then this getter
+    /// will cause a runtime error.
     var blockAttributeViewModel: BlockAttributeViewModel {
         _blockAttributeViewModel()
     }
 
+    /// Create a new AttributeValue.
+    /// 
+    /// This initialiser utilises a key path from a root object that is
+    /// `Modifiable` to the attribute that this class represents. This
+    /// initialiser is generally useful when working with a `Modifiable` object
+    /// that tends to change.
+    /// 
+    /// - Parameter root: A reference to the root `Modifiable` object.
+    /// 
+    /// - Parameter path: An `Attributes.Path` from the root object to the
+    /// attribute.
+    /// 
+    /// - Parameter defaultValue: The default value to use if unable to fetch
+    /// the attribute from the key path (in situations where the structure of
+    /// the `Modifiable` object changes).
+    /// 
+    /// - Parameter label: The label used to describe the attribute (mostly
+    /// utilised in views that display the attribute).
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be utilised to
+    /// send a message when a trigger has been detected as firing.
+    /// 
+    /// - SeeAlso: `LineAttributeViewModel`.
+    /// - SeeAlso: `BlockAttributeViewModel`.
     init<Root: Modifiable>(
         root: Ref<Root>,
         path: Attributes.Path<Root, Attribute>,
         defaultValue: Attribute = .bool(false),
-        label: String, notifier: GlobalChangeNotifier? = nil
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
     ) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(root: root, path: path.lineAttribute, label: label, notifier: notifier)
@@ -94,6 +135,28 @@ final class AttributeValue: Value<Attribute> {
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
 
+    /// Create a new AttributeValue.
+    /// 
+    /// This initialiser utilises a `Ref` reference to an attribute. This is
+    /// useful for working with temporary attributes that do not exist within
+    /// a `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the attribute.
+    /// 
+    /// - Parameter errorsRef: A const-reference to an array of error strings
+    /// that will be utilised to report any errors that occur when maniupulating
+    /// the attribute.
+    /// 
+    /// - Parameter label: The label used to describe the attribute (mostly
+    /// utilised in views that display the attribute).
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    /// 
+    /// - SeeAlso: `LineAttributeViewModel`.
+    /// - SeeAlso: `BlockAttributeViewModel`.
     init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(
