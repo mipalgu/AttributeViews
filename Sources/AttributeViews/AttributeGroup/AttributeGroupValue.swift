@@ -87,7 +87,7 @@ final class AttributeGroupValue: Value<AttributeGroup> {
     /// from the base `Modifiable` object.
     /// 
     /// - Parameter defaultValue: The defalut value to use for the
-    /// `AttributeGroupe` if the group sieces to exist. This is necessary to
+    /// `AttributeGroupe` if the group ceases to exist. This is necessary to
     /// prevent `SwiftUi` crashes during animations when the group is deleted.
     /// 
     /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
