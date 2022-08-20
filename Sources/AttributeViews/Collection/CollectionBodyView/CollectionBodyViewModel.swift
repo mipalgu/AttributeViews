@@ -58,8 +58,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -67,55 +67,148 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view model associated with a `CollectionBodyView`.
+/// 
+/// This view model is responsible for providing CRUD (create, update, delete)
+/// functionality for a collection of attributes. As such, this view model
+/// provides functions for adding new attributes to the collection, updating the
+/// collection through the reordering of attributes, and deleting attributes
+/// from the collection.
 final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
 
+    /// Provides access to the collection associated with this view.
     private let ref: CollectionBodyValue
 
+    /// The type of the attributes contained within the collection.
     let type: AttributeType
 
+    /// A dictionary associating the index of the collection with a
+    /// corresponding `CollectionRowViewModel`.
     private var rowsData: [Int: CollectionRowViewModel] = [:]
 
+    /// All `CollectionRowViewModel`s for the collection.
     var rows: [CollectionRowViewModel] {
         let values = ref.isValid ? ref.value : []
         return values.indices.map { row(for: $0) }
     }
 
+    /// A set of `ObjectIdentifiers` for all `CollectionRowViewModel`s that'
+    /// are within the selection.
     @Published var selection: Set<ObjectIdentifier> = []
 
+    /// A `CollectionViewDataSource` that provides access to the data associated
+    /// with the collection.
+    /// 
+    /// - SeeAlso: KeyPathCollectionViewDataSource
+    /// - SeeAlso: BindingCollectionViewDataSource
     private let dataSource: CollectionViewDataSource
 
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, type: AttributeType, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `CollectionBodyViewModel`.
+    /// 
+    /// This initialiser create a new `CollectionBodyViewModel` utilising a key
+    /// path from a `Modifiable` object that contains the collection that
+    /// this view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the collection that this view model is associated with.
+    /// 
+    /// - Parameter path: A `Attributes.Path` that points to the collection from
+    /// the base `Modifiable` object.
+    /// 
+    /// - Parameter type: The type of the attributes contained within the
+    /// collection.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, [Attribute]>,
+        type: AttributeType,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = CollectionBodyValue(root: root, path: path, notifier: notifier)
         self.type = type
         self.dataSource = KeyPathCollectionViewDataSource<Root>(root: root, path: path, notifier: notifier)
     }
 
-    init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), type: AttributeType, delayEdits: Bool = false) {
+    /// Create a new `CollectionBodyViewModel`.
+    /// 
+    /// This initialiser create a new `CollectionBodyViewModel` utilising a
+    /// reference to the collection directly. It is useful to call
+    /// this initialiser when utilising collections that do not exist
+    /// within a `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the collection that this view model
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that will be
+    /// utilised to display errors for this collection.
+    /// 
+    /// - Parameter type: The type of the attributes contained within the
+    /// collection.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    init(
+        valueRef: Ref<[Attribute]>,
+        errorsRef: ConstRef<[String]> = ConstRef(copying: []),
+        type: AttributeType,
+        delayEdits: Bool = false
+    ) {
         self.ref = CollectionBodyValue(valueRef: valueRef, errorsRef: errorsRef)
         self.type = type
         self.dataSource = BindingCollectionViewDataSource(ref: valueRef, delayEdits: delayEdits)
     }
 
+    /// Fetch the view model associated with a particular row.
+    /// 
+    /// - Parameter index: The index of the row to fetch the view model for.
+    /// 
+    /// - Returns: The `CollectionRowViewModel` associated with the row.
     private func row(for index: Int) -> CollectionRowViewModel {
         guard let viewModel = rowsData[index] else {
-            let viewModel = CollectionRowViewModel(collection: ref.valueRef, rowIndex: index, attributeViewModel: {
+            // swiftlint:disable unowned_variable_capture
+            let viewModel = CollectionRowViewModel(
+                collection: ref.valueRef,
+                rowIndex: index
+            ) { [unowned self] in
                 self.dataSource.viewModel(forElementAtRow: $0)
-            })
+            }
+            // swiftlint:enable unowned_variable_capture
             rowsData[index] = viewModel
             return viewModel
         }
         return viewModel
     }
 
+    /// Fetch any errors associated with a particular row.
+    /// 
+    /// - Parameter index: The index of the row to fetch the errors for.
+    /// 
+    /// - Returns: The errors associated with the row.
     func errors(forRow _: Int) -> [String] {
         []
     }
 
+    /// Add an attribute to the collection.
+    /// 
+    /// - Parameter attribute: The attribute to add to the collection.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func addElement(newRow: Attribute) {
         dataSource.addElement(newRow)
         objectWillChange.send()
     }
 
+    /// Remove a particular row from the collection.
+    /// 
+    /// - Parameter row: The row to remove from the collection.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func deleteRow(row: Int) {
         guard row < rows.count else {
             return
@@ -126,6 +219,12 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         deleteElements(atOffsets: offsets)
     }
 
+    /// Delete a set of rows from the collection.
+    /// 
+    /// - Parameter offsets: The set of rows to delete from the collection.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func deleteElements(atOffsets offsets: IndexSet) {
         selection.removeAll()
         dataSource.deleteElements(atOffsets: offsets)
@@ -153,6 +252,18 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         objectWillChange.send()
     }
 
+    /// Move a set of rows to a new location within the collection.
+    /// 
+    /// The rows are moved so that the are placed directly before the element
+    /// at `destination`.
+    /// 
+    /// - Parameter source: The set of rows to move.
+    /// 
+    /// - Parameter destination: The index of the element to place the rows
+    /// before.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
@@ -165,6 +276,10 @@ final class CollectionBodyViewModel: ObservableObject, GlobalChangeNotifier {
         objectWillChange.send()
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
     func send() {
         objectWillChange.send()
         rowsData = [:]

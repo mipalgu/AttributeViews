@@ -63,23 +63,32 @@ import Foundation
 import GUUI
 import TokamakShim
 
+/// A view that displays a collection of attributes.
+/// 
+/// The collection is displayed as a `List`. This list allows selecting one or
+/// more items, thus allowing reordering and deletion of selected items. Each
+/// row is a `CollectionRowView`.
 struct CollectionBodyView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: CollectionBodyViewModel
 
+    /// The contents of the view.
     var body: some View {
         List(selection: $viewModel.selection) {
             ForEach(viewModel.rows, id: \.id) { row in
-                CollectionRowView(
-                    viewModel: row,
-                    onDelete: { viewModel.deleteRow(row: row.rowIndex) }
-                )
-            }.onMove {
+                CollectionRowView(viewModel: row) {
+                    viewModel.deleteRow(row: row.rowIndex)
+                }
+            }
+            .onMove {
                 viewModel.moveElements(atOffsets: $0, to: $1)
-            }.onDelete {
+            }
+            .onDelete {
                 viewModel.deleteElements(atOffsets: $0)
             }
-        }.frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + $1.row.underestimatedHeight }) + 75)
+        }
+        .frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + $1.row.underestimatedHeight }) + 75)
         .onExitCommand {
             viewModel.selection.removeAll(keepingCapacity: true)
         }

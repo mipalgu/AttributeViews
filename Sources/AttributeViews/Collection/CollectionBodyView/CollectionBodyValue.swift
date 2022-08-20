@@ -59,17 +59,61 @@
 import Attributes
 import GUUI
 
+/// A convenience class for working with a collection of attributes.
+/// 
+/// This class simply provides a means for accessing a `CollectionRowViewModel`
+/// for each row within a collection of attributes. Thus, a
+/// `CollectionRowViewModel` is associated with each attribute within the
+/// collection that this view model manages.
 final class CollectionBodyValue: Value<[Attribute]> {
 
+    /// A function for returning a view model for a given attribute at a given
+    /// index.
     private let _attributeViewModel: (Int) -> AttributeViewModel
 
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [Attribute]>, defaultValue: [Attribute] = [], notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `CollectionBodyValue`.
+    /// 
+    /// This initialiser create a new `CollectionBodyValue` utilising a key path
+    /// from a `Modifiable` object that contains the collection of attributes
+    /// that this class is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the collection that this class is associated with.
+    /// 
+    /// - Parameter path: A `Attributes.Path` that points to the collection from
+    /// the base `Modifiable` object.
+    /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// collection if the collection ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the attribute is
+    /// deleted.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    override init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, [Attribute]>,
+        defaultValue: [Attribute] = [],
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self._attributeViewModel = {
             AttributeViewModel(root: root, path: path[$0], label: "", notifier: notifier)
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
 
+    /// Create a new `CollectionBodyValue`.
+    /// 
+    /// This initialiser create a new `CollectionBodyValue` utilising a
+    /// reference to the collection directly. It is useful to call this
+    /// initialiser when utilising collections that do not exist within a
+    /// `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the collection that this class
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that will be
+    /// utilised to display errors for this collection.
     override init(valueRef: Ref<[Attribute]>, errorsRef: ConstRef<[String]>) {
         self._attributeViewModel = {
             AttributeViewModel(valueRef: valueRef[$0], errorsRef: ConstRef(copying: []), label: "")
@@ -77,6 +121,12 @@ final class CollectionBodyValue: Value<[Attribute]> {
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
 
+    /// Fetch the view model associated with a particular row within the
+    /// collection.
+    /// 
+    /// - Parameter row: The index of the row to fetch the view model for.
+    /// 
+    /// - Returns: The `CollectionRowViewModel` associated with the row.
     func viewModel(forRow row: Int) -> CollectionRowViewModel {
         CollectionRowViewModel(collection: valueRef, rowIndex: row, attributeViewModel: _attributeViewModel)
     }
