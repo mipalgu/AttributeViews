@@ -15,7 +15,7 @@ import Attributes
 
 // swiftlint:disable type_contents_order
 
-/// A view that dispalys and edits a line property.
+/// A view that displays and edits a line property.
 /// 
 /// The view displays a `TextField` that allows a user to edit the value of the
 /// line property and presents the errors associated with those edits below

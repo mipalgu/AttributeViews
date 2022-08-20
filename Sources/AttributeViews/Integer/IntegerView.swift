@@ -16,7 +16,7 @@ import Attributes
 
 // swiftlint:disable type_contents_order
 
-/// A view that dispalys and edits a integer property.
+/// A view that displays and edits an integer property.
 /// 
 /// The view displays a `TextField` that allows a user to edit the value of the
 /// integer property and presents the errors associated with those edits below
