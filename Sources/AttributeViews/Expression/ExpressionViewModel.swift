@@ -58,4 +58,8 @@
 
 import Attributes
 
+/// The view model associated with `ExpressionView`.
+/// 
+/// This view model delays edits so that editing only modifies the model once
+/// the user has committed the changes.
 public typealias ExpressionViewModel = DelayEditValueViewModel<Expression>
