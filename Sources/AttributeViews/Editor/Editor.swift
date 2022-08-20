@@ -64,33 +64,125 @@ import SwiftUI
 
 #if canImport(Cocoa)
 
-import Foundation
 import Cocoa
+import Foundation
 
+/// A source code editor.
 struct Editor: NSViewControllerRepresentable {
 
+    /// The coordinator that handles any delegate functionality from the editor.
+    final class Coordinator: NSObject, NSTextViewDelegate {
+
+        /// Are we currently editing?
+        var editing = false
+
+        // swiftlint:disable implicitly_unwrapped_optional
+
+        /// The `NSTextView` that is being edited.
+        var textView: NSTextView!
+
+        // swiftlint:enable implicitly_unwrapped_optional
+
+        /// A function that is called when wanting to change the value of the
+        /// editor.
+        let changeValue: (String) -> Void
+
+        /// A function that is executed when editing has been completed.
+        let onCommit: (String) -> Void
+
+        /// Create a new `Coordinator`.
+        /// 
+        /// - Parameter changeValue: A function that is called when wanting to
+        /// change the value of the editor.
+        /// 
+        /// - Parameter onCommit: A function that is executed when editing has
+        /// been completed.
+        init(changeValue: @escaping (String) -> Void, onCommit: @escaping (String) -> Void) {
+            self.changeValue = changeValue
+            self.onCommit = onCommit
+        }
+
+        /// Called when the view is disappearing from the screen.
+        /// 
+        /// Calls `onCommit` and sets `editing` to false.
+        func viewWillDisappear() {
+            if editing {
+                onCommit(textView.string)
+                editing = false
+            }
+        }
+
+        /// Called when editing has been completed.
+        /// 
+        /// Calls `onCommit` and sets `editing` to false.
+        ///
+        /// - Parameter notification: The `Notification` that triggered this
+        /// function to be called.
+        func textDidEndEditing(_ notification: Notification) {
+            onCommit(textView.string)
+            editing = false
+        }
+
+        /// Triggered when the text within `textView` changes.
+        ///
+        /// Calls `onChangeValue` and sets `editing` to true.
+        ///
+        /// - Prameter notification: The notification that triggered this
+        /// function to be called.
+        func textDidChange(_ notification: Notification) {
+            changeValue(textView.string)
+            editing = true
+        }
+
+    }
+
+    /// A binding to the text within the editor.
     @Binding var editingText: String
+
+    /// The fillable size that the editor must fit in.
     let size: CGSize
 
+    /// An optional function that is executed when editing has been completed.
     let onCommit: ((String) -> Void)?
 
+    /// Create a new `Editor`.
+    /// 
+    /// - Parameter editingText: A binding to the text within the editor.
+    /// 
+    /// - Parameter size: The fillable size that the editor must fit in.
+    /// 
+    /// - Parameter onCommit: An optional function that is executed when editing
+    /// has been completed.
     init(editingText: Binding<String>, size: CGSize, onCommit: ((String) -> Void)? = nil) {
         self._editingText = editingText
         self.size = size
         self.onCommit = onCommit
     }
 
+    /// Create a new `Coordinator` for the editor.
+    /// 
+    /// - Returns: A new `Coordinator` for the editor.
     func makeCoordinator() -> Coordinator {
-        return Coordinator(
+        Coordinator(
             changeValue: onCommit == nil ? { editingText = $0 } : { _ in },
             onCommit: onCommit ?? { _ in }
         )
     }
 
+    /// Create the controller for the editor.
+    /// 
+    /// This function sets the delegate to the contexts coordinator so that
+    /// the coordinator can be notified of changes happening within the editor.
+    /// 
+    /// - Parameter context: The context for the editor.
+    /// 
+    /// - Returns: The controller for the editor.
     func makeNSViewController(context: Context) -> EditorViewController {
         let scrollView = NSTextView.scrollableTextView()
         scrollView.setFrameSize(size)
-        let textView = scrollView.documentView as! NSTextView
+        guard let textView = scrollView.documentView as? NSTextView else {
+            fatalError("Unable to convert `scrollView.documentView` to `NSTextView`")
+        }
         if textView.isAutomaticTextReplacementEnabled {
             textView.toggleAutomaticTextReplacement(nil)
         }
@@ -120,71 +212,53 @@ struct Editor: NSViewControllerRepresentable {
         return controller
     }
 
-    func updateNSViewController(_ nsViewController: EditorViewController, context: Context) {}
-
-    final class Coordinator: NSObject, NSTextViewDelegate {
-
-        var editing: Bool = false
-
-        var textView: NSTextView!
-
-        let changeValue: (String) -> Void
-
-        let onCommit: (String) -> Void
-
-        init(changeValue: @escaping (String) -> Void, onCommit: @escaping (String) -> Void) {
-            self.changeValue = changeValue
-            self.onCommit = onCommit
-        }
-
-        func viewWillDisappear() {
-            if editing {
-                onCommit(textView.string)
-                editing = false
-            }
-        }
-
-        func textDidEndEditing(_ notification: Notification) {
-            onCommit(textView.string)
-            editing = false
-        }
-
-        func textDidChange(_ notification: Notification) {
-            changeValue(textView.string)
-            editing = true
-        }
-
-    }
+    /// Does nothing.
+    func updateNSViewController(_: EditorViewController, context _: Context) {}
 
 }
 
 #else
 
-import Foundation
 import Attributes
+import Foundation
 
+// swiftlint:disable type_contents_order
+
+/// A source code editor.
 struct Editor: View {
 
+    /// A binding to the source code being edited.
     @Binding var text: String
 
+    /// The fillable size that the editor must fit in.
     var size: CGSize
 
+    /// An optional function that is executed when editing has been completed.
     var onCommit: ((Code) -> Void)?
 
+    /// Create a new `Editor`.
+    /// 
+    /// - Parameter editingText: A binding to the text within the editor.
+    /// 
+    /// - Parameter size: The fillable size that the editor must fit in.
+    /// 
+    /// - Parameter onCommit: An optional function that is executed when editing
+    /// has been completed.
     init(editingText: Binding<String>, size: CGSize, onCommit: ((Code) -> Void)?) {
         self._text = editingText
         self.size = size
         self.onCommit = onCommit
     }
 
+    /// The contents of this view.
     var body: some View {
+        // swiftlint:disable:next trailing_closure
         TextField("", text: $text, onCommit: {
             guard let callback = self.onCommit else {
                 return
             }
             callback(text)
-        })
-            .frame(width: size.width, height: size.height)
+        }).frame(width: size.width, height: size.height)
     }
 
 }
