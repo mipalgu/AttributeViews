@@ -65,10 +65,24 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// A view that displays a collection of attributes.
+/// 
+/// The collection contains a header and a body. The header contains the
+/// title of the collection with the errors vertically stacked below the title.
+/// The body contains vertically stacked rows with contents of the collection.
+/// 
+/// The behaviour of creating a new attribute depends on the type of attribute
+/// that is being created. In this case, if the attribute type is a
+/// `LineAttributeType`, then the creation of the new attribute is provided
+/// utilising a field at the top of the collection. Conversely, if the attribute
+/// type is a `BlockAttributeType`, then the creation of the new attribute is
+/// handled utilising a sheet.
 public struct CollectionView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: CollectionViewModel
 
+    /// The content of the view.
     public var body: some View {
         VStack(alignment: .leading) {
             Text(viewModel.label.pretty.capitalized)
@@ -86,11 +100,16 @@ public struct CollectionView: View {
 }
 
 #if canImport(SwiftUI)
+
+/// The previews of associated with `CollectionView`.
 struct CollectionView_Previews: PreviewProvider {
 
+    /// A view that renders a `CollectionView` preview containing
+    /// text attributes that exist within a `Modifiable` object.
     struct BlockRoot_Preview: View {
 
-        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+        /// The `Modifiable` object containing the text attributes.
+        @State var modifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
                 fields: [
@@ -106,8 +125,10 @@ struct CollectionView_Previews: PreviewProvider {
             )
         ])
 
+        /// The path to the collection within the `Modifiable` object.
         let path = EmptyModifiable.path.attributes[0].attributes["text"].wrappedValue.collectionValue
 
+        /// The `CollectionView`.
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -121,10 +142,14 @@ struct CollectionView_Previews: PreviewProvider {
 
     }
 
+    /// A view that renders a `CollectionView` preview containing
+    /// text attributes that do not exist within a `Modifiable` object.
     struct BlockBinding_Preview: View {
 
+        /// An array of text attributes that the `CollectionView` will manage.
         @State var value: [Attribute] = []
 
+        /// The `CollectionView` initialised with a reference to `value`.
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -139,9 +164,12 @@ struct CollectionView_Previews: PreviewProvider {
 
     }
 
+    /// A view that renders a `CollectionView` preview containing
+    /// line attributes that exist within a `Modifiable` object.
     struct LineRoot_Preview: View {
 
-        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+        /// The `Modifiable` object containing the line attributes.
+        @State var modifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
                 fields: [
@@ -157,8 +185,10 @@ struct CollectionView_Previews: PreviewProvider {
             )
         ])
 
+        /// The path to the collection within the `Modifiable` object.
         let path = EmptyModifiable.path.attributes[0].attributes["lines"].wrappedValue.collectionValue
 
+        /// The `CollectionView`.
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -172,10 +202,14 @@ struct CollectionView_Previews: PreviewProvider {
 
     }
 
+    /// A view that renders a `CollectionView` preview containing
+    /// line attributes that do not exist within a `Modifiable` object.
     struct LineBinding_Preview: View {
 
+        /// An array of line attributes that the `CollectionView` will manage.
         @State var value: [Attribute] = []
 
+        /// The `CollectionView` initialised with a reference to `value`.
         var body: some View {
             CollectionViewPreviewView(
                 viewModel: CollectionViewModel(
@@ -190,16 +224,26 @@ struct CollectionView_Previews: PreviewProvider {
 
     }
 
+    /// A view that creates a @StateObject `CollectionViewModel` and passes
+    /// it to the `CollectionView`.
     struct CollectionViewPreviewView: View {
 
+        /// The view model associated with the `CollectionView`.
         @StateObject var viewModel: CollectionViewModel
 
+        /// Create a new `CollectionView`, passing it the `viewModel`.
         var body: some View {
             CollectionView(viewModel: viewModel)
         }
 
     }
 
+    /// The previews associated with `CollectionView` vertically stacked in
+    /// this order:
+    ///     - `LineRoot_Preview`
+    ///     - `LineBinding_Preview`
+    ///     - `BlockRoot_Preview`
+    ///     - `BlockBinding_Preview`
     static var previews: some View {
         VStack {
             LineRoot_Preview()
@@ -209,4 +253,5 @@ struct CollectionView_Previews: PreviewProvider {
         }
     }
 }
+
 #endif

@@ -66,27 +66,77 @@ import SwiftUI
 import Attributes
 import GUUI
 
+// swiftlint:disable type_contents_order
+
+/// A view that displays within a sheet for modifying an object.
 public struct ChangeItemView<SubView: View>: View {
 
+    /// The label to display for the view.
     let label: String
 
+    /// A function that is invoked when saving the object.
     let onSave: (() -> Void)?
 
+    /// A function that is invoked when deleting the object.
     let onDelete: (() -> Void)?
 
+    /// A function that is invoked when dismissing the sheet.
     let onDismiss: (() -> Void)?
 
+    /// A function that returns the sub view to display.
     let subView: () -> SubView
 
-    public init(label: String, onSave: (() -> Void)? = nil, onDelete: (() -> Void)? = nil, subView: @escaping () -> SubView) {
+    /// Create a new `ChangeItemView`.
+    /// 
+    /// - Parameter label: The label to display for the view.
+    /// 
+    /// - Parameter onSave: A function that is invoked when saving the object.
+    /// 
+    /// - Parameter onDelete: A function that is invoked when deleting the
+    /// object.
+    /// 
+    /// - Parameter subView: A function that returns the sub view to display.
+    public init(
+        label: String,
+        onSave: (() -> Void)? = nil,
+        onDelete: (() -> Void)? = nil,
+        subView: @escaping () -> SubView
+    ) {
         self.init(label: label, onSave: onSave, onDelete: onDelete, onDismiss: nil, subView: subView)
     }
 
+    /// Create a new `ChangeItemView`.
+    /// 
+    /// - Parameter label: The label to display for the view.
+    /// 
+    /// - Parameter onDismiss: A function that is invoked when dismissing the
+    /// view.
+    /// 
+    /// - Parameter subView: A function that returns the sub view to display.
     public init(label: String, onDismiss: (() -> Void)?, subView: @escaping () -> SubView) {
         self.init(label: label, onSave: nil, onDelete: nil, onDismiss: onDismiss, subView: subView)
     }
 
-    private init(label: String, onSave: (() -> Void)?, onDelete: (() -> Void)?, onDismiss: (() -> Void)?, subView: @escaping () -> SubView) {
+    /// Create a new `ChangeItemView`.
+    /// 
+    /// - Parameter label: The label to display for the view.
+    /// 
+    /// - Parameter onSave: A function that is invoked when saving the object.
+    /// 
+    /// - Parameter onDelete: A function that is invoked when deleting the
+    /// object.
+    /// 
+    /// - Parameter onDismiss: A function that is invoked when dismissing the
+    /// view.
+    /// 
+    /// - Parameter subView: A function that returns the sub view to display.
+    private init(
+        label: String,
+        onSave: (() -> Void)?,
+        onDelete: (() -> Void)?,
+        onDismiss: (() -> Void)?,
+        subView: @escaping () -> SubView
+    ) {
         self.label = label
         self.onSave = onSave
         self.onDelete = onDelete
@@ -94,44 +144,33 @@ public struct ChangeItemView<SubView: View>: View {
         self.subView = subView
     }
 
+    /// The content of the view.
     public var body: some View {
+        // swiftlint:disable:next closure_body_length
         VStack {
             ZStack(alignment: .top) {
                 Text(label).font(.headline)
                 HStack {
                     if let onDismiss = onDismiss {
-                        #if canImport(SwiftUI)
                         Button(action: onDismiss) {
-                            Image(systemName: "arrowshape.turn.up.backward").font(.system(size: 16, weight: .regular))
+                            Image(systemName: "arrowshape.turn.up.backward")
+                                .font(.system(size: 16, weight: .regular))
                         }.buttonStyle(.plain)
-                        #else
-                        Button(action: onDismiss) {
-                            Image(systemName: "arrowshape.turn.up.backward").font(.system(size: 16, weight: .regular))
-                        }
-                        #endif
                     }
                     Spacer()
                     if let onDelete = onDelete {
-                        #if canImport(SwiftUI)
                         Button(action: onDelete) {
-                            Image(systemName: "trash.fill").font(.system(size: 16, weight: .regular)).foregroundColor(.red)
+                            Image(systemName: "trash.fill")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundColor(.red)
                         }.buttonStyle(.plain)
-                        #else
-                        Button(action: onDelete) {
-                            Image(systemName: "trash.fill").font(.system(size: 16, weight: .regular)).foregroundColor(.red)
-                        }
-                        #endif
                     }
                     if let onSave = onSave {
-                        #if canImport(SwiftUI)
                         Button(action: onSave) {
-                            Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular)).foregroundColor(.blue)
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundColor(.blue)
                         }.buttonStyle(.plain)
-                        #else
-                        Button(action: onSave) {
-                            Image(systemName: "square.and.pencil").font(.system(size: 16, weight: .regular)).foregroundColor(.blue)
-                        }
-                        #endif
                     }
                 }
             }
@@ -142,10 +181,15 @@ public struct ChangeItemView<SubView: View>: View {
 }
 
 #if canImport(SwiftUI)
+
+/// The previews associated with `ChangeItemView`.
 struct ChangeItemView_Previews: PreviewProvider {
 
+    /// A view that renders the `ChangeItemView`, passing no functions
+    /// for any actions.
     struct Preview: View {
 
+        /// The contents of the preview.
         var body: some View {
             ChangeItemView(label: "Add Item") {
                 Text("Some Text Here")
@@ -154,6 +198,7 @@ struct ChangeItemView_Previews: PreviewProvider {
 
     }
 
+    /// A previes associated with the `ChangeItemView`.
     static var previews: some View {
         VStack {
             Preview()
