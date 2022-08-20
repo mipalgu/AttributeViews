@@ -56,28 +56,53 @@
  *
  */
 
-import GUUI
-import Foundation
 import Attributes
+import Foundation
+import GUUI
 
+/// A `CollectionViewDataSource` that operates on a reference to a collection
+/// of attributes.
 struct BindingCollectionViewDataSource: CollectionViewDataSource {
 
+    /// The reference to the collection of attributes.
     let ref: Ref<[Attribute]>
 
+    /// Should we delay edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
     let delayEdits: Bool
 
+    /// Add a new row to the collection.
+    /// 
+    /// - Parameter row: The new attribute to add to the collection.
     func addElement(_ row: Attribute) {
         ref.value.append(row)
     }
 
+    /// Remove a set of rows from the collection.
+    /// 
+    /// - Parameter offsets: The offsets of the rows to remove.
     func deleteElements(atOffsets offsets: IndexSet) {
         ref.value.remove(atOffsets: offsets)
     }
 
+    /// Move a set of rows in the collection to a new place in the collection.
+    /// 
+    /// - Parameter source: The offsets of the rows to move.
+    /// 
+    /// - Parameter destination: The offset to move the rows to. The rows will
+    /// be moved so that the element at `destination` is the first element that
+    /// proceeds the rows at `source`.
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         ref.value.move(fromOffsets: source, toOffset: destination)
     }
 
+    /// Fetch the view model associated with a particular row.
+    /// 
+    /// - Parameter row: The row to fetch the view model for.
+    /// 
+    /// - Returns: The view model for the row.
     func viewModel(forElementAtRow row: Int) -> AttributeViewModel {
         AttributeViewModel(valueRef: ref[row], errorsRef: ConstRef(copying: []), label: "")
     }
