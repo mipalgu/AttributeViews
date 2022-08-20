@@ -58,8 +58,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -67,22 +67,38 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view model associated with the `CollectionRowView`.
+/// 
+/// This view model is responsible for providing functionality related to the
+/// display of a single row within a collection of attributes. Generally, this
+/// view model is used in conjunction with the `CollectionBodyViewModel`.
+/// 
+/// - SeeAlso: `CollectionRowView`.
+/// - SeeAlso: `CollectionBodyViewModel`.
 final class CollectionRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
 
+    /// A reference to the collection containing this row.
     private let collection: Ref<[Attribute]>
 
+    /// The index of the row within `collection`.
     var rowIndex: Int
 
-    @Published var showSheet: Bool = false
+    /// When true, displays a sheet in `CollectionRowView` for editing the
+    /// row.
+    @Published var showSheet = false
 
-    private var viewModel: AttributeViewModel? = nil
+    /// The view model associated with the attribute.
+    private var viewModel: AttributeViewModel?
 
+    /// A function that returns the view model associated with a given row.
     private let attributeViewModel: (Int) -> AttributeViewModel
 
+    /// The attribute associated with this row.
     var row: Attribute {
         rowIndex >= collection.value.count ? Attribute.line("") : collection.value[rowIndex]
     }
 
+    /// The view associated with this row.
     var view: AnyView {
         guard rowIndex < collection.value.count else {
             return AnyView(EmptyView())
@@ -95,12 +111,34 @@ final class CollectionRowViewModel: ObservableObject, Identifiable, GlobalChange
         return AnyView(AttributeView(viewModel: viewModel))
     }
 
-    init(collection: Ref<[Attribute]>, rowIndex: Int, attributeViewModel: @escaping (Int) -> AttributeViewModel) {
+    /// Create a new `CollectionRowViewModel`.
+    /// 
+    /// - Parameter collection: A reference to the collection containing the row
+    /// associated with this view model.
+    /// 
+    /// - Parameter rowIndex: The index of the row within `collection`.
+    /// 
+    /// - Parameter attributeViewModel: A function that returns the view model
+    /// associated with a given row in `collection`.
+    init(
+        collection: Ref<[Attribute]>,
+        rowIndex: Int,
+        attributeViewModel: @escaping (Int) -> AttributeViewModel
+    ) {
         self.collection = collection
         self.rowIndex = rowIndex
         self.attributeViewModel = attributeViewModel
     }
 
+    /// Set `showSheet` to false.
+    func hideSheet() {
+        showSheet = false
+    }
+
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
     func send() {
         objectWillChange.send()
         viewModel = nil
