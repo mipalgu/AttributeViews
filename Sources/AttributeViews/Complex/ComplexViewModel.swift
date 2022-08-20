@@ -65,48 +65,72 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class ComplexValue: Value<[String: Attribute]> {
-
-    private let _viewModel: (String) -> AttributeViewModel
-
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, defaultValue: [String: Attribute] = [:], notifier: GlobalChangeNotifier? = nil) {
-        self._viewModel = { AttributeViewModel(root: root, path: path[$0].wrappedValue, label: $0, notifier: notifier) }
-        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
-    }
-
-    init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
-        self._viewModel = { AttributeViewModel(valueRef: valueRef[$0].wrappedValue, errorsRef: ConstRef(copying: []), label: $0, delayEdits: delayEdits) }
-        super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-
-    func viewModel(forAttribute attribute: String) -> AttributeViewModel {
-        self._viewModel(attribute)
-    }
-
-}
-
+/// The view model associated with the `ComplexView`.
+/// 
+/// The `ComplexView` represents a complex property that is composed of many
+/// sub-attributes. The role of this view model is to provide access to the
+/// corresponding sub-view-models associated with the sub-attributes.
+/// 
+/// The `ComplexView` displays each sub-attribute as a `DisclosureGroup` that
+/// can be expanded or collapsed. This view model also stores data related
+/// to the state of each disclosure group.
 public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
 
+    /// A reference to the complex property that this view model is associated
+    /// with.
     private let ref: ComplexValue
 
+    /// Stores which disclosure groups are expanded or collapsed.
     private var expanded: [String: Bool] = [:]
 
+    /// The view models associated with each attribute.
     private var attributeViewModels: [String: AttributeViewModel] = [:]
 
+    /// The label associated with the complex property.
     @Published public var label: String
 
-    let _fields: () -> [Field]
+    /// A function that returns the fields associated with the complex property.
+    private let getfields: () -> [Field]
 
+    /// The fields associated with the complex property.
     public var fields: [Field] {
-        _fields()
+        getfields()
     }
 
+    /// The errors associated with the complex property.
     var errors: [String] {
         ref.errors
     }
 
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [String: Attribute]>, label: String, fieldsPath: Attributes.Path<Root, [Field]>, notifier: GlobalChangeNotifier? = nil) {
-        self._fields = {
+    /// Create a new `ComplexViewModel`.
+    /// 
+    /// This initialiser create a new `ComplexViewModel` utilising a key
+    /// path from a `Modifiable` object that contains the complex property
+    /// that this view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the complex property that this view model is associated
+    /// with.
+    /// 
+    /// - Parameter path: A `Attributes.Path` that points to the complex
+    /// property from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the complex
+    /// property.
+    /// 
+    /// - Parameter fieldsPath: An `Attributes.Path` that points to the fields
+    /// of the complex property from the base `Modifiable` object.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, [String: Attribute]>,
+        label: String,
+        fieldsPath: Attributes.Path<Root, [Field]>,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
+        self.getfields = {
             guard !fieldsPath.isNil(root.value) else {
                 return []
             }
@@ -116,16 +140,51 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         self.label = label
     }
 
-    init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, fields: [Field], delayEdits: Bool = false) {
-        self._fields = {
+    /// Create a new `ComplexViewModel`.
+    /// 
+    /// This initialiser create a new `ComplexViewModel` utilising a
+    /// reference to the complex property directly. It is useful to call
+    /// this initialiser when utilising complex properties that do not exist
+    /// within a `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the complex property that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors associated with
+    /// the complex property.
+    /// 
+    /// - Parameter label: The label to use when presenting the complex
+    /// property.
+    /// 
+    /// - Parameter fields: The fields associated with the complex property.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    init(
+        valueRef: Ref<[String: Attribute]>,
+        errorsRef: ConstRef<[String]> = ConstRef(copying: []),
+        label: String,
+        fields: [Field],
+        delayEdits: Bool = false
+    ) {
+        self.getfields = {
             fields
         }
         self.ref = ComplexValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
         self.label = label
     }
 
+    /// Create a binding to a bool indicating whether the given field is
+    /// expanded or not.
+    /// 
+    /// - Parameter fieldName: The name of the field to check.
+    /// 
+    /// - Returns: A binding to a bool indicating whether `fieldName` is
+    /// expanded or not.
     func expandedBinding(_ fieldName: String) -> Binding<Bool> {
-        return Binding(
+        Binding(
             get: { self.expanded[fieldName] ?? false },
             set: {
                 self.objectWillChange.send()
@@ -134,6 +193,10 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         )
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
     public func send() {
         attributeViewModels.values.forEach {
             $0.send()
@@ -142,12 +205,20 @@ public final class ComplexViewModel: ObservableObject, GlobalChangeNotifier {
         sync()
     }
 
+    /// Manually trigger an `objectWillChange` notification in all child
+    /// view models.
     func sync() {
         attributeViewModels.values.forEach {
             $0.send()
         }
     }
 
+    /// Fetch the view model associated with the given field.
+    /// 
+    /// - Parameter fieldName: The name of the field to fetch the view model
+    /// for.
+    /// 
+    /// - Returns: The view model associated with the given field.
     func viewModel(forField fieldName: String) -> AttributeViewModel {
         if let viewModel = attributeViewModels[fieldName] {
             return viewModel
