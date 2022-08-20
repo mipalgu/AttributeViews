@@ -98,15 +98,17 @@ struct NewAttributeView: View {
                 }
                 VStack {
                     if viewModel.newRow.attribute.isLine {
-                        Button(action: self.viewModel.addElement) {
+                        Button {
+                            self.viewModel.addElement()
+                        } label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                        }.buttonStyle(PlainButtonStyle())
-                          .foregroundColor(.blue)
+                        }.buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                     } else {
-                        Button(action: self.viewModel.showSheet.toggle) {
+                        Button {
+                            self.viewModel.showSheet.toggle()
+                        } label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                        }.buttonStyle(PlainButtonStyle())
-                          .foregroundColor(.blue)
+                        }.buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                     }
                 }.frame(width: 20)
             }
