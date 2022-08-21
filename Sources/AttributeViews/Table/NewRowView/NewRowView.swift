@@ -57,8 +57,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -66,12 +66,19 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view for adding a new attribute to a table.
+/// 
+/// This view is utilised by the `TableView` in order to handle the
+/// creation of new attributes that are added to a table attribute.
+/// 
+/// - SeeAlso: `TableView`.
+/// - SeeAlso: `LineAttributeView`.
 struct NewRowView: View {
 
+    /// The view model associated with thie view.
     @ObservedObject var viewModel: NewRowViewModel
 
-    //@EnvironmentObject var config: Config
-
+    /// The content of this view.
     var body: some View {
         VStack {
             HStack {
@@ -81,16 +88,11 @@ struct NewRowView: View {
                     }.frame(minWidth: 0, maxWidth: .infinity)
                 }
                 VStack {
-                    #if !canImport(SwiftUI)
-                    Button(action: viewModel.addElement, label: {
+                    Button(action: viewModel.addElement) {
                         Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    })
-                    #else
-                    Button(action: viewModel.addElement, label: {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    }).buttonStyle(PlainButtonStyle())
-                      .foregroundColor(.blue)
-                    #endif
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .foregroundColor(.blue)
                 }.frame(width: 20)
             }
         }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
