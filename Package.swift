@@ -1,11 +1,14 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.6
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 #if arch(wasm32)
-let ui: [Package.Dependency] = [.package(name: "Tokamak", url: "https://github.com/TokamakUI/Tokamak", from: "0.10.0")]
+let ui: [Package.Dependency] = [.package(url: "https://github.com/TokamakUI/Tokamak", from: "0.10.0")]
 let products: [Target.Dependency] = [.product(name: "TokamakShim", package: "Tokamak")]
+#elseif os(macOS) || os(Linux)
+let ui: [Package.Dependency] = [.package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")]
+let products: [Target.Dependency] = []
 #else
 let ui: [Package.Dependency] = []
 let products: [Target.Dependency] = []
@@ -21,8 +24,8 @@ let package = Package(
             targets: ["AttributeViews"]),
     ],
     dependencies: ui + [
-        .package(name: "Attributes", url: "git@github.com:mipalgu/Attributes.git", .branch("main")),
-        .package(name: "GUUI", url: "git@github.com:mipalgu/GUUI.git", .branch("main"))
+        .package(url: "git@github.com:mipalgu/Attributes.git", branch: "main"),
+        .package(url: "git@github.com:mipalgu/GUUI.git", branch: "main")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -30,6 +33,8 @@ let package = Package(
         .target(
             name: "AttributeViews",
             dependencies: products + ["Attributes", "GUUI"]),
-        .target(name: "AttributeViewsTests", dependencies: products + ["AttributeViews", "Attributes", "GUUI"])
+        .executableTarget(
+            name: "AttributeViewsTests",
+            dependencies: products + ["AttributeViews", "Attributes", "GUUI"])
     ]
 )
