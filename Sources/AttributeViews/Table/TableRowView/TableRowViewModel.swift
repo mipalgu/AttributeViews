@@ -1,8 +1,8 @@
 /*
- * NewRowView.swift
- * 
+ * TableRowViewModel.swift
+ * TableRowView
  *
- * Created by Callum McColl on 4/5/2022.
+ * Created by Callum McColl on 21/8/22.
  * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,6 @@
  */
 
 #if canImport(TokamakShim)
-import Foundation
 import TokamakShim
 #else
 import SwiftUI
@@ -66,36 +65,76 @@ import SwiftUI
 import Attributes
 import GUUI
 
-/// The view for adding a new attribute to a table.
+/// The view model associated with the `TableRowView`.
 /// 
-/// This view is utilised by the `TableView` in order to handle the
-/// creation of new attributes that are added to a table attribute.
+/// This view model is responsible for providing functionality related to the
+/// display of a single row within a table of attributes. Generally, this
+/// view model is used in conjunction with the `TableBodyViewModel`.
 /// 
-/// - SeeAlso: `TableView`.
-/// - SeeAlso: `LineAttributeView`.
-struct NewRowView: View {
+/// - SeeAlso: `TableRowView`.
+/// - SeeAlso: `TableBodyViewModel`.
+final class TableRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
 
-    /// The view model associated with thie view.
-    @ObservedObject var viewModel: NewRowViewModel
+    /// A reference to the table.
+    private let table: Ref<[[LineAttribute]]>
 
-    /// The content of this view.
-    var body: some View {
-        VStack {
-            HStack {
-                ForEach(0..<viewModel.newRow.count) { index in
-                    VStack {
-                        LineAttributeView(viewModel: viewModel.newRow[index])
-                    }.frame(minWidth: 0, maxWidth: .infinity)
-                }
-                VStack {
-                    Button(action: viewModel.addElement) {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .foregroundColor(.blue)
-                }.frame(width: 20)
-            }
-        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+    /// The index of the row being displayed.
+    var rowIndex: Int
+
+    /// The viewModel associated with each column in the row.
+    private var viewModels: [Int: LineAttributeViewModel] = [:]
+
+    /// A function to fetch the view model of an attribute within the table
+    /// given a row and column index.
+    private let lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
+
+    /// The row being displayed.
+    var row: [LineAttribute] {
+        rowIndex >= table.value.count ? [] : table.value[rowIndex]
+    }
+
+    /// Create a new `TableRowView`.
+    /// 
+    /// - Parameter table: A reference to the table.
+    /// 
+    /// - Parameter rowIndex: The index of the row being displayed.
+    /// 
+    /// - Parameter lineAttributeViewModel: A function to fetch the view model
+    /// of an attribute within the table given a row and column index.
+    init(
+        table: Ref<[[LineAttribute]]>,
+        rowIndex: Int,
+        lineAttributeViewModel: @escaping (Int, Int) -> LineAttributeViewModel
+    ) {
+        self.table = table
+        self.rowIndex = rowIndex
+        self.lineAttributeViewModel = lineAttributeViewModel
+    }
+
+    /// Fetch the view associated with a particular column in the row.
+    /// 
+    /// - Parameter index: The index of the column in the row.
+    /// 
+    /// - Returns: The view for the attribute at the given column index.
+    func view(atIndex index: Int) -> AnyView {
+        guard rowIndex < table.value.count && index < table.value[rowIndex].count else {
+            return AnyView(EmptyView())
+        }
+        if let viewModel = viewModels[index] {
+            return AnyView(LineAttributeView(viewModel: viewModel))
+        }
+        let viewModel = self.lineAttributeViewModel(rowIndex, index)
+        viewModels[index] = viewModel
+        return AnyView(LineAttributeView(viewModel: viewModel))
+    }
+
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
+    func send() {
+        objectWillChange.send()
+        viewModels = [:]
     }
 
 }

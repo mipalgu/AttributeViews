@@ -1,8 +1,8 @@
 /*
- * TableBodyValue.swift
- * 
+ * ComplexValue.swift
+ * Complex
  *
- * Created by Callum McColl on 4/5/2022.
+ * Created by Callum McColl on 21/8/22.
  * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,85 +56,87 @@
  *
  */
 
-#if canImport(TokamakShim)
-import Foundation
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
 import Attributes
 import GUUI
 
-/// A convenience class for working with a table of attributes.
+/// A convenience class for working with a `ComplexValue`.
 /// 
-/// This class simply provides a means for accessing a `TableRowViewModel`
-/// for each row  within a table of attributes. Thus, a
-/// `TableRowViewModel` is associated with each row within the
-/// table that this view model manages.
-final class TableBodyValue: Value<[[LineAttribute]]> {
+/// A complex value represents a dictionary where the keys are a string and the
+/// values are an `Attribute`. This class provides functionality to fetch
+/// `AttributeViewModel`s for each key in the dictionary.
+final class ComplexValue: Value<[String: Attribute]> {
 
-    /// A function for returning a view model for a given row, column pair.
-    private let _lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
+    /// A fucntion that fetches a view model given a key.
+    private let _viewModel: (String) -> AttributeViewModel
 
-    /// Create a new `TableBodyValue`.
+    /// Create a new `ComplexValue`.
     /// 
-    /// This initialiser create a new `TableBodyValue` utilising a key path
-    /// from a `Modifiable` object that contains the table of attributes
-    /// that this class is associated with.
+    /// This initialiser create a new `ComplexValue` utilising a key path
+    /// from a `Modifiable` object that contains the complex property that this
+    /// class is associated with.
     /// 
     /// - Parameter root: A reference to the base `Modifiable` object that
-    /// contains the table that this class is associated with.
+    /// contains the complex property that this class is associated with.
     /// 
-    /// - Parameter path: An `Attributes.Path` that points to the table from
-    /// the base `Modifiable` object.
+    /// - Parameter path: A `Attributes.Path` that points to the complex
+    /// property from the base `Modifiable` object.
     /// 
     /// - Parameter defaultValue: The defalut value to use for the
-    /// table if the table ceases to exist. This is necessary to
-    /// prevent `SwiftUi` crashes during animations when the table is
-    /// deleted.
+    /// complex property if the complex property ceases to exist. This is
+    /// necessary to prevent `SwiftUi` crashes during animations when the
+    /// complex property is deleted.
     /// 
     /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
     /// notify any listeners when a trigger is fired.
     override init<Root: Modifiable>(
         root: Ref<Root>,
-        path: Attributes.Path<Root, [[LineAttribute]]>,
-        defaultValue: [[LineAttribute]] = [],
+        path: Attributes.Path<Root, [String: Attribute]>,
+        defaultValue: [String: Attribute] = [:],
         notifier: GlobalChangeNotifier? = nil
     ) {
-        self._lineAttributeViewModel = {
-            LineAttributeViewModel(root: root, path: path[$0][$1], label: "", notifier: notifier)
+        self._viewModel = {
+            AttributeViewModel(root: root, path: path[$0].wrappedValue, label: $0, notifier: notifier)
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
 
-    /// Create a new `TableBodyValue`.
+    /// Create a new `ComplexValue`.
     /// 
-    /// This initialiser create a new `TableBodyValue` utilising a
-    /// reference to the table directly. It is useful to call this
-    /// initialiser when utilising tables that do not exist within a
+    /// This initialiser create a new `ComplexValue` utilising a
+    /// reference to the complex property directly. It is useful to call this
+    /// initialiser when utilising complex properties that do not exist within a
     /// `Modifiable` object.
     /// 
-    /// - Parameter valueRef: A reference to the table that this class
-    /// is associated with.
+    /// - Parameter valueRef: A reference to the complex property that this
+    /// class is associated with.
     /// 
     /// - Parameter errorsRef: A const-reference to the errors associated with
-    /// the table.
-    override init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>) {
-        self._lineAttributeViewModel = {
-            LineAttributeViewModel(valueRef: valueRef[$0][$1], errorsRef: ConstRef(copying: []), label: "")
+    /// the complex property.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    init(valueRef: Ref<[String: Attribute]>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
+        self._viewModel = {
+            AttributeViewModel(
+                valueRef: valueRef[$0].wrappedValue,
+                errorsRef: ConstRef(copying: []),
+                label: $0,
+                delayEdits: delayEdits
+            )
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
 
-    /// Fetch the view model associated with a particular row within the
-    /// table.
+    /// Fetch a view model for a specific attribute.
     /// 
-    /// - Parameter row: The index of the row to fetch the view model for.
+    /// - Parameter attribute: The name of the attribute for the view model to
+    /// fetch.
     /// 
-    /// - Returns: The `TableRowViewModel` associated with the row.
-    func viewModel(forRow row: Int) -> TableRowViewModel {
-        TableRowViewModel(table: valueRef, rowIndex: row, lineAttributeViewModel: _lineAttributeViewModel)
+    /// - Returns: The `AttributeViewModel` associated with the attribute.
+    func viewModel(forAttribute attribute: String) -> AttributeViewModel {
+        self._viewModel(attribute)
     }
 
 }

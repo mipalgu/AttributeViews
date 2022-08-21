@@ -13,14 +13,27 @@ import SwiftUI
 
 import Attributes
 
+// swiftlint:disable type_contents_order
+
+/// A view that displays and allows editing of a `LineAttribute`.
+/// 
+/// Since a `LineAttribute` is an enum, and can thus be one of many cases,
+/// this view handles this display and editing of each case. This makes it
+/// possible to create this view using any of the `LineAttribute` cases and
+/// receive a single view that displays the case correctly.
 public struct LineAttributeView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: LineAttributeViewModel
 
+    /// Create a new `LineAttributeView`.
+    /// 
+    /// - Parameter viewModel: The view model associated with this view.
     public init(viewModel: LineAttributeViewModel) {
-        self.viewModel = viewModel
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
     }
 
+    /// The contents of this view.
     public var body: some View {
         switch viewModel.lineAttribute.type {
         case .bool:
@@ -37,5 +50,5 @@ public struct LineAttributeView: View {
             LineView(viewModel: viewModel.lineViewModel)
         }
     }
-}
 
+}

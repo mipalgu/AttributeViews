@@ -56,4 +56,5 @@
  *
  */
 
+/// The view model associated with `EnumeratedView`.
 public typealias EnumeratedViewModel = ValueViewModel<String>

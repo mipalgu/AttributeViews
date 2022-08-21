@@ -64,14 +64,28 @@ import SwiftUI
 
 import Attributes
 
+// swiftlint:disable type_contents_order
+
+/// A view that displays a single Attribute from the `Attributes` package.
+/// 
+/// This view draws a number of subviews, depending on the type of Attribute
+/// that is referenced by its view model. Therefore, the majority of the
+/// corresponding behaviour of this view is delegated to several other views.
+/// This view is simply a convenience view that is capable of displaying any
+/// Attribute that is passed to it.
 public struct AttributeView: View {
 
+    /// The view model for the AttributeView.
     @ObservedObject var viewModel: AttributeViewModel
 
+    /// Create a new `AttributeView`.
+    /// 
+    /// - Parameter viewModel: The view model for the AttributeView.
     public init(viewModel: AttributeViewModel) {
-        self.viewModel = viewModel
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
     }
 
+    /// Draw the view.
     public var body: some View {
         viewModel.subView
     }

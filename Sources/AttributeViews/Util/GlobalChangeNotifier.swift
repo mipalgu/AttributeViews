@@ -56,8 +56,11 @@
  *
  */
 
+/// A protocol that allows for a conforming type to listen to a notification
+/// informing the conforming type that a trigger has fired.
 public protocol GlobalChangeNotifier: AnyObject {
 
+    /// Send the notification.
     func send()
 
 }

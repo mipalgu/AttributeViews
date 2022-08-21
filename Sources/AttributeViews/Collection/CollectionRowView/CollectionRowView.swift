@@ -66,22 +66,45 @@ import SwiftUI
 import Attributes
 import GUUI
 
+// swiftlint:disable type_contents_order
+
+/// A view that displays a single row within a collection of attributes.
+/// 
+/// The behaviour of this view depends on the type of attribute that is
+/// contained within the collection. If the attribute is a `LineAttributeType`,
+/// then editing of the attribute is performed inline with an `AttributeView`.
+/// If, however, the attribute is a `BlockAttributeType`, then editing of the
+/// attribute is performed utilising a sheet displaying a `ChangeItemView`.
 struct CollectionRowView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: CollectionRowViewModel
+
+    /// A function that is invoked when the row is being deleted.
     let onDelete: () -> Void
 
+    /// Create a new `CollectionRowView`.
+    /// 
+    /// - Parameter viewModel: The view model associated with this view.
+    /// 
+    /// - Parameter onDelete: A function that is invoked when the row is being
+    /// deleted.
     init(viewModel: CollectionRowViewModel, onDelete: @escaping () -> Void = {}) {
         self._viewModel = ObservedObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
 
+    /// The content of this
     var body: some View {
+        // swiftlint:disable:next closure_body_length
         HStack {
             if viewModel.row.type.isRecursive {
                 Text(viewModel.row.strValue ?? "Item \(viewModel.rowIndex)")
                     .sheet(isPresented: $viewModel.showSheet) {
-                        ChangeItemView(label: viewModel.row.strValue ?? "Item \(viewModel.rowIndex)", onDismiss: { viewModel.showSheet = false }) {
+                        ChangeItemView(
+                            label: viewModel.row.strValue ?? "Item \(viewModel.rowIndex)",
+                            onDismiss: viewModel.hideSheet
+                        ) {
                             viewModel.view
                         }
                     }
@@ -93,7 +116,9 @@ struct CollectionRowView: View {
                     .font(.system(size: 16, weight: .regular))
                     .rotationEffect(.degrees(90))
                 if viewModel.row.type.isRecursive {
-                    Button(action: { viewModel.showSheet.toggle() }) {
+                    Button {
+                        viewModel.showSheet.toggle()
+                    } label: {
                         Image(systemName: "chevron.right").font(.system(size: 10, weight: .regular))
                     }.buttonStyle(.plain)
                 }
@@ -105,6 +130,8 @@ struct CollectionRowView: View {
 }
 
 #if canImport(SwiftUI)
+
+/// The previews associated with `CollectionRowView`.
 struct CollectionRowView_Previews: PreviewProvider {
 
 //    struct Root_Preview: View {
@@ -125,7 +152,13 @@ struct CollectionRowView_Previews: PreviewProvider {
 //                ],
 //                attributes: [
 //                    "table": .table([
-//                        [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
+//                        [
+//                            .bool(false),
+//                            .integer(1),
+//                            .float(1.1),
+//                            .enumerated("a", validValues: ["a", "b", "c"]),
+//                            .line("hello")
+//                        ]
 //                    ], columns: [
 //                        ("bool", .bool),
 //                        ("int", .integer),
@@ -151,43 +184,52 @@ struct CollectionRowView_Previews: PreviewProvider {
 //
 //    }
 
+    /// A view that displays a single row for a collection that does not exist
+    /// within a `Modifiable` object.
     struct Binding_Preview: View {
 
+        /// The collection of attributes.
         @State var value: [Attribute] = [.line("Hello"), .line("World")]
 
+        /// Errors associated with the collection.
         @State var errors: [[String]] = [
             ["line error1", "line error2"],
             ["line2 error1", "line2 error2"]
         ]
 
+        /// The view for row 0.
         var body: some View {
             CollectionRowPreviewView(
                 viewModel: CollectionRowViewModel(
                     collection: Ref(get: { self.value }, set: { self.value = $0 }),
-                    rowIndex: 0,
-                    attributeViewModel: { (row) in
-                        AttributeViewModel(
-                            valueRef: Ref(get: { self.value[row] }, set: { self.value[row] = $0 }),
-                            errorsRef: ConstRef(copying: []),
-                            label: ""
-                        )
-                    }
-                )
+                    rowIndex: 0
+                ) { row in
+                    AttributeViewModel(
+                        valueRef: Ref(get: { self.value[row] }, set: { self.value[row] = $0 }),
+                        errorsRef: ConstRef(copying: []),
+                        label: ""
+                    )
+                }
             )
         }
 
     }
 
+    /// Provides a view that creates a @StateObject `CollectionRowViewModel` and
+    /// passes it to a `CollectionRowView`.
     struct CollectionRowPreviewView: View {
 
+        /// The view model associated wtih a `CollectionRowView`.
         @StateObject var viewModel: CollectionRowViewModel
 
+        /// Create a new `CollectionRowView`, and pass it `viewModel`.
         var body: some View {
             CollectionRowView(viewModel: viewModel)
         }
 
     }
 
+    /// All previews associated with `CollectionRowView`.
     static var previews: some View {
         VStack {
 //            Root_Preview()
@@ -198,4 +240,5 @@ struct CollectionRowView_Previews: PreviewProvider {
         }
     }
 }
+
 #endif

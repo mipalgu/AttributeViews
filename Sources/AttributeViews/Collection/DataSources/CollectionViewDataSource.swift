@@ -56,15 +56,41 @@
  *
  */
 
-import GUUI
-import Foundation
 import Attributes
+import Foundation
+import GUUI
 
+/// A protocol that describes common functionality for a collection of
+/// attributes.
+/// 
+/// This protocol generally defines those CRUD (create, update, delete)
+/// operations that are common manipulations for a collection of attributes.
 protocol CollectionViewDataSource {
 
+    /// Add a new row to the collection.
+    /// 
+    /// - Parameter row: The new attribute to add to the collection.
     func addElement(_ row: Attribute)
+
+    /// Remove a set of rows from the collection.
+    /// 
+    /// - Parameter offsets: The offsets of the rows to remove.
     func deleteElements(atOffsets offsets: IndexSet)
+
+    /// Move a set of rows in the collection to a new place in the collection.
+    /// 
+    /// - Parameter source: The offsets of the rows to move.
+    /// 
+    /// - Parameter destination: The offset to move the rows to. The rows will
+    /// be moved so that the element at `destination` is the first element that
+    /// proceeds the rows at `source`.
     func moveElements(atOffsets source: IndexSet, to destination: Int)
+
+    /// Fetch the view model associated with a particular row.
+    /// 
+    /// - Parameter row: The row to fetch the view model for.
+    /// 
+    /// - Returns: The view model for the row.
     func viewModel(forElementAtRow row: Int) -> AttributeViewModel
 
 }

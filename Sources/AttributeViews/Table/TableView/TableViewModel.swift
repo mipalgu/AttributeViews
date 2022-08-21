@@ -57,8 +57,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -66,40 +66,121 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view model associated with a `TableView`.
+/// 
+/// This view model provides data and functionality to the `TableView`.
+/// The `TableView` is responsible for displaying a table of
+/// attributes. This view model therefore provides CRUD (create, update, delete)
+/// functionality for that table of attributes.
 public final class TableViewModel: ObservableObject, GlobalChangeNotifier {
 
+    /// The view model that provides the functionality for creating a new row
+    /// within a `TableView`.
     let newRowViewModel: NewRowViewModel
 
+    /// The view model associated with managing the table of attributes.
     let tableBodyViewModel: TableBodyViewModel
 
+    /// The label of the table.
     let label: String
 
+    /// Provides access to errors associated with the table.
     private let errorsRef: ConstRef<[String]>
 
+    /// The errors associated with the table.
     var listErrors: [String] {
         errorsRef.value
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, label: String, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `TableViewModel`.
+    /// 
+    /// This initialiser create a new `TableViewModel` utilising a key
+    /// path from a `Modifiable` object that contains the table
+    /// that this view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the table that this view model is associated
+    /// with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the table
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the table.
+    /// 
+    /// - Parameter columns: A description of the columns within the table.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, [[LineAttribute]]>,
+        label: String,
+        columns: [BlockAttributeType.TableColumn],
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         let emptyRow = columns.map(\.type.defaultValue)
         let bodyViewModel = TableBodyViewModel(root: root, path: path, columns: columns, notifier: notifier)
-        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: ConstRef(copying: columns.map { _ in [] }), bodyViewModel: bodyViewModel)
+        self.newRowViewModel = NewRowViewModel(
+            newRow: emptyRow,
+            emptyRow: emptyRow,
+            errors: ConstRef(copying: columns.map { _ in [] }),
+            bodyViewModel: bodyViewModel
+        )
         self.tableBodyViewModel = bodyViewModel
         self.label = label
-        self.errorsRef = ConstRef(
-            get: { root.value.errorBag.errors(forPath: path).map(\.message) }
-        )
+        self.errorsRef = ConstRef { root.value.errorBag.errors(forPath: path).map(\.message) }
     }
 
-    public init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>, label: String, columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
+    /// Create a new `TableViewModel`.
+    /// 
+    /// This initialiser create a new `TableViewModel` utilising a
+    /// reference to the table directly. It is useful to call
+    /// this initialiser when utilising tables that do not exist
+    /// within a `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the table that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that are
+    /// associated with the table.
+    /// 
+    /// - Parameter label: The label to use when presenting the table.
+    /// 
+    /// - Parameter columns: A description of the columns within the table.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    public init(
+        valueRef: Ref<[[LineAttribute]]>,
+        errorsRef: ConstRef<[String]>,
+        label: String,
+        columns: [BlockAttributeType.TableColumn],
+        delayEdits: Bool = false
+    ) {
         let emptyRow = columns.map(\.type.defaultValue)
-        let bodyViewModel = TableBodyViewModel(valueRef: valueRef, errorsRef: ConstRef(copying: []), columns: columns, delayEdits: delayEdits)
-        self.newRowViewModel = NewRowViewModel(newRow: emptyRow, emptyRow: emptyRow, errors: ConstRef(copying: columns.map { _ in [] }), bodyViewModel: bodyViewModel)
+        let bodyViewModel = TableBodyViewModel(
+            valueRef: valueRef,
+            errorsRef: ConstRef(copying: []),
+            columns: columns,
+            delayEdits: delayEdits
+        )
+        self.newRowViewModel = NewRowViewModel(
+            newRow: emptyRow,
+            emptyRow: emptyRow,
+            errors: ConstRef(copying: columns.map { _ in [] }),
+            bodyViewModel: bodyViewModel
+        )
         self.tableBodyViewModel = bodyViewModel
         self.label = label
         self.errorsRef = errorsRef
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
     public func send() {
         objectWillChange.send()
         newRowViewModel.send()

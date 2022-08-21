@@ -59,18 +59,29 @@
 import Attributes
 import GUUI
 
+/// A convenience class for working with values that have associated errors.
+/// 
+/// Generally, when working with attributes, you will want to use the `Value`
+/// class (or one of its subclasses) to tie a value to a set of errors. This
+/// class is a convenience class that provides functionality for values that
+/// have associated errors.
 class Value<Value> {
 
+    /// A function that returns whether the value is valid.
     private let _isValid: () -> Bool
 
+    /// A reference to the value.
     let valueRef: Ref<Value>
 
+    /// A const-reference to the errors associated with the value.
     let errorsRef: ConstRef<[String]>
 
+    /// Is the value valid?
     var isValid: Bool {
         _isValid()
     }
 
+    /// The value associated with this class.
     var value: Value {
         get {
             valueRef.value
@@ -79,11 +90,36 @@ class Value<Value> {
         }
     }
 
+    /// the errors associated with `value`.
     var errors: [String] {
         errorsRef.value
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value>, defaultValue: Value, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `Value`.
+    /// 
+    /// This initialiser create a new `Value` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// class is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this class is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the value
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// value if the value ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the value is
+    /// deleted.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, Value>,
+        defaultValue: Value,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.valueRef = Ref(
             get: {
                 path.isNil(root.value) ? defaultValue : root.value[keyPath: path.keyPath]
@@ -99,12 +135,36 @@ class Value<Value> {
             }
         )
         self.errorsRef = ConstRef {
-                root.value.errorBag.errors(forPath: path).map(\.message)
-            }
+            root.value.errorBag.errors(forPath: path).map(\.message)
+        }
         self._isValid = { !path.isNil(root.value) }
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Value?>, defaultValue: Value, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `Value`.
+    /// 
+    /// This initialiser create a new `Value` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// class is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this class is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to an optional that
+    /// contains the value from the base `Modifiable` object.
+    /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// value if the value ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the value is
+    /// deleted.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, Value?>,
+        defaultValue: Value,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.valueRef = Ref(
             get: {
                 path.isNil(root.value) ? defaultValue : (root.value[keyPath: path.keyPath] ?? defaultValue)
@@ -120,12 +180,24 @@ class Value<Value> {
             }
         )
         self.errorsRef = ConstRef {
-                root.value.errorBag.errors(forPath: path).map(\.message)
-            }
+            root.value.errorBag.errors(forPath: path).map(\.message)
+        }
         self._isValid = { !path.isNil(root.value) }
     }
 
-    public init(valueRef: Ref<Value>, errorsRef: ConstRef<[String]>) {
+    /// Create a new `Value`.
+    /// 
+    /// This initialiser create a new `Value` utilising a
+    /// reference to the value directly. It is useful to call this
+    /// initialiser when utilising values that do not exist within a
+    /// `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the value that this class
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that are
+    /// associated with the value.
+    init(valueRef: Ref<Value>, errorsRef: ConstRef<[String]>) {
         self.valueRef = valueRef
         self.errorsRef = errorsRef
         self._isValid = { true }

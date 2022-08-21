@@ -59,9 +59,11 @@
 #if canImport(TokamakShim)
 import TokamakShim
 
+/// Typealias State to `TokamakShim.State` to avoid conflicts.
 typealias State = TokamakShim.State
 #else
 import SwiftUI
 
+/// Typealias State to `SwiftUI.State` to avoid conflicts.
 typealias State = SwiftUI.State
 #endif

@@ -1,9 +1,9 @@
 /*
- * TableBodyValue.swift
- * 
+ * AttributeGroupValue.swift
+ * AttributeGroups
  *
- * Created by Callum McColl on 4/5/2022.
- * Copyright © 2022 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 19/8/22.
+ * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,85 +56,88 @@
  *
  */
 
-#if canImport(TokamakShim)
-import Foundation
-import TokamakShim
-#else
-import SwiftUI
-#endif
-
 import Attributes
 import GUUI
 
-/// A convenience class for working with a table of attributes.
-/// 
-/// This class simply provides a means for accessing a `TableRowViewModel`
-/// for each row  within a table of attributes. Thus, a
-/// `TableRowViewModel` is associated with each row within the
-/// table that this view model manages.
-final class TableBodyValue: Value<[[LineAttribute]]> {
+/// A convenience class for working with an `AttributeGroup`.
+final class AttributeGroupValue: Value<AttributeGroup> {
 
-    /// A function for returning a view model for a given row, column pair.
-    private let _lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
+    /// A getter for retrieving the `ComplexViewModel` associated with the
+    /// group.
+    private let _viewModel: () -> ComplexViewModel
 
-    /// Create a new `TableBodyValue`.
+    /// A getter for retrieving the `ComplexViewModel` associated with the
+    /// group.
     /// 
-    /// This initialiser create a new `TableBodyValue` utilising a key path
-    /// from a `Modifiable` object that contains the table of attributes
-    /// that this class is associated with.
+    /// - SeeAlso: `ComplexViewModel`.
+    var viewModel: ComplexViewModel {
+        _viewModel()
+    }
+
+    /// Create a new `AttributeGroupValue`.
+    /// 
+    /// This initialiser create a new `AttributeGroupValue` utilising a key path
+    /// from a `Modifiable` object that contains the attribute group that this
+    /// class is associated with.
     /// 
     /// - Parameter root: A reference to the base `Modifiable` object that
-    /// contains the table that this class is associated with.
+    /// contains the attribute group that this class is associated with.
     /// 
-    /// - Parameter path: An `Attributes.Path` that points to the table from
-    /// the base `Modifiable` object.
+    /// - Parameter path: A `Attributes.Path` that points to the attribute group
+    /// from the base `Modifiable` object.
     /// 
     /// - Parameter defaultValue: The defalut value to use for the
-    /// table if the table ceases to exist. This is necessary to
-    /// prevent `SwiftUi` crashes during animations when the table is
-    /// deleted.
+    /// `AttributeGroupe` if the group ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the group is deleted.
     /// 
     /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
     /// notify any listeners when a trigger is fired.
     override init<Root: Modifiable>(
         root: Ref<Root>,
-        path: Attributes.Path<Root, [[LineAttribute]]>,
-        defaultValue: [[LineAttribute]] = [],
+        path: Attributes.Path<Root, AttributeGroup>,
+        defaultValue: AttributeGroup = AttributeGroup(name: ""),
         notifier: GlobalChangeNotifier? = nil
     ) {
-        self._lineAttributeViewModel = {
-            LineAttributeViewModel(root: root, path: path[$0][$1], label: "", notifier: notifier)
+        self._viewModel = {
+            let group = path.isNil(root.value) ? nil : root.value[keyPath: path.keyPath]
+            return ComplexViewModel(
+                root: root,
+                path: path.attributes,
+                label: group?.name ?? "",
+                fieldsPath: path.fields,
+                notifier: notifier
+            )
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
 
-    /// Create a new `TableBodyValue`.
+    /// Create a new `AttributeGroupValue`.
     /// 
-    /// This initialiser create a new `TableBodyValue` utilising a
-    /// reference to the table directly. It is useful to call this
-    /// initialiser when utilising tables that do not exist within a
+    /// This initialiser create a new `AttributeGroupValue` utilising a
+    /// reference to the attribute group directly. It is useful to call this
+    /// initialiser when utilising attribute groups that do not exist within a
     /// `Modifiable` object.
     /// 
-    /// - Parameter valueRef: A reference to the table that this class
+    /// - Parameter valueRef: A reference to the attribute group that this class
     /// is associated with.
     /// 
-    /// - Parameter errorsRef: A const-reference to the errors associated with
-    /// the table.
-    override init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>) {
-        self._lineAttributeViewModel = {
-            LineAttributeViewModel(valueRef: valueRef[$0][$1], errorsRef: ConstRef(copying: []), label: "")
+    /// - Parameter errorsRef: A const-reference to the errors that will be
+    /// utilised to display errors for this attribute group.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
+        self._viewModel = {
+            ComplexViewModel(
+                valueRef: valueRef.attributes,
+                label: valueRef.value.name,
+                fields: valueRef.value.fields,
+                delayEdits: delayEdits
+            )
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-
-    /// Fetch the view model associated with a particular row within the
-    /// table.
-    /// 
-    /// - Parameter row: The index of the row to fetch the view model for.
-    /// 
-    /// - Returns: The `TableRowViewModel` associated with the row.
-    func viewModel(forRow row: Int) -> TableRowViewModel {
-        TableRowViewModel(table: valueRef, rowIndex: row, lineAttributeViewModel: _lineAttributeViewModel)
     }
 
 }

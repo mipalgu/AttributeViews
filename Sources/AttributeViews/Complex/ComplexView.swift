@@ -12,17 +12,29 @@ import SwiftUI
 #endif
 
 import Attributes
+import GUUI
 
+// swiftlint:disable type_contents_order
+
+/// A view the displays a complex property.
+/// 
+/// The view creates a `Seciton` containing disclosure groups for each
+/// sub-attribute. The view delegates the display of each sub-attribute to
+/// `AttributeView`, and simply places each `AttributeView` within a collapsable
+/// disclosure group.
 public struct ComplexView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: ComplexViewModel
 
-    //@EnvironmentObject var config: Config
-
+    /// Create a new `ComplexView`.
+    /// 
+    /// - Parameter viewModel: The view model associated with this view.
     public init(viewModel: ComplexViewModel) {
-        self.viewModel = viewModel
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
     }
 
+    /// The contents of this view.
     public var body: some View {
         VStack {
             if !viewModel.fields.isEmpty {
@@ -34,7 +46,10 @@ public struct ComplexView: View {
                         VStack(alignment: .leading) {
                             ForEach(viewModel.fields, id: \.name) { field in
                                 if viewModel.viewModel(forField: field.name).attribute.isBlock {
-                                    DisclosureGroup(field.name.pretty, isExpanded: viewModel.expandedBinding(field.name)) {
+                                    DisclosureGroup(
+                                        field.name.pretty,
+                                        isExpanded: viewModel.expandedBinding(field.name)
+                                    ) {
                                         AttributeView(viewModel: viewModel.viewModel(forField: field.name))
                                     }
                                 } else {
@@ -52,51 +67,82 @@ public struct ComplexView: View {
 
 }
 
-import GUUI
-
 #if canImport(SwiftUI)
+
+/// The previews associated with `ComplexView`.
 struct ComplexView_Previews: PreviewProvider {
 
+    /// A view that creates a `ComplexView` utilising a `Modifiable` object.
     struct Root_Preview: View {
 
+        /// A dictionary indicating which attributes are expanded.
         @State var expanded: [AnyKeyPath: Bool] = [:]
 
+        /// A reference to a `Modifiable` object that contains the complex
+        /// property.
         @State var modifiable: Ref<EmptyModifiable> = Ref(copying: EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
-                fields: [Field(name: "complex", type: .complex(layout: [Field(name: "bool", type: .bool), Field(name: "integer", type: .integer)]))],
+                fields: [
+                    Field(
+                        name: "complex",
+                        type: .complex(
+                            layout: [
+                                Field(name: "bool", type: .bool),
+                                Field(name: "integer", type: .integer)
+                            ]
+                        )
+                    )
+                ],
                 attributes: [
                     "complex": .complex(
                         ["bool": .bool(false), "integer": .integer(3)],
-                        layout: [Field(name: "bool", type: .bool), Field(name: "integer", type: .integer)])
+                        layout: [
+                            Field(name: "bool", type: .bool),
+                            Field(name: "integer", type: .integer)
+                        ]
+                    )
                 ],
                 metaData: [:]
             )
         ]))
 
+        /// A path to the complex property within `modifiable`.
         let path = EmptyModifiable.path.attributes[0].attributes["complex"].wrappedValue.complexValue
 
+        /// The contents of this view.
         var body: some View {
             ComplexViewPreview(
                 viewModel: ComplexViewModel(
                     root: modifiable,
                     path: path,
                     label: "Root",
-                    fieldsPath: EmptyModifiable.path.attributes[0].attributes["complex"].wrappedValue.complexFields
+                    fieldsPath: EmptyModifiable
+                        .path
+                        .attributes[0]
+                        .attributes["complex"]
+                        .wrappedValue
+                        .complexFields
                 )
             )
         }
 
     }
 
+    /// A view that creates a `ComplexView` utilising a binding to the complex
+    /// property directly.
     struct Binding_Preview: View {
 
+        /// The value of the complex property.
         @State var value: [String: Attribute] = [
             "s": .line("Hello"),
             "f": .float(3.12)
         ]
+
+        /// Errors associated with the complex property.
         @State var errors: [String] = ["An error", "A second error"]
 
+        /// The contents of this view.
         var body: some View {
             ComplexViewPreview(
                 viewModel: ComplexViewModel(
@@ -110,21 +156,28 @@ struct ComplexView_Previews: PreviewProvider {
 
     }
 
+    /// A view that creates a @StateObject `ComplexViewModel` that gets passed
+    /// to a `ComplexView`.
     struct ComplexViewPreview: View {
 
+        /// The view model associated with the `ComplexView`.
         @StateObject var viewModel: ComplexViewModel
 
+        /// Create a new `ComplexView`, passing `viewModel` to it.
         var body: some View {
             ComplexView(viewModel: viewModel)
         }
 
     }
 
+    /// All previews associated with `ComplexView`.
     static var previews: some View {
         VStack {
             Root_Preview()
             Binding_Preview()
         }
     }
+
 }
+
 #endif

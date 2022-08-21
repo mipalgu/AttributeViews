@@ -57,8 +57,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -66,10 +66,17 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// A view that displays a table of attributes.
+/// 
+/// The table is displayed as a `List`. This list allows selecting one or
+/// more items, thus allowing reordering and deletion of selected items. Each
+/// row is a `TableRowView`.
 struct TableBodyView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: TableBodyViewModel
 
+    /// The contents of the view.
     var body: some View {
         List(selection: $viewModel.selection) {
             VStack {
@@ -85,16 +92,17 @@ struct TableBodyView: View {
                 }
             }
             ForEach(viewModel.rows, id: \.id) { row in
-                TableRowView(
-                    viewModel: row,
-                    onDelete: { viewModel.deleteRow(row: row.rowIndex) }
-                )
-            }.onMove {
+                TableRowView(viewModel: row) {
+                    viewModel.deleteRow(row: row.rowIndex)
+                }
+            }
+            .onMove {
                 viewModel.moveElements(atOffsets: $0, to: $1)
-            }.onDelete {
+            }
+            .onDelete {
                 viewModel.deleteElements(atOffsets: $0)
             }
-        }.frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + ($1.row.first?.underestimatedHeight ?? 5) }) + 75)
+        }.frame(minHeight: CGFloat(viewModel.underestimatedHeight))
         .onExitCommand {
             viewModel.selection.removeAll(keepingCapacity: true)
         }
@@ -103,11 +111,15 @@ struct TableBodyView: View {
 }
 
 #if canImport(SwiftUI)
+
+/// The previews associated with `TableBodyView`.
 struct TableBodyView_Previews: PreviewProvider {
 
+    /// Creates a `TableBodyView` utilising a `Modifiable` object.
     struct Root_Preview: View {
 
-        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+        /// The `Modifiable` object that contains the table.
+        @State var modifiable = EmptyModifiable(attributes: [
             AttributeGroup(
                 name: "Fields",
                 fields: [
@@ -117,34 +129,46 @@ struct TableBodyView_Previews: PreviewProvider {
                     )
                 ],
                 attributes: [
-                    "table": .table([
-                        [.bool(false), .integer(1), .float(1.1)],
-                        [.bool(true), .integer(2), .float(2.2)]
-                    ], columns: [("b", .bool), ("i", .integer), ("f", .float)]
+                    "table": .table(
+                        [
+                            [.bool(false), .integer(1), .float(1.1)],
+                            [.bool(true), .integer(2), .float(2.2)]
+                        ],
+                        columns: [("b", .bool), ("i", .integer), ("f", .float)]
                     )
                 ],
                 metaData: [:]
             )
         ])
 
+        /// A path to the table in `modifiable`.
         let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue
 
+        /// The contents of the view.
         var body: some View {
             TableBodyViewPreviewView(
                 viewModel: TableBodyViewModel(
                     root: Ref(get: { self.modifiable }, set: { self.modifiable = $0 }),
                     path: path,
-                    columns: [.init(name: "b", type: .bool), .init(name: "i", type: .integer), .init(name: "f", type: .float)]
+                    columns: [
+                        .init(name: "b", type: .bool),
+                        .init(name: "i", type: .integer),
+                        .init(name: "f", type: .float)
+                    ]
                 )
             )
         }
 
     }
 
+    /// A view that creates a `TableBodyView` utilising a reference to the table
+    /// directly.
     struct Binding_Preview: View {
 
+        /// The table.
         @State var value: [[LineAttribute]] = []
 
+        /// The contents of the view.
         var body: some View {
             TableBodyViewPreviewView(
                 viewModel: TableBodyViewModel(
@@ -165,21 +189,28 @@ struct TableBodyView_Previews: PreviewProvider {
 
     }
 
+    /// A view that creates a @StateObject `TableBodyViewModel` for creating a
+    /// `TableView` with.
     struct TableBodyViewPreviewView: View {
 
+        /// The view model associated with `TableBodyViewModel`.
         @StateObject var viewModel: TableBodyViewModel
 
+        /// Create a new `TableBodyView`, passing the `viewModel` to it.
         var body: some View {
             TableBodyView(viewModel: viewModel)
         }
 
     }
 
+    /// All previews associated with `TableView`.
     static var previews: some View {
         VStack {
             Root_Preview()
             Binding_Preview()
         }
     }
+
 }
+
 #endif

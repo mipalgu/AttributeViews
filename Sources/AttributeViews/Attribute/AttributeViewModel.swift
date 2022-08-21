@@ -65,18 +65,34 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view model associated with `AttributeView`.
 public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
 
+    /// A reference to the attribute that this view model is associated with.
     private let ref: AttributeValue
 
+    /// A getter that returns the view model associated with this attribute
+    /// when this attribute is a `LineAttribute`.
+    /// 
+    /// - Warning: If this attribute is not a `LineAttribute` then this getter
+    /// will cause a runtime error.
     lazy var lineAttributeViewModel: LineAttributeViewModel = {
         ref.lineAttributeViewModel
     }()
 
+    /// A getter that returns the view model associated with this attribute
+    /// when this attribute is a `BlockAttribute`.
+    /// 
+    /// - Warning: If this attribute is not a `BlockAttribute` then this getter
+    /// will cause a runtime error.
     lazy var blockAttributeViewModel: BlockAttributeViewModel = {
         ref.blockAttributeViewModel
     }()
 
+    /// The attribute associated with this view model.
+    /// 
+    /// - Attention: Calling the setter of the property causes this view model
+    /// to publish an `objectWillChange` notification.
     var attribute: Attribute {
         get {
             ref.value
@@ -86,6 +102,12 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
         }
     }
 
+    /// The view associated with the attribute associated wtih this view model.
+    /// 
+    /// The view returned will either be a `LineAttributeView` or a
+    /// `BlockAttributeView` depending on whether the attribute referenced
+    /// by this view model is a line attribute or a block attribute
+    /// respectively.
     var subView: AnyView {
         switch ref.value.type {
         case .block:
@@ -95,14 +117,66 @@ public final class AttributeViewModel: ObservableObject, GlobalChangeNotifier {
         }
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, Attribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `AttributeViewModel`.
+    /// 
+    /// This initialiser create a new `AttributeViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the attribute that this view
+    /// model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the attribute that this view model is associated with.
+    /// 
+    /// - Parameter path: A `Attributes.Path` that points to the attribute
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to display for the attribute.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, Attribute>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = AttributeValue(root: root, path: path, label: label, notifier: notifier)
     }
 
-    public init(valueRef: Ref<Attribute>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String, delayEdits: Bool = false) {
-        self.ref = AttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
+    /// Create a new `AttributeViewModel`.
+    /// 
+    /// This initialiser create a new `AttributeViewModel` utilising a reference
+    /// to the attribute directly. It is useful to call this initialiser when
+    /// utilising attributes that do not exist within a `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the attribute that this view model
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that will be
+    /// utilised to display errors for this attribute.
+    /// 
+    /// - Parameter label: The label to display for the attribute.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    public init(
+        valueRef: Ref<Attribute>,
+        errorsRef: ConstRef<[String]> = ConstRef(copying: []),
+        label: String,
+        delayEdits: Bool = false
+    ) {
+        self.ref = AttributeValue(
+            valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits
+        )
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// in the `blockAttributeViewModel` or `lineAttributeViewModel` depending
+    /// on whether the attribute referenced by this view model is a
+    /// `LineAttribute` or a `BlockAttribute` respectively.
     public func send() {
         objectWillChange.send()
         if ref.value.isBlock {

@@ -65,12 +65,29 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view for adding a new attribute to a collection.
+/// 
+/// This view is utilised by the `CollectionView` in order to handle the
+/// creation of new attributes that are added to a collection attribute.
+/// The behaviour of this view changes depending on the type of the attribute
+/// within the collection. If the type of the attribute within the collection is
+/// a `LineAttributeType`, then the view will display an `AttributeView` that 
+/// allows the user to edit the new attribute. However, if the type of the
+/// attribute within the collection is a `BlockAttributeType`, then the view
+/// displays an "AddItem" button that when pressed will display a sheet that
+/// contains a `ChangeItemView` for creating the new attribute.
+/// 
+/// - SeeAlso: `CollectionView`.
+/// - SeeAlso: `AttributeView`.
+/// - SeeAlso: `ChangeItemView`.
 struct NewAttributeView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: NewAttributeViewModel
 
-    //@EnvironmentObject var config: Config
+    // @EnvironmentObject var config: Config
 
+    /// The content of this view.
     var body: some View {
         VStack {
             HStack {
@@ -81,15 +98,17 @@ struct NewAttributeView: View {
                 }
                 VStack {
                     if viewModel.newRow.attribute.isLine {
-                        Button(action: viewModel.addElement, label: {
+                        Button {
+                            self.viewModel.addElement()
+                        } label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                        }).buttonStyle(PlainButtonStyle())
-                          .foregroundColor(.blue)
+                        }.buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                     } else {
-                        Button(action: { viewModel.showSheet.toggle() }) {
+                        Button {
+                            self.viewModel.showSheet.toggle()
+                        } label: {
                             Image(systemName: "plus").font(.system(size: 16, weight: .regular))
-                        }.buttonStyle(PlainButtonStyle())
-                          .foregroundColor(.blue)
+                        }.buttonStyle(PlainButtonStyle()).foregroundColor(.blue)
                     }
                 }.frame(width: 20)
             }
@@ -99,13 +118,10 @@ struct NewAttributeView: View {
             .sheet(isPresented: $viewModel.showSheet) {
                 ChangeItemView(
                     label: "Add Item",
-                    onSave: {
-                        viewModel.addElement()
-                    },
-                    onDelete: {
-                        viewModel.showSheet = false
-                    }
+                    onSave: viewModel.addElement
                 ) {
+                    viewModel.showSheet = false
+                } subView: {
                     AttributeView(viewModel: viewModel.newRow)
                 }
             }

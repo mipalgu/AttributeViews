@@ -65,51 +65,79 @@ import SwiftUI
 import Attributes
 import GUUI
 
-fileprivate final class AttributeGroupValue: Value<AttributeGroup> {
-
-    private let _viewModel: () -> ComplexViewModel
-
-    var viewModel: ComplexViewModel {
-        _viewModel()
-    }
-
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, defaultValue: AttributeGroup = AttributeGroup(name: ""), notifier: GlobalChangeNotifier? = nil) {
-        self._viewModel = {
-            let group = path.isNil(root.value) ? nil : root.value[keyPath: path.keyPath]
-            return ComplexViewModel(root: root, path: path.attributes, label: group?.name ?? "", fieldsPath: path.fields, notifier: notifier)
-        }
-        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
-    }
-
-    init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]>, delayEdits: Bool) {
-        self._viewModel = {
-            ComplexViewModel(valueRef: valueRef.attributes, label: valueRef.value.name, fields: valueRef.value.fields, delayEdits: delayEdits)
-        }
-        super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-
-}
-
+/// The view model associated with the `AttributeGroupView`.
+/// 
+/// This view model is responsible for managing the state of the
+/// `AttributeGroupView`. Therefore, this view model provides any necessary
+/// data or functionality to the `AttributeGroupView`.
 public final class AttributeGroupViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
 
+    /// A reference to the `AttributeGroup` associated with this view.
     private let ref: AttributeGroupValue
 
+    /// The `ComplexViewModel` used to create the `ComplexView` that displays
+    /// the attributes within the group associated with this view model.
     lazy var complexViewModel: ComplexViewModel = {
         ref.viewModel
     }()
 
+    /// The label that should be utilised describing the `AttributeGroup`
+    /// associated with this view.
     public var name: String {
         complexViewModel.label
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, AttributeGroup>, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `AttributeGroupViewModel`.
+    /// 
+    /// This initialiser create a new `AttributeGroupViewModel` utilising a key
+    /// path from a `Modifiable` object that contains the attribute group that
+    /// this view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the attribute group that this view model is associated with.
+    /// 
+    /// - Parameter path: A `Attributes.Path` that points to the attribute group
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, AttributeGroup>,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = AttributeGroupValue(root: root, path: path, notifier: notifier)
     }
 
-    public init(valueRef: Ref<AttributeGroup>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), delayEdits: Bool = false) {
+    /// Create a new `AttributeGroupViewModel`.
+    /// 
+    /// This initialiser create a new `AttributeGroupViewModel` utilising a
+    /// reference to the attribute group directly. It is useful to call this
+    /// initialiser when utilising attribute groups that do not exist within a
+    /// `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the attribute group that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that will be
+    /// utilised to display errors for this attribute group.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    public init(
+        valueRef: Ref<AttributeGroup>,
+        errorsRef: ConstRef<[String]> = ConstRef(copying: []),
+        delayEdits: Bool = false
+    ) {
         self.ref = AttributeGroupValue(valueRef: valueRef, errorsRef: errorsRef, delayEdits: delayEdits)
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to the `complexViewModel` and all of its children.
     public func send() {
         objectWillChange.send()
         complexViewModel.send()

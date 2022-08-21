@@ -65,55 +65,29 @@ import SwiftUI
 import Attributes
 import GUUI
 
-final class TableRowViewModel: ObservableObject, Identifiable, GlobalChangeNotifier {
+// swiftlint:disable type_contents_order
 
-    private let table: Ref<[[LineAttribute]]>
-
-    var rowIndex: Int
-
-    private var viewModels: [Int: LineAttributeViewModel] = [:]
-
-    private let lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
-
-    var row: [LineAttribute] {
-        rowIndex >= table.value.count ? [] : table.value[rowIndex]
-    }
-
-    init(table: Ref<[[LineAttribute]]>, rowIndex: Int, lineAttributeViewModel: @escaping (Int, Int) -> LineAttributeViewModel) {
-        self.table = table
-        self.rowIndex = rowIndex
-        self.lineAttributeViewModel = lineAttributeViewModel
-    }
-
-    func view(atIndex index: Int) -> AnyView {
-        guard rowIndex < table.value.count && index < table.value[rowIndex].count else {
-            return AnyView(EmptyView())
-        }
-        if let viewModel = viewModels[index] {
-            return AnyView(LineAttributeView(viewModel: viewModel))
-        }
-        let viewModel = self.lineAttributeViewModel(rowIndex, index)
-        viewModels[index] = viewModel
-        return AnyView(LineAttributeView(viewModel: viewModel))
-    }
-
-    func send() {
-        objectWillChange.send()
-        viewModels = [:]
-    }
-
-}
-
+/// A view that displays a single row within a table of attributes.
 struct TableRowView: View {
 
+    /// The view model associated with this view.
     @ObservedObject var viewModel: TableRowViewModel
+
+    /// A function that is invoked when the row is being deleted.
     let onDelete: () -> Void
 
+    /// Create a new `TableRowView`.
+    /// 
+    /// - Parameter viewModel: The view model associated with this view.
+    /// 
+    /// - Parameter onDelete: A function that is invoked when the row is being
+    /// deleted.
     init(viewModel: TableRowViewModel, onDelete: @escaping () -> Void = {}) {
         self._viewModel = ObservedObject(wrappedValue: viewModel)
         self.onDelete = onDelete
     }
 
+    /// The content of this
     var body: some View {
         HStack {
             ForEach(viewModel.row.indices, id: \.self) { index in
@@ -133,56 +107,76 @@ struct TableRowView: View {
 }
 
 #if canImport(SwiftUI)
+
+/// The previews associated with `TableRowView`.
 struct TableRowView_Previews: PreviewProvider {
 
-//    struct Root_Preview: View {
-//
-//        @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
-//            AttributeGroup(
-//                name: "Fields", fields: [
-//                    Field(
-//                        name: "table",
-//                        type: .table(columns: [
-//                            ("bool", .bool),
-//                            ("int", .integer),
-//                            ("float", .float),
-//                            ("enum", .enumerated(validValues: ["a", "b", "c"])),
-//                            ("line", .line)
-//                        ])
-//                    )
-//                ],
-//                attributes: [
-//                    "table": .table([
-//                        [.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]
-//                    ], columns: [
-//                        ("bool", .bool),
-//                        ("int", .integer),
-//                        ("float", .float),
-//                        ("enum", .enumerated(validValues: ["a", "b", "c"])),
-//                        ("line", .line)
-//                    ])
-//                ],
-//                metaData: [:]
-//            )
-//        ])
-//
-//        let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue[0]
-//
-//        let config = DefaultAttributeViewsConfig()
-//
-//        var body: some View {
-//            TableRowView<DefaultAttributeViewsConfig>(
-//                root: $modifiable,
-//                path: path
-//            ).environmentObject(config)
-//        }
-//
-//    }
+// struct Root_Preview: View {
 
+//     @State var modifiable: EmptyModifiable = EmptyModifiable(attributes: [
+//         AttributeGroup(
+//             name: "Fields", fields: [
+//                 Field(
+//                     name: "table",
+//                     type: .table(columns: [
+//                         ("bool", .bool),
+//                         ("int", .integer),
+//                         ("float", .float),
+//                         ("enum", .enumerated(validValues: ["a", "b", "c"])),
+//                         ("line", .line)
+//                     ])
+//                 )
+//             ],
+//             attributes: [
+//                 "table": .table([
+//                     [
+//                         .bool(false),
+//                         .integer(1),
+//                         .float(1.1),
+//                         .enumerated("a", validValues: ["a", "b", "c"]),
+//                         .line("hello")
+//                     ]
+//                 ], columns: [
+//                     ("bool", .bool),
+//                     ("int", .integer),
+//                     ("float", .float),
+//                     ("enum", .enumerated(validValues: ["a", "b", "c"])),
+//                     ("line", .line)
+//                 ])
+//             ],
+//             metaData: [:]
+//         )
+//     ])
+
+//     let path = EmptyModifiable.path.attributes[0].attributes["table"].wrappedValue.tableValue[0]
+
+//     let config = DefaultAttributeViewsConfig()
+
+//     var body: some View {
+//         TableRowView<DefaultAttributeViewsConfig>(
+//             root: $modifiable,
+//             path: path
+//         ).environmentObject(config)
+//     }
+
+// }
+
+    /// A view that displays a single row for a table that does not exist
+    /// within a `Modifiable` object.
     struct Binding_Preview: View {
 
-        @State var value: [[LineAttribute]] = [[.bool(false), .integer(1), .float(1.1), .enumerated("a", validValues: ["a", "b", "c"]), .line("hello")]]
+        /// The table of attributes.
+        @State var value: [[LineAttribute]] = [
+            [
+                .bool(false),
+                .integer(1),
+                .float(1.1),
+                .enumerated("a", validValues: ["a", "b", "c"]),
+                .line("hello")
+            ]
+        ]
 
+        /// Errors associated with the table.
         @State var errors: [[String]] = [
             ["bool error1", "bool error2"],
             ["int error"],
@@ -191,34 +185,39 @@ struct TableRowView_Previews: PreviewProvider {
             ["Really long line error that is very long in length"]
         ]
 
+        /// The view for row 0.
         var body: some View {
             TableRowPreviewView(
                 viewModel: TableRowViewModel(
                     table: Ref(get: { self.value }, set: { self.value = $0 }),
-                    rowIndex: 0,
-                    lineAttributeViewModel: { (row, col) in
-                        LineAttributeViewModel(
-                            valueRef: Ref(get: { self.value[row][col] }, set: { self.value[row][col] = $0 }),
-                            errorsRef: ConstRef(copying: []),
-                            label: ""
-                        )
-                    }
-                )
+                    rowIndex: 0
+                ) { row, col in
+                    LineAttributeViewModel(
+                        valueRef: Ref(get: { self.value[row][col] }, set: { self.value[row][col] = $0 }),
+                        errorsRef: ConstRef(copying: []),
+                        label: ""
+                    )
+                }
             )
         }
 
     }
 
+    /// Provides a view that creates a @StateObject `TableRowViewModel` and
+    /// passes it to a `TableRowView`.
     struct TableRowPreviewView: View {
 
+        /// The view model associated wtih a `CollectionRowView`.
         @StateObject var viewModel: TableRowViewModel
 
+        /// Create a new `CollectionRowView`, and pass it `viewModel`.
         var body: some View {
             TableRowView(viewModel: viewModel)
         }
 
     }
 
+    /// All previews associated with `CollectionRowView`.
     static var previews: some View {
         VStack {
 //            Root_Preview()
@@ -228,5 +227,7 @@ struct TableRowView_Previews: PreviewProvider {
             Binding_Preview()
         }
     }
+
 }
+
 #endif

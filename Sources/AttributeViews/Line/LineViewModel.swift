@@ -56,4 +56,8 @@
  *
  */
 
+/// The view model associated with `LineView`.
+/// 
+/// This view model delays edits so that editing only modifies the model once
+/// the user has committed the changes.
 public typealias LineViewModel = DelayEditValueViewModel<String>

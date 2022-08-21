@@ -65,153 +65,39 @@ import SwiftUI
 import Attributes
 import GUUI
 
-fileprivate final class BlockAttributeValue: Value<BlockAttribute> {
-
-    private let _tableViewModel: () -> TableViewModel
-
-    private let _complexViewModel: () -> ComplexViewModel
-
-    private let _collectionViewModel: () -> CollectionViewModel
-
-    private let _subView: (TableViewModel, ComplexViewModel, CollectionViewModel) -> AnyView
-
-    var tableViewModel: TableViewModel {
-        _tableViewModel()
-    }
-
-    var complexViewModel: ComplexViewModel {
-        _complexViewModel()
-    }
-
-    var collectionViewModel: CollectionViewModel {
-        _collectionViewModel()
-    }
-
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, defaultValue: BlockAttribute = .text(""), label: String, notifier: GlobalChangeNotifier? = nil) {
-        self._tableViewModel = {
-            if path.isNil(root.value) {
-                return TableViewModel(root: root, path: path.tableValue, label: label, columns: [], notifier: notifier)
-            }
-            let columns: [BlockAttributeType.TableColumn]
-            switch root.value[keyPath: path.keyPath].type {
-            case .table(let cols):
-                columns = cols
-            default:
-                return TableViewModel(valueRef: Ref(copying: []), errorsRef: ConstRef(copying: []), label: label, columns: [])
-            }
-            return TableViewModel(root: root, path: path.tableValue, label: label, columns: columns, notifier: notifier)
-        }
-        self._complexViewModel = {
-            if path.isNil(root.value) {
-                return ComplexViewModel(root: root, path: path.complexValue, label: label, fieldsPath: path.complexFields, notifier: notifier)
-            }
-            return ComplexViewModel(root: root, path: path.complexValue, label: label, fieldsPath: path.complexFields, notifier: notifier)
-        }
-        self._collectionViewModel = {
-            if path.isNil(root.value) {
-                return CollectionViewModel(root: root, path: path.collectionValue, label: label, type: .bool, notifier: notifier)
-            }
-            let type: AttributeType
-            switch root.value[keyPath: path.keyPath].type {
-            case .collection(let subType):
-                type = subType
-            default:
-                type = .bool
-            }
-            return CollectionViewModel(root: root, path: path.collectionValue, label: label, type: type, notifier: notifier)
-        }
-        self._subView = { (tableViewModel, complexViewModel, collectionViewModel) in
-            switch root.value[keyPath: path.keyPath].type {
-            case .code(let language):
-                return AnyView(CodeView(root: root.asBinding, path: path.codeValue, label: label, language: language, notifier: notifier))
-            case .text:
-                return AnyView(TextView(root: root.asBinding, path: path.textValue, label: label, notifier: notifier))
-            case .collection:
-                return AnyView(CollectionView(viewModel: collectionViewModel))
-            case .table:
-                return AnyView(TableView(viewModel: tableViewModel))
-            case .complex:
-                return AnyView(ComplexView(viewModel: complexViewModel))
-            case .enumerableCollection(let validValues):
-                return AnyView(EnumerableCollectionView(root: root.asBinding, path: path.enumerableCollectionValue, label: label, validValues: validValues, notifier: notifier))
-            }
-        }
-        super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
-    }
-
-    init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool) {
-        self._tableViewModel = {
-            let columns: [BlockAttributeType.TableColumn]
-            switch valueRef.value.type {
-            case .table(let cols):
-                columns = cols
-            default:
-                columns = []
-            }
-            return TableViewModel(valueRef: valueRef.tableValue, errorsRef: ConstRef(copying: []), label: label, columns: columns, delayEdits: delayEdits)
-        }
-        self._complexViewModel = {
-            let fields: [Field]
-            switch valueRef.value.type {
-            case .complex(let flds):
-                fields = flds
-            default:
-                fields = []
-            }
-            return ComplexViewModel(valueRef: valueRef.complexValue, label: label, fields: fields)
-        }
-        self._collectionViewModel = {
-            let type: AttributeType
-            switch valueRef.value.type {
-            case .collection(let subType):
-                type = subType
-            default:
-                type = .bool
-            }
-            return CollectionViewModel(valueRef: valueRef.collectionValue, errorsRef: ConstRef(copying: []), label: label, type: type, delayEdits: delayEdits)
-        }
-        self._subView = { (tableViewModel, complexViewModel, collectionViewModel) in
-            switch valueRef.value.type {
-            case .code(let language):
-                return AnyView(CodeView(value: valueRef.codeValue.asBinding, label: label, language: language, delayEdits: delayEdits))
-            case .text:
-                return AnyView(TextView(value: valueRef.textValue.asBinding, label: label, delayEdits: delayEdits))
-            case .collection:
-                return AnyView(CollectionView(viewModel: collectionViewModel))
-                //return AnyView(CollectionView(value: valueRef.collectionValue.asBinding, display: valueRef.value.collectionDisplay, label: label, type: type, delayEdits: delayEdits))
-            case .table:
-                return AnyView(TableView(viewModel: tableViewModel))
-            case .complex:
-                return AnyView(ComplexView(viewModel: complexViewModel))
-            case .enumerableCollection(let validValues):
-                return AnyView(EnumerableCollectionView(value: valueRef.enumerableCollectionValue.asBinding, label: label, validValues: validValues))
-            }
-        }
-        super.init(valueRef: valueRef, errorsRef: errorsRef)
-    }
-
-    func subView(tableViewModel: TableViewModel, complexViewModel: ComplexViewModel, collectionViewModel: CollectionViewModel) -> AnyView {
-        _subView(tableViewModel, complexViewModel, collectionViewModel)
-    }
-
-}
-
+/// The view model associated wtih the `BlockAttributeView`.
+/// 
+/// This view model provides the data and functionality required for the
+/// `BlockAttributeView`. Specifically, this view model provides the ability
+/// to create type-erased views for the `BlockAttributeView`, thus hiding the
+/// sub views used to display each different type of block attribute.
 public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifier {
 
+    /// A reference to the block attribute associated with this view model.
     private let ref: BlockAttributeValue
 
+    /// The `TableViewModel` associated with the block attribute when the
+    /// attribute is a table attribute.
     lazy var tableViewModel: TableViewModel = {
         ref.tableViewModel
     }()
 
+    /// The `ComplexViewModel` associated with the block attribute when the
+    /// attribute is a complex attribute.
     lazy var complexViewModel: ComplexViewModel = {
         ref.complexViewModel
     }()
 
+    /// The `CollectionViewModel` associated with the block attribute when the
+    /// attribute is a collection attribute.
     lazy var collectionViewModel: CollectionViewModel = {
         ref.collectionViewModel
     }()
 
+    /// The block attribute associated with this view model.
+    /// 
+    /// Any change made to this attribute will triggere an `objectWillChange`
+    /// notification to be sent.
     var blockAttribute: BlockAttribute {
         get {
             ref.value
@@ -221,23 +107,90 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
         }
     }
 
+    /// Create a new view for displaying the block attribute associated with
+    /// this view model wrapped in an `AnyView`.
     var subView: AnyView {
-        ref.subView(tableViewModel: tableViewModel, complexViewModel: complexViewModel, collectionViewModel: collectionViewModel)
+        ref.subView(
+            tableViewModel: tableViewModel,
+            complexViewModel: complexViewModel,
+            collectionViewModel: collectionViewModel
+        )
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, BlockAttribute>, label: String, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `BlockAttributeViewModel`.
+    /// 
+    /// This initialiser create a new `BlockAttributeViewModel` utilising a key
+    /// path from a `Modifiable` object that contains the block attribute that
+    /// this view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the block attribute that this view model is associated with.
+    /// 
+    /// - Parameter path: A `Attributes.Path` that points to the block attribute
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the block attribute.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, BlockAttribute>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = BlockAttributeValue(root: root, path: path, label: label, notifier: notifier)
     }
 
-    public init(valueRef: Ref<BlockAttribute>, errorsRef: ConstRef<[String]>, label: String, delayEdits: Bool = false) {
-        self.ref = BlockAttributeValue(valueRef: valueRef, errorsRef: errorsRef, label: label, delayEdits: delayEdits)
+    /// Create a new `BlockAttributeViewModel`.
+    /// 
+    /// This initialiser create a new `BlockAttributeViewModel` utilising a
+    /// reference to the block attribute directly. It is useful to call this
+    /// initialiser when utilising attribute groups that do not exist within a
+    /// `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the block attribute that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that will be
+    /// utilised to display errors for this block attribute.
+    /// 
+    /// - Parameter label: The label to use when presenting the block attribute.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    public init(
+        valueRef: Ref<BlockAttribute>,
+        errorsRef: ConstRef<[String]>,
+        label: String,
+        delayEdits: Bool = false
+    ) {
+        self.ref = BlockAttributeValue(
+            valueRef: valueRef,
+            errorsRef: errorsRef,
+            label: label,
+            delayEdits: delayEdits
+        )
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
     public func send() {
         objectWillChange.send()
-        tableViewModel.send()
-        complexViewModel.send()
-        collectionViewModel.send()
+        switch blockAttribute {
+        case .table:
+            tableViewModel.send()
+        case .complex:
+            complexViewModel.send()
+        case .collection:
+            collectionViewModel.send()
+        default:
+            break
+        }
     }
 
 }

@@ -64,22 +64,36 @@ import TokamakShim
 import SwiftUI
 #endif
 
-import Foundation
 import Cocoa
+import Foundation
 
+/// The view controller associated with `Editor`.
 final class EditorViewController: NSViewController {
 
+    /// The `Editor.Coordinator` associated with the editor.
     let coordinator: Editor.Coordinator
 
+    /// Create a new `EditorViewController`.
+    /// 
+    /// - Parameter coordinator: The `Editor.Coordinator` associated with the
+    /// editor.
     init(coordinator: Editor.Coordinator) {
         self.coordinator = coordinator
         super.init(nibName: nil, bundle: nil)
     }
 
+    /// Do not initialize from an NSCoder.
+    /// 
+    /// - Parameter coder: The coder to decode from.
+    /// 
+    /// - Warning: This initialiser always returns nil.
     required init?(coder: NSCoder) {
-        return nil
+        nil
     }
 
+    /// Delegate `viewWillDisapper` to `coordinator`.
+    /// 
+    /// This allows the `coordinator` to detect when the view disappears.
     override func viewWillDisappear() {
         coordinator.viewWillDisappear()
     }

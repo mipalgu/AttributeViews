@@ -57,8 +57,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -66,24 +66,51 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// A `TableViewDataSource` that operates on a keypath to an array of rows
+/// that exists within a base `Modifiable` object.
 struct KeyPathTableViewDataSource<Root: Modifiable>: TableViewDataSource {
 
+    /// A reference to the base `Modifiable` object that
+    /// contains the rows that this data source is associated with.
     let root: Ref<Root>
+
+    /// An `Attributes.Path` that points to the rows from `root`.
     let path: Attributes.Path<Root, [[LineAttribute]]>
+
+    /// A `GlobalChangeNotifier` that will be used to notify any listeners when
+    /// a trigger is fired.
     weak var notifier: GlobalChangeNotifier?
 
+    /// Add a new row to the table.
+    /// 
+    /// - Parameter row: The new attribute to add to the table.
     func addElement(_ row: [LineAttribute]) {
         _ = root.value.addItem(row, to: path)
     }
 
+    /// Remove a set of rows from the table.
+    /// 
+    /// - Parameter offsets: The offsets of the rows to remove.
     func deleteElements(atOffsets offsets: IndexSet) {
         _ = root.value.deleteItems(table: path, items: offsets)
     }
 
+    /// Move a set of rows in the table to a new place in the table.
+    /// 
+    /// - Parameter source: The offsets of the rows to move.
+    /// 
+    /// - Parameter destination: The offset to move the rows to. The rows will
+    /// be moved so that the element at `destination` is the first element that
+    /// proceeds the rows at `source`.
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         _ = root.value.moveItems(table: path, from: source, to: destination)
     }
 
+    /// Fetch the view model associated with a particular row.
+    /// 
+    /// - Parameter row: The row to fetch the view model for.
+    /// 
+    /// - Returns: The view model for the row.
     func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
         LineAttributeViewModel(root: root, path: path[row][column], label: "", notifier: notifier)
     }

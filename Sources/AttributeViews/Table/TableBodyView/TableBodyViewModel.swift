@@ -57,8 +57,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -66,54 +66,146 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// The view model associated with a `TableBodyView`.
+/// 
+/// This view model is responsible for providing CRUD (create, update, delete)
+/// functionality for a table of attributes. As such, this view model
+/// provides functions for adding new attributes to the table, updating the
+/// table through the reordering of attributes, and deleting attributes
+/// from the table.
 final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
 
+    /// Provides access to the table associated with this view.
     private let ref: TableBodyValue
+
+    /// The data scescribing each column of the table.
     let columns: [BlockAttributeType.TableColumn]
 
+    /// A dictionary associating a row index of the table with a
+    /// corresponding `TableRowViewModel`.
     private var rowsData: [Int: TableRowViewModel] = [:]
 
+    /// All `TableRowViewModel`s for the table.
     var rows: [TableRowViewModel] {
         let values = ref.isValid ? ref.value : []
         return values.indices.map { row(for: $0) }
     }
 
+    /// A set of `ObjectIdentifiers` for all `TableRowViewModel`s that'
+    /// are within the selection.
     @Published var selection: Set<ObjectIdentifier> = []
 
+    /// A `TableViewDataSource` that provides access to the data associated
+    /// with the table.
+    /// 
+    /// - SeeAlso: KeyPathTableViewDataSource
+    /// - SeeAlso: BindingTableViewDataSource
     private let dataSource: TableViewDataSource
 
-    init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, columns: [BlockAttributeType.TableColumn], notifier: GlobalChangeNotifier? = nil) {
+    /// Calculate the minimum height for the table.
+    var underestimatedHeight: Int {
+        rows.reduce(0) { $0 + ($1.row.first?.underestimatedHeight ?? 5) } + 75
+    }
+
+    /// Create a new `TableBodyViewModel`.
+    /// 
+    /// This initialiser create a new `TableBodyViewModel` utilising a key
+    /// path from a `Modifiable` object that contains the table that
+    /// this view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the table that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the table from
+    /// the base `Modifiable` object.
+    /// 
+    /// - Parameter columns: A description of the columns within the table.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, [[LineAttribute]]>,
+        columns: [BlockAttributeType.TableColumn],
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = TableBodyValue(root: root, path: path, notifier: notifier)
         self.columns = columns
         self.dataSource = KeyPathTableViewDataSource<Root>(root: root, path: path, notifier: notifier)
     }
 
-    init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), columns: [BlockAttributeType.TableColumn], delayEdits: Bool = false) {
+    /// Create a new `TableBodyViewModel`.
+    /// 
+    /// This initialiser create a new `TableBodyViewModel` utilising a
+    /// reference to the table directly. It is useful to call
+    /// this initialiser when utilising tables that do not exist
+    /// within a `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the table that this view model
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors associated with
+    /// the table.
+    /// 
+    /// - Parameter columns: A description of the columns within the table.
+    /// 
+    /// - Parameter delayEdits: Delays edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    init(
+        valueRef: Ref<[[LineAttribute]]>,
+        errorsRef: ConstRef<[String]> = ConstRef(copying: []),
+        columns: [BlockAttributeType.TableColumn],
+        delayEdits: Bool = false
+    ) {
         self.ref = TableBodyValue(valueRef: valueRef, errorsRef: errorsRef)
         self.columns = columns
         self.dataSource = BindingTableViewDataSource(ref: valueRef, delayEdits: delayEdits)
     }
 
+    /// Fetch the view model associated with a particular row.
+    /// 
+    /// - Parameter index: The index of the row to fetch the view model for.
+    /// 
+    /// - Returns: The `TableRowViewModel` associated with the row.
     private func row(for index: Int) -> TableRowViewModel {
         guard let viewModel = rowsData[index] else {
-            let viewModel = TableRowViewModel(table: ref.valueRef, rowIndex: index, lineAttributeViewModel: {
+            let viewModel = TableRowViewModel(table: ref.valueRef, rowIndex: index) {
                 self.dataSource.viewModel(forElementAtRow: $0, column: $1)
-            })
+            }
             rowsData[index] = viewModel
             return viewModel
         }
         return viewModel
     }
 
+    /// Fetch any errors associated with a particular row.
+    /// 
+    /// - Parameter index: The index of the row to fetch the errors for.
+    /// 
+    /// - Returns: The errors associated with the row.
     func errors(forRow _: Int) -> [[String]] {
         columns.map { _ in [] }
     }
 
+    /// Add a row to the table.
+    /// 
+    /// - Parameter newRow: The new row to add to the table.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func addElement(newRow: [LineAttribute]) {
         dataSource.addElement(newRow)
         objectWillChange.send()
     }
 
+    /// Remove a particular row from the table.
+    /// 
+    /// - Parameter row: The row to remove from the table.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func deleteRow(row: Int) {
         guard row < rows.count else {
             return
@@ -124,6 +216,12 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
         deleteElements(atOffsets: offsets)
     }
 
+    /// Delete a set of rows from the table.
+    /// 
+    /// - Parameter offsets: The set of rows to delete from the table.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func deleteElements(atOffsets offsets: IndexSet) {
         selection.removeAll()
         dataSource.deleteElements(atOffsets: offsets)
@@ -151,6 +249,18 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
         objectWillChange.send()
     }
 
+    /// Move a set of rows to a new location within the table.
+    /// 
+    /// The rows are moved so that the are placed directly before the element
+    /// at `destination`.
+    /// 
+    /// - Parameter source: The set of rows to move.
+    /// 
+    /// - Parameter destination: The index of the element to place the rows
+    /// before.
+    /// 
+    /// - Attention: This triggers an `objectWillChange` notification to be
+    /// sent.
     func moveElements(atOffsets source: IndexSet, to destination: Int) {
         selection.removeAll()
         dataSource.moveElements(atOffsets: source, to: destination)
@@ -163,6 +273,10 @@ final class TableBodyViewModel: ObservableObject, GlobalChangeNotifier {
         objectWillChange.send()
     }
 
+    /// Manually trigger an `objectWillChange` notification.
+    /// 
+    /// This function recursively triggers an `objectWillChange` notification
+    /// to any child view models.
     func send() {
         objectWillChange.send()
         rowsData = [:]
