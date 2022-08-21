@@ -65,16 +65,29 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// A generic view model for working with values that have associated errors.
+/// 
+/// Generally, when working with attributes that are not recursive, you will
+/// want to use this view model to tie a value to a set of errors. This view
+/// model allows one to make changes to a value and automatically generate
+/// errors for the value utilising a `Modifiable` object.
 public final class ValueViewModel<T>: ObservableObject, GlobalChangeNotifier {
 
+    /// A reference to the value associated with this view model.
     private let ref: Value<T>
 
+    /// The label of the value.
     public let label: String
 
+    /// The errors associated with `value`.
     var errors: [String] {
         ref.errors
     }
 
+    /// The value associated with this view model.
+    /// 
+    /// - Attention: Changing this value will cause an `objectWillChange`
+    /// notification to be sent.
     var value: T {
         get {
             ref.value
@@ -84,45 +97,240 @@ public final class ValueViewModel<T>: ObservableObject, GlobalChangeNotifier {
         }
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the value
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// value if the value ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the value is
+    /// deleted.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T>,
+        defaultValue: T,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
     }
 
-    public init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, defaultValue: T, label: String, notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to an optional
+    /// containing the value from the base `Modifiable` object.
+    /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// value if the value ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the value is
+    /// deleted.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T?>,
+        defaultValue: T,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self.ref = Value(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
         self.label = label
     }
 
-    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByStringLiteral {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the value
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public convenience init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) where T: ExpressibleByStringLiteral {
         self.init(root: root, path: path, defaultValue: "", label: label, notifier: notifier)
     }
 
-    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByIntegerLiteral {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the value
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public convenience init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) where T: ExpressibleByIntegerLiteral {
         self.init(root: root, path: path, defaultValue: 0, label: label, notifier: notifier)
     }
 
-    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByBooleanLiteral {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the value
+    /// from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public convenience init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) where T: ExpressibleByBooleanLiteral {
         self.init(root: root, path: path, defaultValue: false, label: label, notifier: notifier)
     }
 
-    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByStringLiteral {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to an optional
+    /// containing the value from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public convenience init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T?>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) where T: ExpressibleByStringLiteral {
         self.init(root: root, path: path, defaultValue: "", label: label, notifier: notifier)
     }
 
-    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByIntegerLiteral {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to an optional
+    /// containing the value from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public convenience init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T?>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) where T: ExpressibleByIntegerLiteral {
         self.init(root: root, path: path, defaultValue: 0, label: label, notifier: notifier)
     }
 
-    public convenience init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, T?>, label: String, notifier: GlobalChangeNotifier? = nil) where T: ExpressibleByBooleanLiteral {
+    /// Create a new `ValueViewModel`.
+    /// 
+    /// This initialiser create a new `ValueViewModel` utilising a key path
+    /// from a `Modifiable` object that contains the value that this
+    /// view model is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the value that this view model is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to an optional
+    /// containing the value from the base `Modifiable` object.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    public convenience init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, T?>,
+        label: String,
+        notifier: GlobalChangeNotifier? = nil
+    ) where T: ExpressibleByBooleanLiteral {
         self.init(root: root, path: path, defaultValue: false, label: label, notifier: notifier)
     }
 
+    /// Create a new `Value`.
+    /// 
+    /// This initialiser create a new `Value` utilising a
+    /// reference to the value directly. It is useful to call this
+    /// initialiser when utilising values that do not exist within a
+    /// `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the value that this view model
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors that are
+    /// associated with the value.
+    /// 
+    /// - Parameter label: The label to use when presenting the value.
     public init(valueRef: Ref<T>, errorsRef: ConstRef<[String]> = ConstRef(copying: []), label: String) {
         self.ref = Value(valueRef: valueRef, errorsRef: errorsRef)
         self.label = label
     }
 
+    /// Manually trigger an `objectWillChange` notification.
     public func send() {
         objectWillChange.send()
     }
