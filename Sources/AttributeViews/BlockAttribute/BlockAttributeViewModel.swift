@@ -129,6 +129,8 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
     /// - Parameter path: A `Attributes.Path` that points to the block attribute
     /// from the base `Modifiable` object.
     /// 
+    /// - Parameter label: The label to use when presenting the block attribute.
+    /// 
     /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
     /// notify any listeners when a trigger is fired.
     public init<Root: Modifiable>(
@@ -152,6 +154,8 @@ public final class BlockAttributeViewModel: ObservableObject, GlobalChangeNotifi
     /// 
     /// - Parameter errorsRef: A const-reference to the errors that will be
     /// utilised to display errors for this block attribute.
+    /// 
+    /// - Parameter label: The label to use when presenting the block attribute.
     /// 
     /// - Parameter delayEdits: Delays edit notifications for those attributes
     /// where it is applicable to do so (for example, delaying edits for a
