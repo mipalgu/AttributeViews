@@ -59,37 +59,47 @@
 #if canImport(TokamakShim)
 import TokamakShim
 
+/// Typealias State to `TokamakShim.State` to avoid conflicts.
 typealias State = TokamakShim.State
 #else
 import SwiftUI
 
+/// Typealias State to `SwiftUI.State` to avoid conflicts.
 typealias State = SwiftUI.State
 #endif
 
-import AttributeViews
 import Attributes
+import AttributeViews
 import GUUI
 
+/// A scene for testing the functionality of AttributeViews.
 struct TestsScene: App {
 
+    /// The apps `NSApplicationDelegate`.
     class AppDelegate: NSObject, NSApplicationDelegate {
 
+        /// Close the app if all windows have closed.
         func applicationShouldTerminateAfterLastWindowClosed(_ application: NSApplication) -> Bool {
-            return true
+            true
         }
 
+        /// Set the activation policy to .regular.
         func applicationWillFinishLaunching(_ notification: Notification) {
             NSApp.setActivationPolicy(.regular)
         }
 
     }
 
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    /// The scenes app delegate.
+    @NSApplicationDelegateAdaptor(AppDelegate.self) weak var appDelegate
 
+    /// The scene phase.
     @Environment(\.scenePhase) private var scenePhase: ScenePhase
 
+    /// Which views are visible.
     @State var expanded: [AnyKeyPath: Bool] = [:]
 
+    /// The view model associated with this app.
     @StateObject var viewModel = AppViewModel(
         root: Ref(
             copying: EmptyModifiable(
@@ -118,7 +128,10 @@ struct TestsScene: App {
                         fields: [
                             Field(name: "text", type: .text),
                             Field(name: "code", type: .code(language: .swift)),
-                            //Field(name: "enumerated_collection", type: .enumerableCollection(validValues: ["a", "b", "c"])),
+                            // Field(
+                            //     name: "enumerated_collection",
+                            //     type: .enumerableCollection(validValues: ["a", "b", "c"])
+                            // ),
                             Field(
                                 name: "table",
                                 type: .table(
@@ -135,11 +148,26 @@ struct TestsScene: App {
                         attributes: [
                             "text": .text(""),
                             "code": .code("", language: .swift),
-                            //"enumerable_collection": .enumerableCollection(["a"], validValues: ["a", "b", "c"]),
+                            // "enumerable_collection": .enumerableCollection(
+                            //     ["a"],
+                            //     validValues: ["a", "b", "c"]
+                            // ),
                             "table": .table(
                                 [
-                                    [.bool(false), .integer(0), .float(0.0), .line(""), .enumerated("a", validValues: ["a", "b", "c"])],
-                                    [.bool(true), .integer(1), .float(0.1), .line("1"), .enumerated("b", validValues: ["a", "b", "c"])]
+                                    [
+                                        .bool(false),
+                                        .integer(0),
+                                        .float(0.0),
+                                        .line(""),
+                                        .enumerated("a", validValues: ["a", "b", "c"])
+                                    ],
+                                    [
+                                        .bool(true),
+                                        .integer(1),
+                                        .float(0.1),
+                                        .line("1"),
+                                        .enumerated("b", validValues: ["a", "b", "c"])
+                                    ]
                                 ],
                                 columns: [
                                     (name: "bool", type: .bool),
@@ -188,7 +216,10 @@ struct TestsScene: App {
                         ],
                         attributes: [
                             "line_collection": .collection(bools: [false, true]),
-                            "code_collection": .collection(code: ["let a = 2", "let b = 3"], language: .swift),
+                            "code_collection": .collection(
+                                code: ["let a = 2", "let b = 3"],
+                                language: .swift
+                            ),
                             "complex_collection": .collection(
                                 complex: [
                                     [
@@ -204,7 +235,10 @@ struct TestsScene: App {
                                     Field(name: "bool", type: .bool),
                                     Field(name: "code", type: .code(language: .swift))
                                 ],
-                                display: ReadOnlyPath<Attribute, Attribute>(keyPath: \.self, ancestors: []).complexValue["code"].wrappedValue.lineAttribute
+                                display: ReadOnlyPath<Attribute, Attribute>(keyPath: \.self, ancestors: [])
+                                    .complexValue["code"]
+                                    .wrappedValue
+                                    .lineAttribute
                             ),
                             "complex": .complex(
                                 [
@@ -244,10 +278,13 @@ struct TestsScene: App {
         path: EmptyModifiable.path.attributes
     )
 
+    /// Some editable text.
     @State var text: String = ""
 
+    /// An error message.
     @State var loadError: String = ""
 
+    /// The contents of this scene.
     var body: some Scene {
         WindowGroup {
             ScrollView(.vertical, showsIndicators: true) {
@@ -261,4 +298,5 @@ struct TestsScene: App {
             }.padding(10)
         }
     }
+
 }
