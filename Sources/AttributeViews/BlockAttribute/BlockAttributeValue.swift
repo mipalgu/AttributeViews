@@ -215,13 +215,15 @@ final class BlockAttributeValue: Value<BlockAttribute> {
         self._subView = { tableViewModel, complexViewModel, collectionViewModel in
             switch root.value[keyPath: path.keyPath].type {
             case .code(let language):
-                return AnyView(CodeView(
-                    root: root.asBinding,
-                    path: path.codeValue,
-                    label: label,
-                    language: language,
-                    notifier: notifier
-                ))
+                return AnyView(
+                    CodeView(
+                        root: root.asBinding,
+                        path: path.codeValue,
+                        label: label,
+                        language: language,
+                        notifier: notifier
+                    )
+                )
             case .text:
                 return AnyView(
                     TextView(root: root.asBinding, path: path.textValue, label: label, notifier: notifier)
@@ -233,13 +235,15 @@ final class BlockAttributeValue: Value<BlockAttribute> {
             case .complex:
                 return AnyView(ComplexView(viewModel: complexViewModel))
             case .enumerableCollection(let validValues):
-                return AnyView(EnumerableCollectionView(
-                    root: root.asBinding,
-                    path: path.enumerableCollectionValue,
-                    label: label,
-                    validValues: validValues,
-                    notifier: notifier
-                ))
+                return AnyView(
+                    EnumerableCollectionView(
+                        root: root.asBinding,
+                        path: path.enumerableCollectionValue,
+                        label: label,
+                        validValues: validValues,
+                        notifier: notifier
+                    )
+                )
             }
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
@@ -310,12 +314,14 @@ final class BlockAttributeValue: Value<BlockAttribute> {
         self._subView = { tableViewModel, complexViewModel, collectionViewModel in
             switch valueRef.value.type {
             case .code(let language):
-                return AnyView(CodeView(
-                    value: valueRef.codeValue.asBinding,
-                    label: label,
-                    language: language,
-                    delayEdits: delayEdits
-                ))
+                return AnyView(
+                        CodeView(
+                        value: valueRef.codeValue.asBinding,
+                        label: label,
+                        language: language,
+                        delayEdits: delayEdits
+                    )
+                )
             case .text:
                 return AnyView(
                     TextView(value: valueRef.textValue.asBinding, label: label, delayEdits: delayEdits)
@@ -327,11 +333,13 @@ final class BlockAttributeValue: Value<BlockAttribute> {
             case .complex:
                 return AnyView(ComplexView(viewModel: complexViewModel))
             case .enumerableCollection(let validValues):
-                return AnyView(EnumerableCollectionView(
-                    value: valueRef.enumerableCollectionValue.asBinding,
-                    label: label,
-                    validValues: validValues
-                ))
+                return AnyView(
+                        EnumerableCollectionView(
+                        value: valueRef.enumerableCollectionValue.asBinding,
+                        label: label,
+                        validValues: validValues
+                    )
+                )
             }
         }
         super.init(valueRef: valueRef, errorsRef: errorsRef)

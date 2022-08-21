@@ -13,7 +13,7 @@ import SwiftUI
 
 import Attributes
 
-// swiftlint: disable type_contents_order
+// swiftlint:disable type_contents_order
 
 /// A view that displays and allows editing of a text property.
 public struct TextView: View {
@@ -152,6 +152,7 @@ public struct TextView: View {
             )
         }
     }
+
 }
 
 #if canImport(SwiftUI)
