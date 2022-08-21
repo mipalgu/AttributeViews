@@ -58,8 +58,10 @@
 
 import Attributes
 
+/// Provide an estimate of the height of an attribute view.
 extension Attribute {
 
+    /// Provide an estimate of the height of an attribute view.
     var underestimatedHeight: Int {
         switch self {
         case .line(let lineAttribute):
@@ -71,16 +73,20 @@ extension Attribute {
 
 }
 
+/// Provide an estimate of the height of a line attribute view.
 extension LineAttribute {
 
+    /// Provide an estimate of the height of a line attribute view.
     var underestimatedHeight: Int {
-        return 28
+        28
     }
 
 }
 
+/// Provide an estimate of the height of a block attribute view.
 extension BlockAttribute {
 
+    /// Provide an estimate of the height of a block attribute view.
     var underestimatedHeight: Int {
         switch self {
         case .code, .text:
