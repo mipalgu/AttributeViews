@@ -57,8 +57,8 @@
  */
 
 #if canImport(TokamakShim)
-import TokamakShim
 import Foundation
+import TokamakShim
 #else
 import SwiftUI
 #endif
@@ -66,17 +66,60 @@ import SwiftUI
 import Attributes
 import GUUI
 
+/// A convenience class for working with a table of attributes.
+/// 
+/// This class simply provides a means for accessing a `TableRowViewModel`
+/// for each row  within a table of attributes. Thus, a
+/// `TableRowViewModel` is associated with each row within the
+/// table that this view model manages.
 final class TableBodyValue: Value<[[LineAttribute]]> {
 
+    /// A function for returning a view model for a given row, column pair.
     private let _lineAttributeViewModel: (Int, Int) -> LineAttributeViewModel
 
-    override init<Root: Modifiable>(root: Ref<Root>, path: Attributes.Path<Root, [[LineAttribute]]>, defaultValue: [[LineAttribute]] = [], notifier: GlobalChangeNotifier? = nil) {
+    /// Create a new `TableBodyValue`.
+    /// 
+    /// This initialiser create a new `TableBodyValue` utilising a key path
+    /// from a `Modifiable` object that contains the table of attributes
+    /// that this class is associated with.
+    /// 
+    /// - Parameter root: A reference to the base `Modifiable` object that
+    /// contains the table that this class is associated with.
+    /// 
+    /// - Parameter path: An `Attributes.Path` that points to the table from
+    /// the base `Modifiable` object.
+    /// 
+    /// - Parameter defaultValue: The defalut value to use for the
+    /// table if the table ceases to exist. This is necessary to
+    /// prevent `SwiftUi` crashes during animations when the table is
+    /// deleted.
+    /// 
+    /// - Parameter notifier: A `GlobalChangeNotifier` that will be used to
+    /// notify any listeners when a trigger is fired.
+    override init<Root: Modifiable>(
+        root: Ref<Root>,
+        path: Attributes.Path<Root, [[LineAttribute]]>,
+        defaultValue: [[LineAttribute]] = [],
+        notifier: GlobalChangeNotifier? = nil
+    ) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(root: root, path: path[$0][$1], label: "", notifier: notifier)
         }
         super.init(root: root, path: path, defaultValue: defaultValue, notifier: notifier)
     }
 
+    /// Create a new `TableBodyValue`.
+    /// 
+    /// This initialiser create a new `TableBodyValue` utilising a
+    /// reference to the table directly. It is useful to call this
+    /// initialiser when utilising tables that do not exist within a
+    /// `Modifiable` object.
+    /// 
+    /// - Parameter valueRef: A reference to the table that this class
+    /// is associated with.
+    /// 
+    /// - Parameter errorsRef: A const-reference to the errors associated with
+    /// the table.
     override init(valueRef: Ref<[[LineAttribute]]>, errorsRef: ConstRef<[String]>) {
         self._lineAttributeViewModel = {
             LineAttributeViewModel(valueRef: valueRef[$0][$1], errorsRef: ConstRef(copying: []), label: "")
@@ -84,6 +127,12 @@ final class TableBodyValue: Value<[[LineAttribute]]> {
         super.init(valueRef: valueRef, errorsRef: errorsRef)
     }
 
+    /// Fetch the view model associated with a particular row within the
+    /// table.
+    /// 
+    /// - Parameter row: The index of the row to fetch the view model for.
+    /// 
+    /// - Returns: The `TableRowViewModel` associated with the row.
     func viewModel(forRow row: Int) -> TableRowViewModel {
         TableRowViewModel(table: valueRef, rowIndex: row, lineAttributeViewModel: _lineAttributeViewModel)
     }
