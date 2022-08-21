@@ -219,7 +219,7 @@ struct CollectionRowView_Previews: PreviewProvider {
     /// passes it to a `CollectionRowView`.
     struct CollectionRowPreviewView: View {
 
-        // The view model associated wtih a `CollectionRowView`.
+        /// The view model associated wtih a `CollectionRowView`.
         @StateObject var viewModel: CollectionRowViewModel
 
         /// Create a new `CollectionRowView`, and pass it `viewModel`.
