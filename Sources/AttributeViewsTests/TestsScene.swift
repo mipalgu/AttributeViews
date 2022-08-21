@@ -90,8 +90,12 @@ struct TestsScene: App {
 
     }
 
+    // swiftlint:disable weak_delegate
+
     /// The scenes app delegate.
-    @NSApplicationDelegateAdaptor(AppDelegate.self) weak var appDelegate
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+    // swiftlint:enable weak_delegate
 
     /// The scene phase.
     @Environment(\.scenePhase) private var scenePhase: ScenePhase
