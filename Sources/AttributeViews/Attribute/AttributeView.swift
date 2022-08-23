@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * AttributeView.swift
+ * MachineViews
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 16/11/20.
+ * Copyright © 2020 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,38 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+#if canImport(TokamakShim)
+import TokamakShim
+#else
+import SwiftUI
+#endif
+
+import Attributes
+
+// swiftlint:disable type_contents_order
+
+/// A view that displays a single Attribute from the `Attributes` package.
+/// 
+/// This view draws a number of subviews, depending on the type of Attribute
+/// that is referenced by its view model. Therefore, the majority of the
+/// corresponding behaviour of this view is delegated to several other views.
+/// This view is simply a convenience view that is capable of displaying any
+/// Attribute that is passed to it.
+public struct AttributeView: View {
+
+    /// The view model for the AttributeView.
+    @ObservedObject var viewModel: AttributeViewModel
+
+    /// Create a new `AttributeView`.
+    /// 
+    /// - Parameter viewModel: The view model for the AttributeView.
+    public init(viewModel: AttributeViewModel) {
+        self._viewModel = ObservedObject(wrappedValue: viewModel)
+    }
+
+    /// Draw the view.
+    public var body: some View {
+        viewModel.subView
+    }
+
+}

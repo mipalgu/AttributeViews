@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * ExpressionViewModel.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,10 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+import Attributes
+
+/// The view model associated with `ExpressionView`.
+/// 
+/// This view model delays edits so that editing only modifies the model once
+/// the user has committed the changes.
+public typealias ExpressionViewModel = DelayEditValueViewModel<Expression>

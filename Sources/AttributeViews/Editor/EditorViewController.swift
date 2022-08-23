@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * EditorViewController.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,48 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+#if canImport(Cocoa)
+
+#if canImport(TokamakShim)
+import TokamakShim
+#else
+import SwiftUI
+#endif
+
+import Cocoa
+import Foundation
+
+/// The view controller associated with `Editor`.
+final class EditorViewController: NSViewController {
+
+    /// The `Editor.Coordinator` associated with the editor.
+    let coordinator: Editor.Coordinator
+
+    /// Create a new `EditorViewController`.
+    /// 
+    /// - Parameter coordinator: The `Editor.Coordinator` associated with the
+    /// editor.
+    init(coordinator: Editor.Coordinator) {
+        self.coordinator = coordinator
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    /// Do not initialize from an NSCoder.
+    /// 
+    /// - Parameter coder: The coder to decode from.
+    /// 
+    /// - Warning: This initialiser always returns nil.
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    /// Delegate `viewWillDisapper` to `coordinator`.
+    /// 
+    /// This allows the `coordinator` to detect when the view disappears.
+    override func viewWillDisappear() {
+        coordinator.viewWillDisappear()
+    }
+
+}
+
+#endif

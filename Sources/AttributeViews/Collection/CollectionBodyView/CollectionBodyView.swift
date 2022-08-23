@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * CollectionBodyView.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,42 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+import Attributes
+#if !canImport(SwiftUI)
+import Foundation
+#endif
+import GUUI
+import TokamakShim
+
+/// A view that displays a collection of attributes.
+/// 
+/// The collection is displayed as a `List`. This list allows selecting one or
+/// more items, thus allowing reordering and deletion of selected items. Each
+/// row is a `CollectionRowView`.
+struct CollectionBodyView: View {
+
+    /// The view model associated with this view.
+    @ObservedObject var viewModel: CollectionBodyViewModel
+
+    /// The contents of the view.
+    var body: some View {
+        List(selection: $viewModel.selection) {
+            ForEach(viewModel.rows, id: \.id) { row in
+                CollectionRowView(viewModel: row) {
+                    viewModel.deleteRow(row: row.rowIndex)
+                }
+            }
+            .onMove {
+                viewModel.moveElements(atOffsets: $0, to: $1)
+            }
+            .onDelete {
+                viewModel.deleteElements(atOffsets: $0)
+            }
+        }
+        .frame(minHeight: CGFloat(viewModel.rows.reduce(0) { $0 + $1.row.underestimatedHeight }) + 75)
+        .onExitCommand {
+            viewModel.selection.removeAll(keepingCapacity: true)
+        }
+    }
+
+}

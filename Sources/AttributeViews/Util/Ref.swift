@@ -1,8 +1,8 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * Ref.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
+ * Created by Callum McColl on 24/5/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,5 +56,48 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+#if canImport(TokamakShim)
+import TokamakShim
+#else
+import SwiftUI
+#endif
+
+import Attributes
+import GUUI
+
+/// Provide functionality relating to paths to be used with `ConstRef`.
+public extension ConstRef {
+
+    /// Creates a new `ConstRef` that points to the target of the given path.
+    /// 
+    /// - Parameter path: The `ReadOnlyPath` to the target property.
+    /// 
+    /// - Returns: A new `ConstRef` that points to the target of the given path.
+    subscript<Path: ReadOnlyPathProtocol>(readOnly path: Path) -> ConstRef<Path.Value> where Path.Root == T {
+        self[dynamicMember: path.keyPath]
+    }
+
+}
+
+/// Allow functionality relating to path to be used with `Ref`.
+public extension Ref {
+
+    /// Creates a new `Ref` that points to the target of the given path.
+    /// 
+    /// - Parameter path: The `PathProtocol` to the target property.
+    /// 
+    /// - Returns: A new `Ref` that points to the target of the given path.
+    subscript<Path: PathProtocol>(path path: Path) -> Ref<Path.Value> where Path.Root == T {
+        self[dynamicMember: path.path]
+    }
+
+    /// Creates a new binding that points to the target of the given path.
+    /// 
+    /// - Parameter path: The `PathProtocol` to the target property.
+    /// 
+    /// - Returns: A new binding that points to the target of the given path.
+    subscript<Path: PathProtocol>(bindingTo path: Path) -> Binding<Path.Value> where Path.Root == T {
+        self[path: path].asBinding
+    }
+
+}

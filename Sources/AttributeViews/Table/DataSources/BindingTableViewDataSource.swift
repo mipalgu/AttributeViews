@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * BindingTableViewDataSource.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,60 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+#if canImport(TokamakShim)
+import Foundation
+import TokamakShim
+#else
+import SwiftUI
+#endif
+
+import Attributes
+import GUUI
+
+/// A `TableViewDataSource` that operates on a reference to an array of rows.
+struct BindingTableViewDataSource: TableViewDataSource {
+
+    /// The reference to the array of rows.
+    let ref: Ref<[[LineAttribute]]>
+
+    /// Should we delay edit notifications for those attributes
+    /// where it is applicable to do so (for example, delaying edits for a
+    /// `LineAttribute` so that a notification is not sent for every
+    /// character change).
+    let delayEdits: Bool
+
+    /// Add a new row to the table.
+    /// 
+    /// - Parameter row: The new attribute to add to the table.
+    func addElement(_ row: [LineAttribute]) {
+        ref.value.append(row)
+    }
+
+    /// Remove a set of rows from the table.
+    /// 
+    /// - Parameter offsets: The offsets of the rows to remove.
+    func deleteElements(atOffsets offsets: IndexSet) {
+        ref.value.remove(atOffsets: offsets)
+    }
+
+    /// Move a set of rows in the table to a new place in the table.
+    /// 
+    /// - Parameter source: The offsets of the rows to move.
+    /// 
+    /// - Parameter destination: The offset to move the rows to. The rows will
+    /// be moved so that the element at `destination` is the first element that
+    /// proceeds the rows at `source`.
+    func moveElements(atOffsets source: IndexSet, to destination: Int) {
+        ref.value.move(fromOffsets: source, toOffset: destination)
+    }
+
+    /// Fetch the view model associated with a particular row.
+    /// 
+    /// - Parameter row: The row to fetch the view model for.
+    /// 
+    /// - Returns: The view model for the row.
+    func viewModel(forElementAtRow row: Int, column: Int) -> LineAttributeViewModel {
+        LineAttributeViewModel(valueRef: ref[row][column], errorsRef: ConstRef(copying: []), label: "")
+    }
+
+}

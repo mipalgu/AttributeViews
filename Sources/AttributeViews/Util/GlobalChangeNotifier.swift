@@ -1,8 +1,8 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * GlobalChangeNotifier.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
+ * Created by Callum McColl on 6/5/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,5 +56,11 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+/// A protocol that allows for a conforming type to listen to a notification
+/// informing the conforming type that a trigger has fired.
+public protocol GlobalChangeNotifier: AnyObject {
+
+    /// Send the notification.
+    func send()
+
+}

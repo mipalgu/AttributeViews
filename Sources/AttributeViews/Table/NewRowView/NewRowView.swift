@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * NewRowView.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 4/5/2022.
+ * Copyright © 2022 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,46 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+#if canImport(TokamakShim)
+import Foundation
+import TokamakShim
+#else
+import SwiftUI
+#endif
+
+import Attributes
+import GUUI
+
+/// The view for adding a new attribute to a table.
+/// 
+/// This view is utilised by the `TableView` in order to handle the
+/// creation of new attributes that are added to a table attribute.
+/// 
+/// - SeeAlso: `TableView`.
+/// - SeeAlso: `LineAttributeView`.
+struct NewRowView: View {
+
+    /// The view model associated with thie view.
+    @ObservedObject var viewModel: NewRowViewModel
+
+    /// The content of this view.
+    var body: some View {
+        VStack {
+            HStack {
+                ForEach(0..<viewModel.newRow.count) { index in
+                    VStack {
+                        LineAttributeView(viewModel: viewModel.newRow[index])
+                    }.frame(minWidth: 0, maxWidth: .infinity)
+                }
+                VStack {
+                    Button(action: viewModel.addElement) {
+                        Image(systemName: "plus").font(.system(size: 16, weight: .regular))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .foregroundColor(.blue)
+                }.frame(width: 20)
+            }
+        }.padding(.leading, 15).padding(.trailing, 18).padding(.bottom, 15)
+    }
+
+}

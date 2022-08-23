@@ -1,8 +1,8 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * UnderestimatedHeight.swift
+ * 
  *
- * Created by Callum McColl on 25/03/2021.
+ * Created by Callum McColl on 2/5/21.
  * Copyright © 2021 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,5 +56,50 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+import Attributes
+
+/// Provide an estimate of the height of an attribute view.
+extension Attribute {
+
+    /// Provide an estimate of the height of an attribute view.
+    var underestimatedHeight: Int {
+        switch self {
+        case .line(let lineAttribute):
+            return lineAttribute.underestimatedHeight
+        case .block(let blockAttribute):
+            return blockAttribute.underestimatedHeight
+        }
+    }
+
+}
+
+/// Provide an estimate of the height of a line attribute view.
+extension LineAttribute {
+
+    /// Provide an estimate of the height of a line attribute view.
+    var underestimatedHeight: Int {
+        28
+    }
+
+}
+
+/// Provide an estimate of the height of a block attribute view.
+extension BlockAttribute {
+
+    /// Provide an estimate of the height of a block attribute view.
+    var underestimatedHeight: Int {
+        switch self {
+        case .code, .text:
+            return 50
+        case .enumerableCollection(_, let validValues):
+            return validValues.count * LineAttribute.line("").underestimatedHeight / 4
+        case .collection(let values, _, type: _):
+            return values.reduce(0) { $0 + $1.underestimatedHeight }
+        case .complex(let attributes, _):
+            return attributes.reduce(0) { $0 + $1.value.underestimatedHeight }
+        case .table(let rows, _):
+            return rows.count * LineAttribute.line("").underestimatedHeight + 75
+        }
+    }
+
+}

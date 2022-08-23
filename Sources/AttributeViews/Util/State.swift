@@ -1,9 +1,9 @@
 /*
- * main.swift 
- * AttributeViewsTests 
+ * State.swift
+ * AttributeViews
  *
- * Created by Callum McColl on 25/03/2021.
- * Copyright © 2021 Callum McColl. All rights reserved.
+ * Created by Callum McColl on 30/11/20.
+ * Copyright © 2020 Callum McColl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,5 +56,14 @@
  *
  */
 
-TestsScene.main()
-// TriggerTests.main()
+#if canImport(TokamakShim)
+import TokamakShim
+
+/// Typealias State to `TokamakShim.State` to avoid conflicts.
+typealias State = TokamakShim.State
+#else
+import SwiftUI
+
+/// Typealias State to `SwiftUI.State` to avoid conflicts.
+typealias State = SwiftUI.State
+#endif
