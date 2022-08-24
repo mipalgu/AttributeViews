@@ -35,6 +35,7 @@ let package = Package(
             dependencies: products + ["Attributes", "GUUI"]),
         .executableTarget(
             name: "AttributeViewsTests",
-            dependencies: products + ["AttributeViews", "Attributes", "GUUI"])
+            dependencies: products + ["AttributeViews", "Attributes", "GUUI"]),
+        .testTarget(name: "AttributeViewsTestTarget", dependencies: ["AttributeViews", "Attributes", "GUUI"])
     ]
 )
