@@ -57,6 +57,7 @@
  */
 
 #if canImport(TokamakShim)
+import Foundation
 import TokamakShim
 
 /// Typealias State to `TokamakShim.State` to avoid conflicts.
@@ -74,6 +75,8 @@ import GUUI
 
 /// A scene for testing the functionality of AttributeViews.
 struct TestsScene: App {
+
+#if canImport(SwiftUI)
 
     /// The apps `NSApplicationDelegate`.
     class AppDelegate: NSObject, NSApplicationDelegate {
@@ -94,6 +97,8 @@ struct TestsScene: App {
 
     /// The scenes app delegate.
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+#endif
 
     // swiftlint:enable weak_delegate
 

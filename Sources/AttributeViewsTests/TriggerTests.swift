@@ -15,6 +15,8 @@ import TokamakShim
 /// A test app for testing triggers.
 struct TriggerTests: App {
 
+#if canImport(SwiftUI)
+
     /// The `NSApplicationDelegate`.
     class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -35,6 +37,7 @@ struct TriggerTests: App {
     /// The app delegate.
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+#endif
     // swiftlint:enable weak_delegate
 
     /// The scene phase.
