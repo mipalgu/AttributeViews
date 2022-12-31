@@ -61,7 +61,6 @@ import Attributes
 import Foundation
 #endif
 import GUUI
-import TokamakShim
 
 /// A view that displays a collection of attributes.
 /// 

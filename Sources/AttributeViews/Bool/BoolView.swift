@@ -7,7 +7,6 @@
 
 import Attributes
 import GUUI
-import TokamakShim
 
 // swiftlint:disable type_contents_order
 

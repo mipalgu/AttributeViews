@@ -10,7 +10,6 @@ import Foundation
 import Attributes
 import AttributeViews
 import GUUI
-import TokamakShim
 
 /// A test app for testing triggers.
 struct TriggerTests: App {

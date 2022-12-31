@@ -244,7 +244,7 @@ struct TestsScene: App {
                                     Field(name: "bool", type: .bool),
                                     Field(name: "code", type: .code(language: .swift))
                                 ],
-                                display: ReadOnlyPath<Attribute, Attribute>(keyPath: \.self, ancestors: [])
+                                display: ReadOnlyPath<Attribute, Attribute>(Attribute.self)
                                     .complexValue["code"]
                                     .wrappedValue
                                     .lineAttribute
